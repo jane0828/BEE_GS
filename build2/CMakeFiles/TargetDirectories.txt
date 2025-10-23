@@ -1,0 +1,3 @@
+/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build2/CMakeFiles/MIMAN.dir
+/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build2/CMakeFiles/edit_cache.dir
+/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build2/CMakeFiles/rebuild_cache.dir
