@@ -7,6 +7,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define READ_BUF_SIZE   1024
 
+
+
+
 //Custom Headers
 #include "miman_config.h"
 #include "miman_orbital.h"
@@ -35,7 +38,7 @@ extern Console console;
 extern Observer Yonsei;
 extern int Requested;
 extern Sband * sgs;
-
+volatile sig_atomic_t g_shutdown_requested = 0;
 ////Thread
 /* pthread index */
 // 0 : Radio Control
@@ -58,6 +61,15 @@ pthread_t p_thread[16];
 pthread_mutex_t conn_lock = PTHREAD_MUTEX_INITIALIZER;
 
 csp_debug_level_t debug_level;
+
+#include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+void shutdown_handler(int sig) {
+    g_shutdown_requested = 1;
+}
 
 
 void Initialize_ConfigSettings()
@@ -93,6 +105,8 @@ char * fontfile = "../bin/font/Inconsolata.ttf";
 //Main
 int main(int, char**)
 {
+
+
     Initialize_ConfigSettings();
     Initialize_TLESettings();
     Initialize_CMDLabels();
@@ -104,7 +118,7 @@ int main(int, char**)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     //// Create Main window with graphics context
-    GLFWwindow * window = glfwCreateWindow(1920, 1080, "MIMAN - Monochrome Imaging for Monitoring Aerosol by Nanosatellite", NULL, NULL);
+    GLFWwindow * window = glfwCreateWindow(1920, 1080, "BEE-1000 Ground Station", NULL, NULL);
     if (window == NULL)
         return -1;
     glfwMakeContextCurrent(window);
@@ -130,7 +144,7 @@ int main(int, char**)
     // Load Fonts
     io.Fonts->AddFontFromFileTTF(fontfile, 30.0f);
     
-    ImVec4 clear_color = ImVec4(0.168f, 0.184f, 0.467f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.925f, 0.870f, 0.945f, 1.00f);  
     int WinWidth;
     int WinHeight;
     float ReactiveWidth;
@@ -202,13 +216,19 @@ int main(int, char**)
     char logfilename[128] ={0,};
     time_t tmtime = time(0);
     struct tm * local = localtime(&tmtime);
-    sprintf(logfilename, "../data/HVD_Log/log--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
+    sprintf(logfilename, "../data/BEE_TC_Log/log--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
     log_ptr = fopen(logfilename, "wb");
     if(log_ptr == NULL) {
         printf("Invalid log file pointer.\n");
     }
     while(State.AllThread)
     {
+
+        if (g_shutdown_requested) {
+        // 시그널로 인한 종료 요청 들어옴
+        State.GUI = false;       // GUI 루프 정지
+        State.AllThread = false; // while 탈출
+    }
         if(State.GUI)
         {   
             GUIneedshutdown = true;
@@ -218,6 +238,20 @@ int main(int, char**)
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
+
+            ImGuiIO& io = ImGui::GetIO();
+            ImDrawList* bg = ImGui::GetBackgroundDrawList();
+
+
+
+
+            bg->AddRectFilled(
+                ImVec2(0, 0),
+                io.DisplaySize,
+                ImColor(0.141f, 0.364f, 0.376f, 1.00f)  // Colorset_1과 동일
+            );
+
+
             glfwGetWindowSize(window, &WinWidth, &WinHeight);
             ReactiveWidth = (float)WinWidth / DISPLAY_WINDWIDTH;
             ReactiveHeight = (float)WinHeight / DISPLAY_WINDHEIGHT;
@@ -258,7 +292,7 @@ int main(int, char**)
             ImGui_FrequencyWindow(ReactiveHeight * 0.5);
             
             //Show Command Window
-            ImGui::SetNextWindowPos(ImVec2(DISPLAY_COL2 * ReactiveWidth, DISPLAY_ROW3 * ReactiveHeight), ImGuiCond_Always);
+            ImGui::SetNextWindowPos(ImVec2(0 * ReactiveWidth, DISPLAY_ROW2 * ReactiveHeight), ImGuiCond_Always);
             ImGui::SetNextWindowSize(ImVec2(DISPLAY_COMMAND_W * ReactiveWidth, DISPLAY_COMMAND_H * ReactiveHeight), ImGuiCond_Always);
             ImGui_CommandWindow(ReactiveHeight * 0.5);
 
@@ -341,6 +375,9 @@ int main(int, char**)
                     State.TRx_mode = true;
                     State.downlink_mode = true;
                     pthread_create(&p_thread[11], NULL, TRxController, NULL); 
+
+
+                    signal(SIGINT, shutdown_handler);
                     
                 }
                 if(State.SbandUse)
@@ -517,8 +554,10 @@ int main(int, char**)
     if(sgs != NULL)
         sgs->finSband();
     sleep(0.5);
-    fclose(log_ptr);
-    printf("Finish MIMAN GS.\n");
-    return 0;
+fclose(log_ptr);
+system("../amp/ampoff");
+printf("Finish BEE-1000 GS.\n");
+return 0;
+
     
 }

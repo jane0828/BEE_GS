@@ -1,4 +1,4 @@
-# Install script for directory: /home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)
+# Install script for directory: /home/miman/Desktop/BEE-1000_GS
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/miman/Desktop/BEE-1000_GS/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

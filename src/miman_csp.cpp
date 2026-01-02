@@ -54,6 +54,7 @@ void miman_usart_rx(uint8_t * buf, int len, void * pxTaskWoken) {
 	csp_kiss_rx(&csp_if_kiss, buf, len, pxTaskWoken);
 }
 
+
 int init_transceiver()
 {
 	// csp_debug_toggle_level(CSP_PACKET);
@@ -64,7 +65,16 @@ int init_transceiver()
 	csp_buffer_init(2048, 2048);
 	csp_init((uint8_t)setup->kiss_node);
 	csp_route_set(CSP_DEFAULT_ROUTE, &csp_if_kiss, CSP_NODE_MAC);
-	csp_route_set(setup->obc_node, &csp_if_kiss, setup->gs100_node);
+	// csp_route_set(setup->obc_node, &csp_if_kiss, setup->gs100_node);
+	// csp_route_set(setup->eps_node, &csp_if_kiss, setup->gs100_node);
+	for (int i = 1; i < 32; ++i) {
+		int ret;
+		if (i == setup->gs100_node || i == setup->kiss_node)
+			continue;
+		if ((ret = csp_route_set(i, &csp_if_kiss, setup->gs100_node)) != CSP_ERR_NONE) {
+			printf("csp_rtable_set err: returned %d\n", ret);
+		}
+	}
 	csp_kiss_init(&csp_if_kiss, &csp_kiss_driver, usart_putc, usart_insert, "KISS");
 	
 	struct usart_conf usart;
@@ -74,7 +84,7 @@ int init_transceiver()
 
 	usart_set_callback(miman_usart_rx);
 
-	csp_rdp_set_opt(12, 10000, 7500, 1, 2000, 20);
+	csp_rdp_set_opt(6, 30000, 16000, 1, 8000, 3);
 	csp_route_start_task(0, 0);
 	
 	return 0;
@@ -312,6 +322,32 @@ void * csp_ping_rdp_crc32(void *)
 	else
 		console.AddLog("[ERROR]##Ping Failed.");
 }
+
+
+// For ping every node
+void* csp_ping_everynode_console(void *arg)
+{
+    uint8_t node = *(uint8_t*)arg;  
+    free(arg);                     
+
+    int pingResult = csp_ping(node, 1500, setup->pingsize, CSP_O_NONE);
+
+    if (pingResult >= 0) {
+        console.AddLog("[OK]##Ping Success at node %u, %dms", node, pingResult);
+        PingCounter++;
+    } else {
+        console.AddLog("[ERROR]##Ping Failed at node %u.", node);
+    }
+
+    return NULL;
+}
+
+
+
+
+
+
+
 
 //Cause Endian Issue, this function is modified.
 void csp_debug_callback(char * filename)

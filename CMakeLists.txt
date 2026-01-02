@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED( VERSION 3.0.0 )
 CMAKE_POLICY(SET CMP0072 OLD)
 
-PROJECT(MIMAN)
+PROJECT(BEE-1000)
 
 SET(CMAKE_VERBOSE_MAKEFILE TRUE)
 # SET( CMAKE_C_FLAGS_DEBUG "-DDEBUG -DC_FLAGS" )
@@ -79,11 +79,11 @@ INCLUDE_DIRECTORIES (${MIMAN_LIB}/gscsp/lib/libftp_client/include)
 INCLUDE_DIRECTORIES (${MIMAN_LIB}/gscsp/lib/libgosh_client/include)
 INCLUDE_DIRECTORIES (${MIMAN_SRC})
 
-ADD_EXECUTABLE(MIMAN ${MIMAN_SRC}/miman_config.cpp ${MIMAN_SRC}/miman_coms.cpp ${MIMAN_SRC}/miman_csp.cpp ${MIMAN_SRC}/miman_ftpfcd.cpp ${MIMAN_SRC}/miman_ftprdp.cpp ${MIMAN_SRC}/miman_imgui.cpp ${MIMAN_SRC}/miman_orbital.cpp ${MIMAN_SRC}/miman_radial.cpp ${MIMAN_SRC}/miman_model.cpp ${MIMAN_SRC}/miman_s_control.cpp ${MIMAN_SRC}/miman_autopilot.cpp ${MIMAN_SRC}/main.cpp)
+ADD_EXECUTABLE(BEE-1000 ${MIMAN_SRC}/miman_config.cpp ${MIMAN_SRC}/miman_coms.cpp ${MIMAN_SRC}/miman_csp.cpp ${MIMAN_SRC}/miman_ftpfcd.cpp ${MIMAN_SRC}/miman_ftprdp.cpp ${MIMAN_SRC}/miman_imgui.cpp ${MIMAN_SRC}/miman_orbital.cpp ${MIMAN_SRC}/miman_radial.cpp ${MIMAN_SRC}/miman_model.cpp ${MIMAN_SRC}/miman_s_control.cpp ${MIMAN_SRC}/miman_autopilot.cpp ${MIMAN_SRC}/main.cpp)
 
 # TARGET_LINK_LIBRARIES(MIMAN curl pthread GL GLEW glut glbinding libssh)
-TARGET_LINK_LIBRARIES(MIMAN curl pthread GL GLEW glut glbinding ssh)
+TARGET_LINK_LIBRARIES(BEE-1000 curl pthread GL GLEW glut glbinding ssh)
 
-TARGET_LINK_LIBRARIES(MIMAN ${MIMAN_LIB}/libsgp4/libsgp4.a)
-TARGET_LINK_LIBRARIES(MIMAN ${MIMAN_LIB}/imgui/libimgui.a)
-TARGET_LINK_LIBRARIES(MIMAN ${MIMAN_LIB}/gscsp/build/libmimancsp.a)
+TARGET_LINK_LIBRARIES(BEE-1000 ${MIMAN_LIB}/libsgp4/libsgp4.a)
+TARGET_LINK_LIBRARIES(BEE-1000 ${MIMAN_LIB}/imgui/libimgui.a)
+TARGET_LINK_LIBRARIES(BEE-1000 ${MIMAN_LIB}/gscsp/build/libmimancsp.a)

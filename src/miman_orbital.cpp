@@ -528,7 +528,7 @@ TLEinfo * SetTLEinfo(const char * label)
 {
     TLEinfo* res = (TLEinfo *)malloc(sizeof(TLEinfo));
     sprintf(res->remote, "https://celestrak.org/NORAD/elements/gp.php?GROUP=%s&FORMAT=tle", label);
-    sprintf(res->local, "./bin/tle/%s.dat", label);
+    sprintf(res->local, "../bin/tle/%s.dat", label);
     sprintf(res->label, label);
     return res;
 }

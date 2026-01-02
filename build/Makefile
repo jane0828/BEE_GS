@@ -60,10 +60,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)"
+CMAKE_SOURCE_DIR = /home/miman/Desktop/BEE-1000_GS
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build"
+CMAKE_BINARY_DIR = /home/miman/Desktop/BEE-1000_GS/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -90,9 +90,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build/CMakeFiles" "/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build//CMakeFiles/progress.marks"
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/miman/Desktop/BEE-1000_GS/build/CMakeFiles /home/miman/Desktop/BEE-1000_GS/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start "/home/miman/Desktop/hvd_tc_tool_original(copy for farfield 1020)/build/CMakeFiles" 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/miman/Desktop/BEE-1000_GS/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -120,24 +120,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named MIMAN
+# Target rules for targets named BEE-1000
 
 # Build rule for target.
-MIMAN: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 MIMAN
-.PHONY : MIMAN
+BEE-1000: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 BEE-1000
+.PHONY : BEE-1000
 
 # fast build rule for target.
-MIMAN/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/build
-.PHONY : MIMAN/fast
+BEE-1000/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/build
+.PHONY : BEE-1000/fast
 
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
 # target to build an object file
 src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/main.cpp.o
 .PHONY : src/main.cpp.o
 
 src/main.i: src/main.cpp.i
@@ -145,7 +145,7 @@ src/main.i: src/main.cpp.i
 
 # target to preprocess a source file
 src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/main.cpp.i
 .PHONY : src/main.cpp.i
 
 src/main.s: src/main.cpp.s
@@ -153,7 +153,7 @@ src/main.s: src/main.cpp.s
 
 # target to generate assembly for a file
 src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
 src/miman_autopilot.o: src/miman_autopilot.cpp.o
@@ -161,7 +161,7 @@ src/miman_autopilot.o: src/miman_autopilot.cpp.o
 
 # target to build an object file
 src/miman_autopilot.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_autopilot.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_autopilot.cpp.o
 .PHONY : src/miman_autopilot.cpp.o
 
 src/miman_autopilot.i: src/miman_autopilot.cpp.i
@@ -169,7 +169,7 @@ src/miman_autopilot.i: src/miman_autopilot.cpp.i
 
 # target to preprocess a source file
 src/miman_autopilot.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_autopilot.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_autopilot.cpp.i
 .PHONY : src/miman_autopilot.cpp.i
 
 src/miman_autopilot.s: src/miman_autopilot.cpp.s
@@ -177,7 +177,7 @@ src/miman_autopilot.s: src/miman_autopilot.cpp.s
 
 # target to generate assembly for a file
 src/miman_autopilot.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_autopilot.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_autopilot.cpp.s
 .PHONY : src/miman_autopilot.cpp.s
 
 src/miman_coms.o: src/miman_coms.cpp.o
@@ -185,7 +185,7 @@ src/miman_coms.o: src/miman_coms.cpp.o
 
 # target to build an object file
 src/miman_coms.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_coms.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_coms.cpp.o
 .PHONY : src/miman_coms.cpp.o
 
 src/miman_coms.i: src/miman_coms.cpp.i
@@ -193,7 +193,7 @@ src/miman_coms.i: src/miman_coms.cpp.i
 
 # target to preprocess a source file
 src/miman_coms.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_coms.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_coms.cpp.i
 .PHONY : src/miman_coms.cpp.i
 
 src/miman_coms.s: src/miman_coms.cpp.s
@@ -201,7 +201,7 @@ src/miman_coms.s: src/miman_coms.cpp.s
 
 # target to generate assembly for a file
 src/miman_coms.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_coms.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_coms.cpp.s
 .PHONY : src/miman_coms.cpp.s
 
 src/miman_config.o: src/miman_config.cpp.o
@@ -209,7 +209,7 @@ src/miman_config.o: src/miman_config.cpp.o
 
 # target to build an object file
 src/miman_config.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_config.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_config.cpp.o
 .PHONY : src/miman_config.cpp.o
 
 src/miman_config.i: src/miman_config.cpp.i
@@ -217,7 +217,7 @@ src/miman_config.i: src/miman_config.cpp.i
 
 # target to preprocess a source file
 src/miman_config.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_config.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_config.cpp.i
 .PHONY : src/miman_config.cpp.i
 
 src/miman_config.s: src/miman_config.cpp.s
@@ -225,7 +225,7 @@ src/miman_config.s: src/miman_config.cpp.s
 
 # target to generate assembly for a file
 src/miman_config.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_config.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_config.cpp.s
 .PHONY : src/miman_config.cpp.s
 
 src/miman_csp.o: src/miman_csp.cpp.o
@@ -233,7 +233,7 @@ src/miman_csp.o: src/miman_csp.cpp.o
 
 # target to build an object file
 src/miman_csp.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_csp.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_csp.cpp.o
 .PHONY : src/miman_csp.cpp.o
 
 src/miman_csp.i: src/miman_csp.cpp.i
@@ -241,7 +241,7 @@ src/miman_csp.i: src/miman_csp.cpp.i
 
 # target to preprocess a source file
 src/miman_csp.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_csp.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_csp.cpp.i
 .PHONY : src/miman_csp.cpp.i
 
 src/miman_csp.s: src/miman_csp.cpp.s
@@ -249,7 +249,7 @@ src/miman_csp.s: src/miman_csp.cpp.s
 
 # target to generate assembly for a file
 src/miman_csp.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_csp.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_csp.cpp.s
 .PHONY : src/miman_csp.cpp.s
 
 src/miman_ftpfcd.o: src/miman_ftpfcd.cpp.o
@@ -257,7 +257,7 @@ src/miman_ftpfcd.o: src/miman_ftpfcd.cpp.o
 
 # target to build an object file
 src/miman_ftpfcd.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_ftpfcd.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_ftpfcd.cpp.o
 .PHONY : src/miman_ftpfcd.cpp.o
 
 src/miman_ftpfcd.i: src/miman_ftpfcd.cpp.i
@@ -265,7 +265,7 @@ src/miman_ftpfcd.i: src/miman_ftpfcd.cpp.i
 
 # target to preprocess a source file
 src/miman_ftpfcd.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_ftpfcd.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_ftpfcd.cpp.i
 .PHONY : src/miman_ftpfcd.cpp.i
 
 src/miman_ftpfcd.s: src/miman_ftpfcd.cpp.s
@@ -273,7 +273,7 @@ src/miman_ftpfcd.s: src/miman_ftpfcd.cpp.s
 
 # target to generate assembly for a file
 src/miman_ftpfcd.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_ftpfcd.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_ftpfcd.cpp.s
 .PHONY : src/miman_ftpfcd.cpp.s
 
 src/miman_ftprdp.o: src/miman_ftprdp.cpp.o
@@ -281,7 +281,7 @@ src/miman_ftprdp.o: src/miman_ftprdp.cpp.o
 
 # target to build an object file
 src/miman_ftprdp.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_ftprdp.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_ftprdp.cpp.o
 .PHONY : src/miman_ftprdp.cpp.o
 
 src/miman_ftprdp.i: src/miman_ftprdp.cpp.i
@@ -289,7 +289,7 @@ src/miman_ftprdp.i: src/miman_ftprdp.cpp.i
 
 # target to preprocess a source file
 src/miman_ftprdp.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_ftprdp.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_ftprdp.cpp.i
 .PHONY : src/miman_ftprdp.cpp.i
 
 src/miman_ftprdp.s: src/miman_ftprdp.cpp.s
@@ -297,7 +297,7 @@ src/miman_ftprdp.s: src/miman_ftprdp.cpp.s
 
 # target to generate assembly for a file
 src/miman_ftprdp.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_ftprdp.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_ftprdp.cpp.s
 .PHONY : src/miman_ftprdp.cpp.s
 
 src/miman_imgui.o: src/miman_imgui.cpp.o
@@ -305,7 +305,7 @@ src/miman_imgui.o: src/miman_imgui.cpp.o
 
 # target to build an object file
 src/miman_imgui.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_imgui.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_imgui.cpp.o
 .PHONY : src/miman_imgui.cpp.o
 
 src/miman_imgui.i: src/miman_imgui.cpp.i
@@ -313,7 +313,7 @@ src/miman_imgui.i: src/miman_imgui.cpp.i
 
 # target to preprocess a source file
 src/miman_imgui.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_imgui.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_imgui.cpp.i
 .PHONY : src/miman_imgui.cpp.i
 
 src/miman_imgui.s: src/miman_imgui.cpp.s
@@ -321,7 +321,7 @@ src/miman_imgui.s: src/miman_imgui.cpp.s
 
 # target to generate assembly for a file
 src/miman_imgui.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_imgui.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_imgui.cpp.s
 .PHONY : src/miman_imgui.cpp.s
 
 src/miman_model.o: src/miman_model.cpp.o
@@ -329,7 +329,7 @@ src/miman_model.o: src/miman_model.cpp.o
 
 # target to build an object file
 src/miman_model.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_model.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_model.cpp.o
 .PHONY : src/miman_model.cpp.o
 
 src/miman_model.i: src/miman_model.cpp.i
@@ -337,7 +337,7 @@ src/miman_model.i: src/miman_model.cpp.i
 
 # target to preprocess a source file
 src/miman_model.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_model.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_model.cpp.i
 .PHONY : src/miman_model.cpp.i
 
 src/miman_model.s: src/miman_model.cpp.s
@@ -345,7 +345,7 @@ src/miman_model.s: src/miman_model.cpp.s
 
 # target to generate assembly for a file
 src/miman_model.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_model.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_model.cpp.s
 .PHONY : src/miman_model.cpp.s
 
 src/miman_orbital.o: src/miman_orbital.cpp.o
@@ -353,7 +353,7 @@ src/miman_orbital.o: src/miman_orbital.cpp.o
 
 # target to build an object file
 src/miman_orbital.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_orbital.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_orbital.cpp.o
 .PHONY : src/miman_orbital.cpp.o
 
 src/miman_orbital.i: src/miman_orbital.cpp.i
@@ -361,7 +361,7 @@ src/miman_orbital.i: src/miman_orbital.cpp.i
 
 # target to preprocess a source file
 src/miman_orbital.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_orbital.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_orbital.cpp.i
 .PHONY : src/miman_orbital.cpp.i
 
 src/miman_orbital.s: src/miman_orbital.cpp.s
@@ -369,7 +369,7 @@ src/miman_orbital.s: src/miman_orbital.cpp.s
 
 # target to generate assembly for a file
 src/miman_orbital.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_orbital.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_orbital.cpp.s
 .PHONY : src/miman_orbital.cpp.s
 
 src/miman_radial.o: src/miman_radial.cpp.o
@@ -377,7 +377,7 @@ src/miman_radial.o: src/miman_radial.cpp.o
 
 # target to build an object file
 src/miman_radial.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_radial.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_radial.cpp.o
 .PHONY : src/miman_radial.cpp.o
 
 src/miman_radial.i: src/miman_radial.cpp.i
@@ -385,7 +385,7 @@ src/miman_radial.i: src/miman_radial.cpp.i
 
 # target to preprocess a source file
 src/miman_radial.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_radial.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_radial.cpp.i
 .PHONY : src/miman_radial.cpp.i
 
 src/miman_radial.s: src/miman_radial.cpp.s
@@ -393,7 +393,7 @@ src/miman_radial.s: src/miman_radial.cpp.s
 
 # target to generate assembly for a file
 src/miman_radial.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_radial.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_radial.cpp.s
 .PHONY : src/miman_radial.cpp.s
 
 src/miman_s_control.o: src/miman_s_control.cpp.o
@@ -401,7 +401,7 @@ src/miman_s_control.o: src/miman_s_control.cpp.o
 
 # target to build an object file
 src/miman_s_control.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_s_control.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_s_control.cpp.o
 .PHONY : src/miman_s_control.cpp.o
 
 src/miman_s_control.i: src/miman_s_control.cpp.i
@@ -409,7 +409,7 @@ src/miman_s_control.i: src/miman_s_control.cpp.i
 
 # target to preprocess a source file
 src/miman_s_control.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_s_control.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_s_control.cpp.i
 .PHONY : src/miman_s_control.cpp.i
 
 src/miman_s_control.s: src/miman_s_control.cpp.s
@@ -417,7 +417,7 @@ src/miman_s_control.s: src/miman_s_control.cpp.s
 
 # target to generate assembly for a file
 src/miman_s_control.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/MIMAN.dir/build.make CMakeFiles/MIMAN.dir/src/miman_s_control.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/BEE-1000.dir/build.make CMakeFiles/BEE-1000.dir/src/miman_s_control.cpp.s
 .PHONY : src/miman_s_control.cpp.s
 
 # Help Target
@@ -428,7 +428,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... MIMAN"
+	@echo "... BEE-1000"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

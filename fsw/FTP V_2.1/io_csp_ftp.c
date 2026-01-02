@@ -47,6 +47,7 @@ enum CSP_PORTS {
     CSP_PORT_FTP_BBB        = 17,
     CSP_PORT_BBB            = 18,
     CSP_PORT_BEACON         = 31,
+    CSP_PORT_RPT            = 25,
     CSP_PORT_AX100_RESET_GNDWDT= 9,
 };
 /**

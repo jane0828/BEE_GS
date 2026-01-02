@@ -76,7 +76,7 @@ static int csp_kiss_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t 
 		driver->kiss_putc(((unsigned char *) &packet->id.ext)[i]);
 	}
 	driver->kiss_putc(FEND);
-
+// printf("\n");
 	/* Free data */
 	csp_buffer_free(packet);
 

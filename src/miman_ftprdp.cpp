@@ -97,7 +97,7 @@ void * ftp_downlink_onorbit(void * param){
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
-    ftp_config.timeout = 5000; //default timeout value
+    ftp_config.timeout = 30000; //default timeout value
     ftp_config.chunk_size = State.chunk_sz; //default chunk size value
     State.ftp_mode = true;
     int status = (int)gs_ftp_download(&ftp_config, FTP->local_path, FTP->remote_path, ftp_callback, NULL);
@@ -137,7 +137,7 @@ void * ftp_uplink_onorbit(void * param){
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
-    ftp_config.timeout = 5000; //default timeout value
+    ftp_config.timeout = 30000; //default timeout value
     ftp_config.chunk_size = State.chunk_sz; //default chunk size value
     State.ftp_mode = true;
     int status = 0;

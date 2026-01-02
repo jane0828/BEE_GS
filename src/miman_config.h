@@ -131,6 +131,11 @@ typedef struct {
     uint8_t obc_node;
     uint8_t ax100_node;
 
+
+    // added for eps ping!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    uint8_t eps_node = 21;
+
     double default_freq;
     uint16_t pingsize;
 
@@ -169,12 +174,43 @@ public:
         strftime(date_and_time_buf, sizeof(date_and_time_buf), "%Y-%m-%d %H:%M\n", &_now_time);
         _history_fs.write(date_and_time_buf, strlen(date_and_time_buf));
     }
-    Console()
-    : _x_pos(0), _y_pos(0), _width(200), _height(50), _push_to_bottom(false), _history_fs("./log/history.log", std::fstream::in | std::fstream::out | std::fstream::app), _debug_fs("./log/debug.log", std::fstream::in | std::fstream::out | std::fstream::app)
-    {
-        Initializer();
-    }
-    Console(float x_pos, float y_pos, float width, float height, const char * const log_name = "./log/history.log", const char * const debug_name = "./log/debug.log")
+Console()
+    : _x_pos(0), _y_pos(0), _width(200), _height(50), _push_to_bottom(false)
+{
+
+    char hist_name[256];
+    char dbg_name[256];
+
+    time_t t = time(NULL);
+    struct tm* lt = localtime(&t);
+
+    sprintf(hist_name, "../data/BEE_Console_Log/console--%04d-%02d-%02d-%02d-%02d-%02d.log",
+            lt->tm_year + 1900,
+            lt->tm_mon + 1,
+            lt->tm_mday,
+            lt->tm_hour,
+            lt->tm_min,
+            lt->tm_sec);
+
+    sprintf(dbg_name, "../data/BEE_Debug_Log/debug--%04d-%02d-%02d-%02d-%02d-%02d.log",
+            lt->tm_year + 1900,
+            lt->tm_mon + 1,
+            lt->tm_mday,
+            lt->tm_hour,
+            lt->tm_min,
+            lt->tm_sec);
+
+
+    _history_fs.open(hist_name, std::fstream::out | std::fstream::trunc);
+    _debug_fs.open(dbg_name, std::fstream::out | std::fstream::trunc);
+
+    Initializer();
+}
+
+
+
+
+    Console(float x_pos, float y_pos, float width, float height, const char * const log_name = "../data/BEE_Console_Log/console.log", const char * const debug_name = "../data/BEE_Debug_Log/debug.log")
     : _x_pos(x_pos), _y_pos(y_pos), _width(width), _height(height), _push_to_bottom(false), _history_fs(log_name, std::fstream::in | std::fstream::out | std::fstream::app), _debug_fs(debug_name, std::fstream::in | std::fstream::out | std::fstream::app)
     {
         Initializer();
@@ -489,7 +525,7 @@ uint32_t chksum_crc32(uint8_t *block, unsigned int length);
 #define	BCN_PORT                    31 //beacon port
 #define TRX_PORT                    13
 #define FTPFCD_PORT                 15
-#define FTPRDP_PORT                 16
+#define FTPRDP_PORT                 9
 #define TASK_SYN	                0x01
 #define TASK_ACK                    0x02
 #define TASK_EAK                    0x04
@@ -539,6 +575,10 @@ uint32_t chksum_crc32(uint8_t *block, unsigned int length);
 // Telecommunication Length
 #define MIM_LEN_PACKET              1024
 #define MIM_LEN_BEACON              sizeof(Beacon)
+#define BEE_LEN_MISSIONBEACON       sizeof(MissionBeacon)
+#define BEE_LEN_REPORT              sizeof(Report)
+#define BEE_LEN_EVENT               sizeof(Event)
+#define BEE_LEN_GETFILEINFO         sizeof(GETFILEINFO)
 
 // Telecommunication Default Settings
 #define MIM_DEFAULT_TIMEOUT         1000
@@ -560,92 +600,7 @@ uint32_t chksum_crc32(uint8_t *block, unsigned int length);
 #define CFE_MSG_SEQCNT_MASK         0x3FFF /**< \brief CCSDS Sequence count mask */
 
 
-/* V1 Command Message IDs must be 0x18xx */
-/* 0x1820 to 0x1827 for this App. */
-#define ADCS_CMD_MID            0x1820
-#define ADCS_SEND_HK_MID        0x1821
-/* V1 Telemetry Message IDs must be 0x08xx */
-/* 0x0820 to 0x0827 for this App. */
-#define ADCS_HK_TLM_MID         0x0820
-#define ADCS_REF_TLM_WHL_MID    0x0821
-#define ADCS_REF_TLM_MTQ_MID    0x0822
-#define ADCS_LOOP_WAKEUP_MID    0x0823
-#define ADCS_OUT_TLM_MID        0x0824
 
-/* V1 Command Message IDs must be 0x18xx */
-#define GPS_CMD_MID         0x1828
-#define GPS_SEND_HK_MID     0x1829
-#define GPS_SEND_MEAS_MID   0x182A
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define GPS_HK_TLM_MID      0x0828
-#define GPS_MEAS_TLM_MID    0x0829
-
-/* V1 Command Message IDs must be 0x18xx */
-#define EPS_CMD_MID                 0x1848
-#define EPS_SEND_HK_MID             0x1849
-#define EPS_WATCHDOG_WAKEUP_MID     0x184A
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define EPS_HK_TLM_MID              0x0848
-#define EPS_BCON_TLM_MID            0x0849
-#define EPS_HK_TLM_ENV_MID          0x084A
-
-/* V1 Command Message IDs must be 0x18xx */
-#define FM_CMD_MID                  0x1870
-// #define FM_CMD_MID                  0x1806
-#define FM_SEND_HK_MID              0x1871
-#define FM_1HZ_WAKEUP_MID           0x1872
-#define FM_SEND_SATMODE_MID         0x1873
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define FM_HK_TLM_MID               0x0871
-#define FM_SATMODE_MID              0x0873
-
-/* V1 Command Message IDs must be 0x18xx */
-#define MTQ_CMD_MID         0x1840
-#define MTQ_SEND_HK_MID     0x1841
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define MTQ_HK_TLM_MID      0x0840
-
-/* V1 Command Message IDs must be 0x18xx */
-#define PAY_CMD_MID         0x1818
-#define PAY_SEND_HK_MID     0x1819
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define PAY_HK_TLM_MID      0x0818
-
-/* V1 Command Message IDs must be 0x18xx */
-#define RWA_CMD_MID         0x1838
-#define RWA_SEND_HK_MID     0x1839
-#define RWA_SEND_WHL_SPEED_MID  0x183A
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define RWA_HK_TLM_MID      0x0838
-#define RWA_WHLSPEED_TLM_MID    0x0839
-
-/* V1 Command Message IDs must be 0x18xx */
-#define SNSR_CMD_MID        0x1830
-#define SNSR_SEND_HK_MID    0x1831
-#define SNSR_SEND_MEAS_MID    0x1832
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define SNSR_HK_TLM_MID     0x0830
-#define SNSR_MEAS_TLM_MID   0x0831
-#define SNSR_SUNDETECTION_INFO_MID   0x0832
-
-/* V1 Command Message IDs must be 0x18xx */
-#define STX_CMD_MID         0x1858
-#define STX_SEND_HK_MID     0x1859
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define STX_HK_TLM_MID      0x0858
-
-/* V1 Command Message IDs must be 0x18xx */
-#define TO_CMD_MID      0x1890
-#define TO_SEND_HK_MID  0x1891
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define TO_HK_TLM_MID   0x0890
-
-/* V1 Command Message IDs must be 0x18xx */
-#define UTRX_CMD_MID        0x1850
-#define UTRX_SEND_HK_MID    0x1851
-/* V1 Telemetry Message IDs must be 0x08xx */
-#define UTRX_HK_TLM_MID     0x0850
-#define UTRX_BCON_TLM_MID   0x0851
 
 /* V1 Command Message IDs must be 0x18xx */
 #define TS_CMD_MID          0x1885
@@ -656,262 +611,6 @@ uint32_t chksum_crc32(uint8_t *block, unsigned int length);
 
 #define ECM_CMD_MID         0x18E0
 
-/*
-** ADCS App command codes
-*/
-#define ADCS_NOOP_CC            0
-#define ADCS_RESET_COUNTERS_CC  1
-#define ADCS_PROCESS_CC         2
-
-#define ADCS_SETPARAM_SC        10
-#define ADCS_SETPARAM_AUX       11
-#define ADCS_SETPARAM_GAIN      12
-#define ADCS_SETPARAM_TLE       13
-#define ADCS_SETPARAM_TARGET    14
-
-/*
-** CI App command codes
-*/
-#define CI_NOOP_CC              0
-#define CI_RESET_COUNTERS_CC    1
-#define CI_RESERVED_CC          2
-
-
-#define CI_GATE_NOOP_CC         20
-
-/*
-** EPS App command codes
-*/
-#define EPS_NOOP_CC                     0
-#define EPS_RESET_COUNTERS_CC           1
-#define EPS_RESERVED_CC                 2
-#define EPS_SYSTEM_RESET_CC             3
-#define EPS_HW_NOOP_CC                  4
-#define EPS_CANCEL_OPERATION_CC         5
-#define EPS_WATCHDOG_CC                 6
-#define EPS_CORRECT_TIME_CC             7
-#define EPS_OUTPUT_BUS_GROUP_ON_CC      8
-#define EPS_OUTPUT_BUS_GROUP_OFF_CC     9
-#define EPS_OUTPUT_BUS_GROUP_STATE_CC   10
-#define EPS_OUTPUT_BUS_CHANNEL_ON_CC    11
-#define EPS_OUTPUT_BUS_CHANNEL_OFF_CC   12
-#define EPS_SWITCH_TO_NOMINAL_MODE_CC   13
-#define EPS_SWITCH_TO_SAFETY_MODE_CC    14
-#define EPS_SET_CONFIG_PARAMETER_CC     15
-#define EPS_RESET_CONFIG_PARAMETER_CC   16
-#define EPS_RESET_CONFIG_CC             17
-#define EPS_LOAD_CONFIG_CC              18
-#define EPS_SAVE_CONFIG_CC              19
-
-/*
-** FM App command codes
-*/
-
-/* Application control commands. */
-#define FM_NOOP_CC                          0
-#define FM_RESET_COUNTERS_CC                1
-#define FM_RESERVED_CC                      2
-#define FM_RESET_FM_CC                      3
-#define FM_RESET_APP_CC                     4
-#define FM_RESET_PROCESSOR_CC               5
-#define FM_RESET_POWER_CC                   6
-
-/* Mission scenario commands. */
-#define FM_MODE_TRANSFER_CC                 10
-#define FM_TERMINATE_EO_CC                  11
-#define FM_TERMINATE_EO_OVERRIDE_CC         12
-#define FM_START_OBSERVATION_CC             13
-#define FM_START_COMMUNICATION_CC           14
-#define FM_START_COMMISSIONING_CC           15
-#define FM_SET_OPERATION_MODE_CC            16
-#define FM_SET_COMMISSIONING_PHASE_CC       17
-#define FM_INITIATE_BASELINE_CC             18
-
-/* Ground based operation commands. */
-#define FM_SET_SPACECRAFT_TIME_CC           20
-#define FM_DEPLOY_ANTENNA_CC                21
-#define FM_USE_NOMINAL_BAUDRATES_CC         22
-
-/* Set flag commands. */
-#define FM_SET_ANTENNA_DEPLOY_FLAG_CC       30
-#define FM_SET_DAYLIGHT_DETECTION_FLAG_CC   31
-#define FM_SET_COMM_MISSING_FLAG_CC         32
-
-/* Operations data handling commands. */
-#define FM_STORE_OBSDATA_TO_CDS_CC          40
-#define FM_RESTORE_OBSDATA_FROM_CDS_CC      41
-#define FM_STORE_OBSDATA_TO_SD_CC           42
-#define FM_RESTORE_OBSDATA_FROM_SD_CC       43
-
-/*
-** GPS App command codes
-*/
-#define GPS_NOOP_CC                 0
-#define GPS_RESET_COUNTERS_CC       1
-#define GPS_RESERVED_CC             2
-#define GPS_RESET_APP_CC            3
-#define GPS_RESET_HW_CC             4
-#define GPS_CLEAR_LOGS_CC           5
-#define GPS_ENABLE_TIME_TONE_CC     6
-#define GPS_DISABLE_TIME_TONE_CC    7
-#define GPS_LOG_ONCE_CC             8
-#define GPS_LOG_ONTIME_CC           9
-#define GPS_LOG_ONCHANGE_CC         10
-#define GPS_LOG_REQUEST_DFT_CC      11
-#define GPS_SET_IF_MODE_CC          12
-
-/*
-** MTQ App command codes
-*/
-#define MTQ_NOOP_CC             0
-#define MTQ_RESET_COUNTERS_CC   1
-#define MTQ_RESERVED_CC         2
-
-#define MTQ_RESET               3
-#define MTQ_RESET_COMP          4
-#define MTQ_SET_DUTY            5
-#define MTQ_ENABLE              6
-#define MTQ_DISABLE             7
-
-#define MTQ_SET_PERIOD          8
-#define MTQ_SET_POLARITY        9
-
-/*
-** PAY App command codes
-*/
-#define PAY_NOOP_CC                 0
-#define PAY_RESET_COUNTERS_CC       1
-#define PAY_PROCESS_CC              2
-#define PAY_CAM_FIND_CC             3
-#define PAY_CAM_CONNECT_CC          4
-#define PAY_CAM_START_OPERATION_CC  5
-#define PAY_CAM_STOP_OPERATION_CC   6
-#define PAY_CAM_DOWNLOAD_NEW_IMG_CC 7
-#define PAY_CAM_DOWNLOAD_OLD_IMG_CC 8
-#define PAY_CAM_SEND_NOARG_CC       9
-#define PAY_CAM_SET_EXPOSURE_CC     10
-#define PAY_CAM_SET_SCPD_CC         11
-#define PAY_BBE_SHUTDOWN_CC         12
-#define PAY_INIT_DEVICE_CC          13
-
-/*
-** RWA App command codes
-*/
-#define RWA_NOOP_CC                         0
-#define RWA_RESET_COUNTERS_CC               1
-#define RWA_RESERVED_CC                     2
-#define RWA_RESET_ALL_CC                    3
-#define RWA_RESET_WHEEL_CC                  4
-#define RWA_SET_WHEEL_REFERENCE_SPEED_CC    5
-#define RWA_SET_WHEEL_REFERENCE_SPEED_ALL_AXIS_CC  6
-#define RWA_SET_WHEEL_COMMANDED_TORQUE_CC   7
-#define RWA_SET_MOTOR_POWER_STATE_CC        8
-#define RWA_SET_ENCODER_POWER_STATE_CC      9
-#define RWA_SET_HALL_POWER_STATE_CC         10
-#define RWA_SET_CONTROL_MODE_CC             11
-#define RWA_SET_BACKUP_WHEEL_MODE_CC        12
-#define RWA_SET_CLEAR_ERRORS_CC             13
-#define RWA_SET_PWM_GAIN_CC                 14
-#define RWA_SET_MAIN_GAIN_CC                15
-#define RWA_SET_BACKUP_GAIN_CC              16
-
-/*
-** SNSR App command codes
-*/
-#define SNSR_NOOP_CC                            0
-#define SNSR_RESET_COUNTERS_CC                  1
-#define SNSR_RESERVED_CC                        2
-#define SNSR_SUN_ALARM_OFF_CC                   3
-
-#define SNSR_STT_BOOT_CC                        10
-#define SNSR_STT_PING_CC                        11
-#define SNSR_STT_UNLOCK_CC                      12
-#define SNSR_STT_REBOOT_CC                      13
-#define SNSR_STT_SET_PARAMS_DFT_CC              14
-#define SNSR_STT_SET_PARAM_CC                   15
-#define SNSR_STT_SEND_RS485_CC                  16
-#define SNSR_STT_INIT_DEVICE_CC                 17
-
-#define SNSR_MMT_RESET_CC                       20
-#define SNSR_MMT_SET_INTERNAL_CONTROL0_CC       21
-#define SNSR_MMT_SET_INTERNAL_CONTROL2_CC       22
-#define SNSR_MMT_WRITE_TO_REGISTER_CC           23
-
-#define SNSR_IMU_RESET_CC                       30
-#define SNSR_IMU_SET_GYRO_OFFSET_CC             31
-#define SNSR_IMU_SET_CONFIGURATION_CC           32
-#define SNSR_IMU_SET_GYRO_CONFIGURATION_CC      33
-#define SNSR_IMU_SET_ACCEL_CONFIGURATION_CC     34
-#define SNSR_IMU_SET_ACCEL_CONFIGURATION2_CC    35
-#define SNSR_IMU_SET_POWER_MANAGEMENT_CC        36
-#define SNSR_IMU_WRITE_TO_REGISTER_CC           37
-
-#define SNSR_IMU_ISOLATE_CC                     50
-#define SNSR_IMU_RESTORE_CC                     51
-#define SNSR_MMT_ISOLATE_CC                     52
-#define SNSR_MMT_RESTORE_CC                     53
-#define SNSR_FSS_ISOLATE_CC                     54
-#define SNSR_FSS_RESTORE_CC                     55
-#define SNSR_CSS_ISOLATE_CC                     56
-#define SNSR_CSS_RESTORE_CC                     57
-#define SNSR_STT_ISOLATE_CC                     58
-#define SNSR_STT_RESTORE_CC                     59
-
-#define SNSR_IMU_WHO_I_AM_CC                    100
-#define SNSR_MMT_GET_PRODUCT_ID_CC              101
-
-/*
-** STX App command codes
-*/
-#define STX_NOOP_CC                 0
-#define STX_RESET_COUNTERS_CC       1
-#define STX_PROCESS_CC              2
-#define STX_RESET_CC                3
-#define STX_SET_CONTROL_MODE_CC     4
-#define STX_SET_ENCODER_RATE_CC     5
-#define STX_SET_PA_POWER_CC         6
-#define STX_SET_SYNTH_OFFSET_CC     7
-#define STX_TRANSMIT_READY_CC       8
-#define STX_TRANSMIT_DATA_CC        9
-#define STX_TRANSMIT_FILE_CC        10
-#define STX_TRANSMIT_FILE_LONG_PATH_CC        11
-#define STX_TRANSMIT_END_CC         12
-
-/*
-** TO App command codes
-*/
-#define TO_BEACON_CALLSIGN         "MIMAN"
-#define TO_BEACON_CALLSIGN_LENGTH  strlen(TO_BEACON_CALLSIGN)
-
-#define TO_NOOP_CC              0
-#define TO_RESET_COUNTERS_CC    1
-#define TO_PROCESS_CC           2
-#define TO_ENABLE_BEACON_CC     3
-#define TO_DISABLE_BEACON_CC    4
-#define TO_DOWNLINK_QUERY_REPLY_CC 5
-
-#define TO_ENABLE_CC            10
-
-/*
-** UTRX App command codes
-*/
-#define UTRX_NOOP_CC                0
-#define UTRX_RESET_COUNTERS_CC      1
-#define UTRX_RESERVED_CC            2
-#define UTRX_REBOOT_CC              3
-
-#define UTRX_SET_TX_FREQ_CC         10
-#define UTRX_SET_TX_BAUD_CC         11
-#define UTRX_SET_TX_MODIND_CC       12
-#define UTRX_SET_TX_MODE_CC         13
-
-#define UTRX_SET_RX_FREQ_CC         20
-#define UTRX_SET_RX_BAUD_CC         21
-#define UTRX_SET_RX_MODIND_CC       22
-#define UTRX_SET_RX_MODE_CC         23
-#define UTRX_SET_RX_BW_CC           24
-
-#define UTRX_STUB_PING_CC           99
 
 /*
 ** TS App command codes
@@ -986,159 +685,7 @@ typedef struct {
     uint8_t                            Spare[4];
 } CFE_MSG_TelemetryHeader;
 
-/*************************************************************************/
-/*
-** Edited by JDM
-** Converter of Struct Type between GS - FSW
-** Warning! Struct Descriptor differs from FSW codes.
-*/
-/*************************************************************************/
 
-/*************************************************************************/
-/*
-** ADCS system
-*/
-/*************************************************************************/ 
-
-typedef struct
-{
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} ADCS_NoArgsCmd_t;
-
-typedef ADCS_NoArgsCmd_t ADCS_NoopCmd_t;
-typedef ADCS_NoArgsCmd_t ADCS_ResetCountersCmd_t;
-typedef ADCS_NoArgsCmd_t ADCS_ProcessCmd_t;
-
-
-typedef struct {
-	double mass, MOI[3][3], inv_MOI[3][3];
-	double css_sf[5], mmt_A[3][3], mmt_bias[3], gyro_bias_a[3], gyro_bias_b[3];
-} ADCS_ParamsSC;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    ADCS_ParamsSC           Params;
-} ADCS_SetParamScCmd_t;
-
-
-typedef struct {
-	uint32_t epochYear;
-	float epochDay;
-	double Bstar, INC, RAAN, ECC, AOP, MA, MM;
-} ADCS_ParamsTLE;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    ADCS_ParamsTLE          Params;
-} ADCS_SetParamTleCmd_t;
-
-
-typedef struct {
-    double mu_E, R_E, coef_J2, w_E, wn;
-	double tstp;
-	uint32_t quit_TRIAD;
-	uint8_t num_AD_loop, num_AC_loop, option_prg_orb_est, option_gyroless, option_ignoreSTT, option_ignoreCSS;
-	double est_P_atd_STT_initial, est_P_atd_FSS_initial, est_P_atd_CSS_initial, est_P_atd_WSS_initial;
-	double GS_sband[3], GS_uhf[3];
-	double wrpm_WHLdot_dump, wrpm_WHL_dump_crit, wrpm_WHL_dump_goal;
-	double w_standby_detumbling_start, w_standby_detumbling_goal, w_standby_forcedSpin_start, angle_standby_forcedSpin_start, M_standby_forcedSpin[3];
-} ADCS_ParamsAux;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    ADCS_ParamsAux          Params;
-} ADCS_SetParamAuxCmd_t;
-
-
-typedef struct {
-	double r_Target[3];
-    double q_Target[4];
-} ADCS_ParamsTarget;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    ADCS_ParamsTarget       Params;
-} ADCS_SetParamTargetCmd_t;
-
-
-typedef struct {
-    uint8_t       WhichGain;
-    uint8_t       Mode;
-    uint16_t      Num;
-    double      Gain[31];
-} ADCS_SetParamGainPayload_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader     CmdHeader;
-    ADCS_SetParamGainPayload_t  Payload;
-} ADCS_SetParamGainCmd_t;
-
-/*************************************************************************/
-/*
-** CI system
-*/
-/*************************************************************************/
-
-
-/*************************************************************************/
-/*
-** EPS system
-*/
-/*************************************************************************/
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-}__attribute__((packed)) EPS_NoArgsCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t Arg;
-} __attribute__((packed)) EPS_U8ArgCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t Arg;
-} __attribute__((packed)) EPS_U16ArgCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int32_t Arg;
-} __attribute__((packed)) EPS_I32ArgCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t ParameterID;
-    uint8_t ParameterLength;
-    uint8_t Parameter[8];
-} __attribute__((packed)) EPS_SetConfigurationParameterCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t ParameterLength;
-    uint16_t ParameterID;
-} __attribute__((packed)) EPS_ResetConfigurationParamterCmd_t;
-
-typedef EPS_NoArgsCmd_t EPS_NoopCmd_t;
-typedef EPS_NoArgsCmd_t EPS_ResetCountersCmd_t;
-typedef EPS_NoArgsCmd_t EPS_SystemResetCmd_t;
-typedef EPS_NoArgsCmd_t EPS_NoOperationCmd_t;
-typedef EPS_NoArgsCmd_t EPS_CancelOperationCmd_t;
-typedef EPS_NoArgsCmd_t EPS_WatchdogCmd_t;
-
-typedef EPS_I32ArgCmd_t EPS_CorrectTimeCmd_t;
-
-typedef EPS_U16ArgCmd_t EPS_OutputBusGroupOnCmd_t;
-typedef EPS_U16ArgCmd_t EPS_OutputBusGroupOffCmd_t;
-typedef EPS_U16ArgCmd_t EPS_OutputBusGroupStateCmd_t;
-
-typedef EPS_U8ArgCmd_t  EPS_OutputBusChannelOnCmd_t;
-typedef EPS_U8ArgCmd_t  EPS_OutputBusChannelOffCmd_t;
-
-typedef EPS_NoArgsCmd_t EPS_SwitchToNominalModeCmd_t;
-typedef EPS_NoArgsCmd_t EPS_SwitchToSafetyModeCmd_t;
-typedef EPS_NoArgsCmd_t EPS_ResetConfigurationCmd_t;
-typedef EPS_NoArgsCmd_t EPS_LoadConfigurationCmd_t;
-typedef EPS_NoArgsCmd_t EPS_SaveConfigurationCmd_t;
 
 /*************************************************************************/
 /*
@@ -1318,31 +865,31 @@ typedef CFE_ES_AppNameCmd_t CFE_ES_RestartAppCmd_t;
 ** For command details, see #CFE_ES_START_APP_CC
 **
 **/
-typedef struct CFE_ES_StartAppCmd_Payload
-{
-    char Application[CFE_MISSION_MAX_API_LEN];   /**< \brief Name of Application to be started */
-    char AppEntryPoint[CFE_MISSION_MAX_API_LEN]; /**< \brief Symbolic name of Application's entry point */
-    char AppFileName[CFE_MISSION_MAX_PATH_LEN];  /**< \brief Full path and filename of Application's
-                                                    executable image */
+// typedef struct CFE_ES_StartAppCmd_Payload
+// {
+//     char Application[CFE_MISSION_MAX_API_LEN];   /**< \brief Name of Application to be started */
+//     char AppEntryPoint[CFE_MISSION_MAX_API_LEN]; /**< \brief Symbolic name of Application's entry point */
+//     char AppFileName[CFE_MISSION_MAX_PATH_LEN];  /**< \brief Full path and filename of Application's
+//                                                     executable image */
 
-    uint32_t StackSize; /**< \brief Desired stack size for the new application */
+//     uint32_t StackSize; /**< \brief Desired stack size for the new application */
 
-    uint8_t ExceptionAction; /**< \brief #CFE_ES_ExceptionAction_RESTART_APP=On exception,
-                                                       restart Application,
-                                                       #CFE_ES_ExceptionAction_PROC_RESTART=On exception,
-                                                       perform a Processor Reset */
-    uint16_t Priority;           /**< \brief The new Applications runtime priority. */
+//     uint8_t ExceptionAction; /**< \brief #CFE_ES_ExceptionAction_RESTART_APP=On exception,
+//                                                        restart Application,
+//                                                        #CFE_ES_ExceptionAction_PROC_RESTART=On exception,
+//                                                        perform a Processor Reset */
+//     uint16_t Priority;           /**< \brief The new Applications runtime priority. */
 
-} CFE_ES_StartAppCmd_Payload_t;
+// } CFE_ES_StartAppCmd_Payload_t;
 
-/**
- * \brief Start Application Command
- */
-typedef struct CFE_ES_StartApp
-{
-    CFE_MSG_CommandHeader      CmdHeader; /**< \brief Command header */
-    CFE_ES_StartAppCmd_Payload_t Payload;   /**< \brief Command payload */
-} CFE_ES_StartAppCmd_t;
+// /**
+//  * \brief Start Application Command
+//  */
+// typedef struct CFE_ES_StartApp
+// {
+//     CFE_MSG_CommandHeader      CmdHeader; /**< \brief Command header */
+//     CFE_ES_StartAppCmd_Payload_t Payload;   /**< \brief Command payload */
+// } CFE_ES_StartAppCmd_t;
 
 
 /*************************************************************************/
@@ -2213,743 +1760,3722 @@ typedef struct {
     HYVRID_CmdExecutionReportMsg_t Report;
 } OS_PACK HYVRID_TelemetryHeader_t;
 
-/*----------------------------------------*/
-/*                   EPS                  */
-/*----------------------------------------*/
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-} OS_PACK HYVRID_NoArgsCmd_t;
 
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 arg;
-} OS_PACK HYVRID_U8ArgsCmd_t;
 
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint16 arg;
-} OS_PACK HYVRID_U16ArgsCmd_t;
 
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint32 arg;
-} OS_PACK HYVRID_U32ArgsCmd_t;
+// ADDED FOR BEE-1006 by Jane
 
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint64 arg;
-} OS_PACK HYVRID_U64ArgsCmd_t;
+// msg id
+#define ADCS_CMD_ID        	0x1865
+#define ADCS_SEND_HK_ID    	0x1866
+#define ADCS_SEND_BCN_ID   	0x1867
+#define ADCS_LOOP_ID			0x1868
 
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int8 arg;
-} OS_PACK HYVRID_S8ArgsCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int16 arg;
-} OS_PACK HYVRID_S16ARgsCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int32 arg;
-} OS_PACK HYVRID_S32ArgsCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int64 arg;
-} OS_PACK HYVRID_S64ArgsCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float arg;
-} OS_PACK HYVRID_FloatArgsCmd_t;
-
-typedef struct {
-   uint8_t    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32_t   Timeout;
-   uint8_t    Channel;
-   bool     Status;
-}__attribute__((packed)) u32u8bool_t;
-
-typedef struct {
-   uint8_t    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32_t   Timeout;
-   uint8_t    Channel;
-}__attribute__((packed)) u32u8_t;
-
-typedef struct {
-   uint8_t   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32_t   Size;
-   uint32_t  Timeout;
-   uint8_t    Node;
-   uint8_t    TableId;
-}__attribute__((packed)) u32u32u8u8_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32   Timeout;
-   uint8    Node;
-   uint8    TableId;
-   uint8    Destination;
-}__attribute__((packed)) u32u8u8u8_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32   Timeout;
-   uint32   Size;
-   uint8    Node;
-   uint8    TableId;
-   uint16   Address;
-   uint8    Type;
-}__attribute__((packed)) u32u32u8u8u16u8_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32   Timeout;
-   uint32   ItemSize;
-   uint32   ItemCount;
-   uint8    Node;
-   uint8    TableId;
-   uint16   Address;
-   uint8    Type;
-} OS_PACK u32u32u32u8u8u16u8_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32   Timeout;
-   bool     ChannelStatus[13];
-} OS_PACK u32bool13_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32   Timeout;
-   bool     ChannelStatus[9];
-} OS_PACK u32bool9_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint32   Timeout;
-   uint32   Size;
-   uint8    Node;
-   uint8    TableId;
-   uint16   Address;
-   uint8    Type;
-   uint8    Value[128];
-} OS_PACK EPS_P60_ParamSetCmd_t;
-
-/*----------------------------------------*/
-/*                   GRX                  */
-/*----------------------------------------*/
-#define GRX_CMD_OEM_HANDLER_NAME_LEN            16
-
-typedef struct {
-    int16 mid;
-    int16 bodylength;
-    uint8 body[150];
-} OS_PACK GRX_AssemblePublish_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_AssemblePublish_t param;
-} OS_PACK GRX_AssemblePublishCmd_t;
-
-typedef struct {
-    uint16 msgId;
-    uint8  type;
-    uint8  padding[1];
-    uint32 port;
-    uint32 trigger;
-    uint32 hold;
-    double period;
-    double offset;
-} NATURALLY_ALIGNED GRX_CmdLOG_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdLOG_t param;
-} NATURALLY_ALIGNED GRX_CmdLOGCmd_t;
-
-typedef struct {
-    uint16 msgId;
-    uint8  padding[2];
-    uint32 port;
-    double period;
-    double offset;
-} NATURALLY_ALIGNED GRX_CmdLogOnTime_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdLogOnTime_t param;
-} NATURALLY_ALIGNED GRX_CmdLogOnTimeCmd_t;
-
-typedef struct {
-    uint16 msgId;
-    uint8  padding[2];
-    uint32 port;
-} NATURALLY_ALIGNED GRX_CmdLogOnChanged_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdLogOnChanged_t param;
-} NATURALLY_ALIGNED GRX_CmdLogOnChangedCmd_t;
-
-typedef struct {
-    uint16 msgId;
-    uint8  padding[2];
-    uint32 port;
-} NATURALLY_ALIGNED GRX_CmdLogOnNew_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdLogOnNew_t param;
-} NATURALLY_ALIGNED GRX_CmdLogOnNewCmd_t;
-
-typedef struct {
-    uint16 msgId;
-    uint8 msgType;
-    uint8 padding[1];
-    uint32 port;
-} NATURALLY_ALIGNED GRX_CmdUnlog_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdUnlog_t param;
-} NATURALLY_ALIGNED GRX_CmdUnlogCmd_t;
-
-typedef struct {
-    uint32 port;
-    bool held;
-} OS_PACK GRX_CmdUnlogAll_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdUnlogAll_t param;
-} OS_PACK GRX_CmdUnlogAllCmd_t;
-
-typedef struct {
-    uint32 constellation;
-    float cutoff;
-} NATURALLY_ALIGNED GRX_CmdElevationCutoff_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdElevationCutoff_t param;
-} NATURALLY_ALIGNED GRX_CmdElevationCutoffCmd_t;
-
-typedef struct {
-    uint32 port;
-    uint32 rxType;
-    uint32 txType;
-    uint32 responses;
-} NATURALLY_ALIGNED GRX_CmdInterfaceMode_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdInterfaceMode_t param;
-} NATURALLY_ALIGNED GRX_CmdInterfaceModeCmd_t;
-
-typedef struct {
-    uint32 port;
-    uint32 baud;
-    uint32 parity;
-    uint32 databits;
-    uint32 stopbits;
-    uint32 handshake;
-    uint32 _break;
-} NATURALLY_ALIGNED GRX_CmdSerialConfig_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_CmdSerialConfig_t param;
-} NATURALLY_ALIGNED GRX_CmdSerialConfigCmd_t;
-
-typedef struct {
-    char name[GRX_CMD_OEM_HANDLER_NAME_LEN];
-    uint16 id;
-    uint16 mlen;
-} NATURALLY_ALIGNED GRX_LogRegisterHandler_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_LogRegisterHandler_t param;
-} NATURALLY_ALIGNED GRX_LogRegisterHandlerCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint16 id;
-} NATURALLY_ALIGNED GRX_LogUnregisterHandlerCmd_t;
-
-typedef struct {
-    uint16 id;
-    int32 options;
-    char libpath[64];
-    char funcName[32];
-} OS_PACK GRX_LogAddCallback_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_LogAddCallback_t param;
-} OS_PACK GRX_LogAddCallbackCmd_t;
-
-typedef struct {
-    uint16 id;
-    uint8_t status;
-    bool override;
-} NATURALLY_ALIGNED GRX_LogSetHandlerStatus_t;
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    GRX_LogSetHandlerStatus_t param;
-} NATURALLY_ALIGNED GRX_LogSetHandlerStatusCmd_t;
-
-/*----------------------------------------*/
-/*                  ADCS                  */
-/*----------------------------------------*/
-// ID 2
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint32 unixTimeSeconds;        /**< Current Unix time s  (measurment unit is [s]) */
-    uint32 unixTimeNanoSeconds;    /**< Current Unix time ns  (measurment unit is [ns]. valid range is between 0 ns and 999999999 ns) */
-} OS_PACK ADCS_CurrentUnixTimeCmd_t;
-
-// ID 48
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float cmdTargetLatitude;     /**< Target latitude command  (measurment unit is [deg]. valid range is between -90 deg and 90 deg) */
-    float cmdTargetLongitude;    /**< Target longitude command  (measurment unit is [deg]. valid range is between -180 deg and 180 deg) */
-    float cmdTargetAltitude;     /**< Target altitude command  (measurment unit is [km]. valid range is between -1000 km and 1000000 km) */
-} OS_PACK ADCS_Reference_LLHTargetCommandCmd_t;
-
-//ID 49
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint32 gnssTimeSeconds;    /**< GNSS Unix time integer seconds  (measurment unit is [s]) */
-    uint32 gnssTimeNs;         /**< GNSS Unix time fraction nanoseconds  (measurment unit is [ns]) */
-    int32 gnssSatPosX;        /**< Satellite position vector X component (GNSS frame)  (measurment unit is [cm]) */
-    int32 gnssSatPosY;        /**< Satellite position vector Y component (GNSS frame)  (measurment unit is [cm]) */
-    int32 gnssSatPosZ;        /**< Satellite position vector Z component (GNSS frame)  (measurment unit is [cm]) */
-    int32 gnssSatVelX;        /**< Satellite velocity vector X component (GNSS frame)  (measurment unit is [cm/s]) */
-    int32 gnssSatVelY;        /**< Satellite velocity vector Y component (GNSS frame)  (measurment unit is [cm/s]) */
-    int32 gnssSatVelZ;        /**< Satellite velocity vector Z component (GNSS frame)  (measurment unit is [cm/s]) */
-    uint8 syncTime;       /**< Flag to indicate if RTC should sync with unix time  */
-} OS_PACK ADCS_GnssMeasurementsCmd_t;
-
-
-// ID 54
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float cmdRpyRoll;     /**< RPY Roll command  (measurment unit is [deg]. valid range is between -180 deg and 180 deg) */
-    float cmdRpyPitch;    /**< RPY Pitch command  (measurment unit is [deg]. valid range is between -180 deg and 180 deg) */
-    float cmdRpyYaw;      /**< RPY Yaw command  (measurment unit is [deg]. valid range is between -180 deg and 180 deg) */
-} OS_PACK ADCS_ReferenceRPYValueCmd_t;
-
-// ID 55
-typedef struct
-{
-    uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int16 mtq0OnTimeCmd;    /**< MTQ0 open-loop on-time command  (measurment unit is [ms]. valid range is between -1000 ms and 1000 ms) */
-    int16 mtq1OnTimeCmd;    /**< MTQ1 open-loop on-time command  (measurment unit is [ms]. valid range is between -1000 ms and 1000 ms) */
-    int16 mtq2OnTimeCmd;    /**< MTQ2 open-loop on-time command  (measurment unit is [ms]. valid range is between -1000 ms and 1000 ms) */
-} OS_PACK ADCS_OpenLoopCommandMtqCmd_t;
-
-// ID 58
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 controlMode;
-    uint16 magConTimeout;
-} OS_PACK ADCS_ControlModeCmd_t;
-
-//ID 61
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float ixx;                 /**< Moment of inertia Ixx  (measurment unit is [kg.m^2]. valid range is between 0 kg.m^2 and 100 kg.m^2) */
-    float iyy;                 /**< Moment of inertia Iyy  (measurment unit is [kg.m^2]. valid range is between 0 kg.m^2 and 100 kg.m^2) */
-    float izz;                 /**< Moment of inertia Izz  (measurment unit is [kg.m^2]. valid range is between 0 kg.m^2 and 100 kg.m^2) */
-    float ixy;                 /**< Product of inertia Ixy  (measurment unit is [kg.m^2]. valid range is between -10 kg.m^2 and 10 kg.m^2) */
-    float ixz;                 /**< Product of inertia Ixz  (measurment unit is [kg.m^2]. valid range is between -10 kg.m^2 and 10 kg.m^2) */
-    float iyz;                 /**< Product of inertia Iyz  (measurment unit is [kg.m^2]. valid range is between -10 kg.m^2 and 10 kg.m^2) */
-    double sunPointBodyVecX;    /**< Sun-pointing body vector X component  */
-    double sunPointBodyVecY;    /**< Sun-pointing body vector Y component  */
-    double sunPointBodyVecZ;    /**< Sun-pointing body vector Z component  */
-    double tgtTrackBodyVecX;    /**< Target-tracking body vector X component  */
-    double tgtTrackBodyVecY;    /**< Target-tracking body vector Y component  */
-    double tgtTrackBodyVecZ;    /**< Target-tracking body vector Z component  */
-} OS_PACK ADCS_ConfigAdcsSatelliteCmd_t;
-
-
-// ID 62
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 conModeDefault;    /**< Default control mode  */
-    float kd;                                                           /**< Detumbling damping gain (Kd)  (valid range is between 0  and 10000 ) */
-    float kdsun;                                                        /**< Sun-spin control gain (KDsun)  (valid range is between -1000  and 1000 ) */
-    float kdecl;                                                        /**< Sun-spin control gain (KDecl)  (valid range is between -1000  and 1000 ) */
-    float ks;                                                           /**< Detumbling spin gain (Ks)  (valid range is between 0  and 10000 ) */
-    float kdf;                                                          /**< Fast B-dot detumbling gain (Kdf)  (valid range is between 0  and 100 ) */
-    float kn;                                                           /**< Y-momentum nutation damping gain (Kn)  (valid range is between 0  and 10000 ) */
-    float kq;                                                           /**< Y-momentum nutation damping quaternion gain (Kq)  (valid range is between 0  and 10000 ) */
-    float kqx;                                                          /**< X-axis GG nutation damping quaternion gain (Kqx)  (valid range is between 0  and 10000 ) */
-    float kqy;                                                          /**< Y-axis GG nutation damping quaternion gain (Kqy)  (valid range is between 0  and 10000 ) */
-    float kqz;                                                          /**< Z-axis GG nutation damping quaternion gain (Kqz)  (valid range is between 0  and 10000 ) */
-    float kh;                                                           /**< Wheel momentum dumping magnetic control gain (Kh)  (valid range is between 0  and 10000 ) */
-    float kp1;                                                          /**< Y-momentum proportional gain (Kp1)  (valid range is between 0  and 100 ) */
-    float kd1;                                                          /**< Y-momentum derivative gain (Kd1)  (valid range is between 0  and 100 ) */
-    float kp2;                                                          /**< RWheel proportional gain (Kp2)  (valid range is between 0  and 100 ) */
-    float kd2;                                                          /**< RWheel derivative gain (Kd2)  (valid range is between 0  and 100 ) */
-    float kp3;                                                          /**< Tracking proportional gain (Kp3)  (valid range is between 0  and 100 ) */
-    float kd3;                                                          /**< Tracking derivative gain (Kd3)  (valid range is between 0  and 100 ) */
-    float ki3;                                                          /**< Tracking integral gain (Ki3)  (valid range is between 0  and 100 ) */
-    float wy_ref;                                                       /**< Reference spin rate (wy-ref)  (measurment unit is [degps]. valid range is between -5 degps and 5 degps) */
-    float h_ref;                                                        /**< Reference wheel momentum (H-ref). Must always be smaller than 0  (measurment unit is [Nms]. valid range is between -10 Nms and 0 Nms) */
-    float hy_bias;                                                      /**< Y-wheel bias momentum during XYZ-control (Hy-bias)  (measurment unit is [Nms]. valid range is between -10 Nms and 10 Nms) */
-    float wSunYawRef;                                                   /**< Reference spin rate for ConSunYawSpin RW control  (measurment unit is [degps]. valid range is between -20 degps and 20 degps) */
-    float sunKeepoutAng;                                                /**< Sun keep-out angle  (measurment unit is [deg]. valid range is between 0 deg and 90 deg) */
-    float rollLimit;                                                    /**< Limit roll angle in ConRollSun and ConRollTarget  (measurment unit is [deg]. valid range is between 0 deg and 180 deg) */
-    bool yawCompensate;                                            /**< Perform yaw compensation for earth rotation in 3-axis RPY control  */
-    bool sunTrackEclEn;                                            /**< Enable sun tracking during eclipse when using ConSunTrack  */
-    bool sunAvoidEn;                                               /**< Enable sun avoidance  */
-} OS_PACK ADCS_ControllerConfigurationCmd_t;
-
-// ID 63
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float offset1;         /**< Magnetometer channel 1 offset  */
-    float offset2;         /**< Magnetometer channel 2 offset  */
-    float offset3;         /**< Magnetometer channel 3 offset  */
-    float sensMatrix11;    /**< Magnetometer sensitivity matrix S11  */
-    float sensMatrix22;    /**< Magnetometer sensitivity matrix S22  */
-    float sensMatrix33;    /**< Magnetometer sensitivity matrix S33  */
-    float sensMatrix12;    /**< Magnetometer sensitivity matrix S12  */
-    float sensMatrix13;    /**< Magnetometer sensitivity matrix S13  */
-    float sensMatrix21;    /**< Magnetometer sensitivity matrix S21  */
-    float sensMatrix23;    /**< Magnetometer sensitivity matrix S23  */
-    float sensMatrix31;    /**< Magnetometer sensitivity matrix S31  */
-    float sensMatrix32;    /**< Magnetometer sensitivity matrix int32  */
-} OS_PACK ADCS_ConfigMag0OrbitCalCmd_t;
-
-// ID 65
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 mountStackX;          /**< StackX mounting  */
-    uint8 mountStackY;          /**< StackY mounting  */
-    uint8 mountStackZ;          /**< StackZ mounting  */
-    uint8 mountMtq0;            /**< MTQ0 mounting  */
-    uint8 mountMtq1;            /**< MTQ1 mounting  */
-    uint8 mountMtq2;            /**< MTQ2 mounting  */
-    uint8 mountRwl0;            /**< Wheel0 mounting  */
-    uint8 mountRwl1;            /**< Wheel1 mounting  */
-    uint8 mountRwl2;            /**< Wheel2 mounting  */
-    uint8 mountCss0;            /**< CSS0 mounting  */
-    uint8 mountCss1;            /**< CSS1 mounting  */
-    uint8 mountCss2;            /**< CSS2 mounting  */
-    uint8 mountCss3;            /**< CSS3 mounting  */
-    uint8 mountCss4;            /**< CSS4 mounting  */
-    uint8 mountCss5;            /**< CSS5 mounting  */
-    uint8 mountCss6;            /**< CSS6 mounting  */
-    uint8 mountCss7;            /**< CSS7 mounting  */
-    uint8 mountCss8;            /**< CSS8 mounting  */
-    uint8 mountCss9;            /**< CSS9 mounting  */
-    double mountFss0Alpha;                                               /**< FSS0 mounting alpha angle  (measurment unit is [deg]) */
-    double mountFss0Beta;                                                /**< FSS0 mounting beta angle  (measurment unit is [deg]) */
-    double mountFss0Gamma;                                               /**< FSS0 mounting gamma angle  (measurment unit is [deg]) */
-    double mountHss0Alpha;                                               /**< HSS0 mounting alpha angle  (measurment unit is [deg]) */
-    double mountHss0Beta;                                                /**< HSS0 mounting beta angle  (measurment unit is [deg]) */
-    double mountHss0Gamma;                                               /**< HSS0 mounting gamma angle  (measurment unit is [deg]) */
-    double mountMag0Alpha;                                               /**< MAG0 mounting alpha angle  (measurment unit is [deg]) */
-    double mountMag0Beta;                                                /**< MAG0 mounting beta angle  (measurment unit is [deg]) */
-    double mountMag0Gamma;                                               /**< MAG0 mounting gamma angle  (measurment unit is [deg]) */
-} OS_PACK ADCS_MountingConfigurationCmd_t;
-
-//ID 67
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 estModeMainDefault;      /**< Default main estimator mode  */
-    uint8 estModeBackupDefault;    /**< Default backup estimator mode  */
-    float magR;                                                               /**< Magnetometer measurement noise  (valid range is between 0  and 1 ) */
-    float cssR;                                                               /**< Coarse sun sensor measurement noise  (valid range is between 0  and 10 ) */
-    float fssR;                                                               /**< Fine sun sensor measurement noise  (valid range is between 0  and 1 ) */
-    float hssR;                                                               /**< Horizon sensor measurement noise  (valid range is between 0  and 1 ) */
-    float strR;                                                               /**< Star tracker measurement noise  (valid range is between 0  and 0.1 ) */
-    float rkfQ;                                                               /**< Magnetometer RKF system noise  (valid range is between 0  and 0.01 ) */
-    float ekfQ;                                                               /**< EKF system noise  (valid range is between 0  and 0.01 ) */
-    float nutDeps;                                                            /**< Polar nutation Epsilon correction  (measurment unit is [rad]. valid range is between -0.1 rad and 0.1 rad) */
-    float nutDpsi;                                                            /**< Polar nutation Psi correction  (measurment unit is [rad]. valid range is between -0.1 rad and 0.1 rad) */
-    bool ekfUseFss;                                                      /**< Use fine sun sensor measurements in EKF  */
-    bool ekfUseCss;                                                      /**< Use coarse sun sensor measurements in EKF  */
-    bool ekfUseHss;                                                      /**< Use horizon sensor measurements in EKF  */
-    bool ekfUseStr;                                                      /**< Use star tracker measurements in EKF  */
-    uint8 tVec1;                       /**< Vector 1 selection for Triad  */
-    uint8 tVec2;                       /**< Vector 2 selection for Triad  */
-} OS_PACK ADCS_EstimatorConfigurationCmd_t;
-
-// ID 68
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    double orbitEpoch;    /**< Orbit epoch  (measurment unit is [yyddd.ssssssss]. valid range is between 0 yyddd.ssssssss and 100000 yyddd.ssssssss) */
-    double orbitIncl;     /**< Orbit inclination  (measurment unit is [deg]. valid range is between 0 deg and 180 deg) */
-    double orbitRaan;     /**< Orbit RAAN  (measurment unit is [deg]. valid range is between 0 deg and 360 deg) */
-    double orbitEccen;    /**< Orbit eccentricity  (valid range is between 0  and 1 ) */
-    double orbitAP;       /**< Orbit argument of perigee  (measurment unit is [deg]. valid range is between 0 deg and 360 deg) */
-    double orbitMA;       /**< Orbit mean anomaly  (measurment unit is [deg]. valid range is between 0 deg and 360 deg) */
-    double orbitMM;       /**< Orbit mean motion  (measurment unit is [orbits/day]. valid range is between 0 orbits/day and 20 orbits/day) */
-    double orbitBstar;    /**< Orbit B-star drag term  (valid range is between 0  and 1 ) */
-} OS_PACK ADCS_ConfigOrbitSatParamsCmd_t;
-
-// ID 69
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 selectRwl;     /**< RWL selection flags  */
-    uint8 selectMag;     /**< MAG selection flags  */
-    uint8 selectFss;     /**< FSS selection flags  */
-    uint8 selectHss;     /**< HSS selection flags  */
-    uint8 selectGyro;    /**< GYR selection flags  */
-    uint8 selectStr;     /**< STR selection flags  */
-    uint8 selectGnss;    /**< GNSS selection flags  */
-    uint8 selectExt;     /**< External sensor selection flags  */
-} OS_PACK ADCS_NodeSelectionCmd_t;
-
-// ID 70
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float mtq0Mmax;     /**< MTQ0 maximum dipole moment  (measurment unit is [A.m^2]. valid range is between 0 A.m^2 and 400 A.m^2) */
-    float mtq1Mmax;     /**< MTQ1 maximum dipole moment  (measurment unit is [A.m^2]. valid range is between 0 A.m^2 and 400 A.m^2) */
-    float mtq2Mmax;     /**< MTQ2 maximum dipole moment  (measurment unit is [A.m^2]. valid range is between 0 A.m^2 and 400 A.m^2) */
-    uint16 onTimeMax;    /**< Maximum magnetorquer on-time  (measurment unit is [ms]) */
-    uint16 onTimeMin;    /**< Minimum magnetorquer on-time  (measurment unit is [ms]) */
-    float mtqFfac;      /**< LPF factor for magnetorquer commands. Set to zero for no filtering  (valid range is between 0  and 1 ) */
-} OS_PACK ADCS_MtqConfigCmd_t;
-
-//ID 71
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8 estModeMain;      /**< Main estimator mode  */
-    uint8 estModeBackup;    /**< Backup estimator mode  */
-} OS_PACK ADCS_EstimationModeCmd_t;
-
-// ID 74
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float rwl0SpeedCmd;    /**< RWL0 open-loop speed command  (valid range is between -10000  and 10000 ) */
-    float rwl1SpeedCmd;    /**< RWL1 open-loop speed command  (valid range is between -10000  and 10000 ) */
-    float rwl2SpeedCmd;    /**< RWL2 open-loop speed command  (valid range is between -10000  and 10000 ) */
-} OS_PACK ADCS_OpenLoopCommandRwlCmd_t;
-
-// ID 76
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    float hx;    /**< X-momentum open-loop speed command  (measurment unit is [Nm]. valid range is between -0.1 Nm and 0.1 Nm) */
-    float hy;    /**< Y-momentum open-loop speed command  (measurment unit is [Nm]. valid range is between -0.1 Nm and 0.1 Nm) */
-    float hz;    /**< Z-momentum open-loop speed command  (measurment unit is [Nm]. valid range is between -0.1 Nm and 0.1 Nm) */
-} OS_PACK ADCS_OpenLoopCommandHxyzRwCmd_t;
-/*----------------------------*/
-/*---- < End of ADCS > -------*/
-/*----------------------------*/
-
-/*----------------------------------------*/
-/*                 IFC app                */
-/*----------------------------------------*/
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char HandleName[16];
-} IFC_HandleNoArgsCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char HandleName[16];
-    uint8 Arg;
-} IFC_HandleU8ArgsCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char HandleName[16];
-    uint32 Arg;
-} IFC_HandleU32ArgsCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    uint16  Size;
-    uint8   Data[128]; 
-} IFC_WriteCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    uint16  Size;
-    uint16  Timeout;
-} IFC_ReadCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int     GpioNum;
-} IFC_GpioNumCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    char    DeviceName[16];
-    int     OpenOpt;
-} IFC_IoOpenCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    int     GpioNum;
-    bool    Value;
-} IFC_GpioWriteCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    uint8   Termios[64];
-} IFC_UartSetTermiosCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    uint16  TxSize;
-    uint16  RxSize;
-    uint8   Address;
-    uint8   TxData[128];
-} IFC_I2cDuplexTransferCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    uint16  TxSize;
-    uint16  RxSize;
-    uint8   TxData[128];
-} IFC_SpiDuplexTransferCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    char    HandleName[16];
-    char    DevName[32];
-    uint8   devType;
-    uint8   MutexId;
-} IFC_IoHandleAllocateCmd_t;
-
-/*----------------------------------------*/
-/*                  PAYS                  */
-/*----------------------------------------*/
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint16  NumReads;
-    uint16  IntervalMs;
-    bool    IgnoreErrors;
-    bool    Pack;
-    char    FileName[128];
-} OS_PACK PAYS_D1064_ReadSaveStatusCmd_t;
-
-
-/*----------------------------------------*/
-/*                  PAYC                  */
-/*----------------------------------------*/
-//Other Definitions
-#define PAYC_STORE_FILENAME_SIZE        32
-#define PAYC_FILE_LIST_PATH_SIZE        64
-#define PAYC_REMOTE_DIRNAME_SIZE        64
-#define PAYC_LOCAL_DIRNAME_SIZE         64
-typedef struct {
-    uint16_t delay;
-    uint32_t snap_flags;
-    uint8_t snap_format;
-    uint32_t store_flags;
-    uint8_t store_format;
-} OS_PACK PAYC_Conf_t;
-
-typedef struct{
-    uint8_t count;
-    uint16_t width;
-    uint16_t height;
-    uint16_t leftedge;
-    uint16_t topedge;
-} OS_PACK PAYC_Snap_t;
-
-typedef struct{
-    uint8_t format;
-    uint8_t scale;
-    char filename[PAYC_STORE_FILENAME_SIZE];
-} OS_PACK PAYC_Store_t;
-
-typedef struct{
-    char StoredFileListLocation[PAYC_FILE_LIST_PATH_SIZE];
-} OS_PACK PAYC_StoreFileListLocation_t;
-
-typedef struct{
-    char remote_dirname[PAYC_REMOTE_DIRNAME_SIZE];
-    char local_dirname[PAYC_LOCAL_DIRNAME_SIZE];
-} OS_PACK PAYC_DirPath_t;
-
-typedef struct{
-    char filename[PAYC_STORE_FILENAME_SIZE];
-} OS_PACK PAYC_DownloadwithFileName_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    PAYC_Conf_t Payload;
-}OS_PACK PAYC_SetConfCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    PAYC_Snap_t Payload;
-} OS_PACK PAYC_SnapCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    PAYC_Store_t Payload;
-} OS_PACK PAYC_StoreCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    PAYC_StoreFileListLocation_t Payload;
-} OS_PACK PAYC_StoreFileListLocationCmd_t;
-
-typedef struct {
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    PAYC_DirPath_t Payload;
-} OS_PACK PAYC_SetDirPathCmd_t;
-
-typedef struct
-{
-    uint8 CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    PAYC_DownloadwithFileName_t Payload;
-} OS_PACK PAYC_DownloadCmd_t;
-
-/*----------------------------------------*/
-/*                  STX                   */
-/*----------------------------------------*/
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint8    Reg;
-   uint8    Val;
-} STX_PULSAR_GenericSetValueCmd_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   bool     Val;
-} STX_PULSAR_SetValueBoolCmd_t;
-
-typedef struct {
-   uint8    CmdHeader[CFE_SB_CMD_HDR_SIZE];
-   uint8    Reg;
-   uint8    Size;
-} STX_PULSAR_GenericGetValueCmd_t;
-
-
-/*----------------------------------------*/
-/*                  PAYR                  */
-/*----------------------------------------*/
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8   Chip;
-    uint8   Pins;
-} PAYR_BurnCmd_t;
-
-typedef struct {
-    uint8   CmdHeader[CFE_SB_CMD_HDR_SIZE];
-    uint8   Chip;
-    bool    MainBurn;
-    uint8_t BurnTimeSeconds;
-} PAYR_BurnLoopCmd_t;
-
-
-
-// ADDED FOR BEE-1006 by J
+// Telemetry topics
+#define ADCS_HK_TLM_ID			0x0865
+#define ADCS_BCN_TLM_ID		0x0866
+#define ADCS_REPORT_TLM_ID		0x0867
 
 /*******************************************/
 /*                                         */
-/*              FTP  (COSMIC)              */
-/*        GomSpace NanoCom AM2150-O        */
+/*             ADCS  (BEE-1000)            */
 /*                                         */
 /*******************************************/
+
+// function codes
+#define ADCS_NOOP_CC           0
+#define ADCS_RESET_COUNTERS_CC 1
+
+#define ADCS_RESET_APP_CMD_COUNTERS_CC          2
+#define ADCS_RESET_DEVICE_CMD_COUNTERS_CC       3
+#define ADCS_SET_COMMUNICATION_MODE_AS_CAN_CC   4
+#define ADCS_GPIO_ENABLE_HIGH_CC 5
+#define ADCS_GPIO_ENABLE_LOW_CC 6
+#define ADCS_GPIO_BOOT_HIGH_CC 8
+#define ADCS_GPIO_BOOT_LOW_CC 9
+#define ADCS_EXIT_BOOTLOADER_CC 10
+
+/* < ADCS Module Command Code (TC, TM) > */
+/* Telecommand */
+#define ADCS_SET_RESET_CC						11 // 1
+#define ADCS_SET_CURRENT_UNIX_TIME_CC			12 // 2
+#define ADCS_SET_ERROR_LOG_SETTING_CC			13 // 6
+#define ADCS_SET_PERSIST_CONFIG_CC				14 // 7
+#define ADCS_SET_CONTROL_ESTIMATION_MODE_CC		15 // 42
+#define ADCS_SET_DISABLE_MAG_RWL_MNT_MNG_CC		16 // 43
+#define ADCS_SET_REFERENCE_IRC_VECTOR_CC		17 // 47
+#define ADCS_SET_REFERENCE_LLH_TARGET_CC		18 // 48
+#define ADCS_SET_ORBIT_MODE_CC					19 // 51
+#define ADCS_SET_MAG_DEPLOY_CMD_CC				20 // 52
+#define ADCS_SET_REFERENCE_RPY_VALUES_CC		21 // 54
+#define ADCS_SET_OPENLOOPCMD_MTQ_CC				22 // 55
+#define ADCS_SET_POWER_STATE_CC					23 // 56
+#define ADCS_SET_RUN_MODE_CC					24 // 57
+#define ADCS_SET_CONTROL_MODE_CC				25 // 58
+#define ADCS_SET_WHL_CONFIG_CC					26 // 59
+#define ADCS_SET_SATELLITE_CONFIG_CC			27 // 61
+#define ADCS_SET_CONTROLLER_CONFIG_CC			28 // 62
+#define ADCS_SET_MAG0_MMT_CALIB_CONFIG_CC		29 // 63
+#define ADCS_SET_DEFAULT_MODE_CONFIG_CC			30 // 64
+#define ADCS_SET_MOUNTING_CONFIG_CC				31 // 65
+#define ADCS_SET_MAG1_MMT_CALIB_CONFIG_CC		32 // 66
+#define ADCS_SET_ESTIMATOR_CONFIG_CC			33 // 67
+#define ADCS_SET_SAT_ORBIT_PARAMS_CONFIG_CC		34 // 68
+#define ADCS_SET_NODE_SELECTION_CONFIG_CC		35 // 69
+#define ADCS_SET_MTQ_CONFIG_CC					36 // 70
+#define ADCS_SET_ESTIMATION_MODE_CC				37 // 71
+#define ADCS_SET_OPERATIONAL_STATE_CC			38 // 72
+#define ADCS_SET_MAG_SENSING_ELM_CONFIG_CC		39 // 77
+#define ADCS_SET_UNSOLICIT_TLM_MSG_SETUP_CC		40 // 112
+#define ADCS_SET_UNSOLICIT_EVENT_MSG_SETUP_CC	41 // 116
+#define ADCS_SET_INITIATE_EVENT_LOG_TRANSFER_CC	42 // 120
+
+/* Telemetry */
+#define	ADCS_GET_ERROR_LOG_SETTING_CC			51 // 132
+#define ADCS_GET_CURRENT_UNIX_TIME_CC			52 // 133
+#define ADCS_GET_PERSIST_CONFIG_DIAGNOSTIC_CC	53 // 134
+#define ADCS_GET_COMMUNICATION_STATUS_CC		54 // 135
+#define ADCS_GET_CONTROL_ESTIMATION_MODE_CC		55 // 150
+#define	ADCS_GET_REFERENCE_IRC_VECTOR_CC		56 // 156
+#define ADCS_GET_REFERENCE_LLH_TARGET_CC		57 // 157
+#define ADCS_GET_ORBIT_MODE_CC					58 // 162
+#define	ADCS_GET_HEALTH_TLM_MMT_CC				59 // 167
+#define ADCS_GET_RAW_CUBESENSE_SUN_CC			60 // 170
+#define	ADCS_GET_REFERENCE_RPY_VALUES_CC		61 // 181
+#define	ADCS_GET_OPENLOOPCMD_MTQ_CC				62 // 182
+#define ADCS_GET_POWER_STATE_CC					63 // 183
+#define ADCS_GET_RUN_MODE_CC					64 // 184
+#define ADCS_GET_CONTROL_MODE_CC                65 // 185
+#define	ADCS_GET_WHL_CONFIG_CC					66 // 186
+#define ADCS_GET_SATELLITE_CONFIG_CC			67 // 189
+#define ADCS_GET_CONTROLLER_CONFIG_CC			68 // 190
+#define	ADCS_GET_MAG0_MMT_CALIB_CONFIG_CC		69 // 191
+#define ADCS_GET_DEFAULT_MODE_CONFIG_CC			70 // 192
+#define ADCS_GET_MOUNTING_CONFIG_CC				71 // 193
+#define	ADCS_GET_MAG1_MMT_CALIB_CONFIG_CC		72 // 194
+#define	ADCS_GET_ESTIMATOR_CONFIG_CC			73 // 195
+#define ADCS_GET_SAT_ORBIT_PARAM_CONFIG_CC		74 // 196
+#define	ADCS_GET_NODE_SELECTION_CONFIG_CC		75 // 197
+#define	ADCS_GET_MTQ_CONFIG_CC					76 // 198
+#define	ADCS_GET_ESTIMATION_MODE_CC				77 // 199
+#define ADCS_GET_OPERATIONAL_STATE_CC			78 // 200
+#define ADCS_GET_RAW_CSS_SENSOR_CC				79 // 203
+#define ADCS_GET_RAW_GYR_SENSOR_CC				80 // 204
+#define ADCS_GET_CALIBRATED_GYR_SENSOR_CC		81 // 207
+#define	ADCS_GET_MAG_SENSING_ELM_CONFIG_CC		82 // 221
+#define	ADCS_GET_TLM_LOG_INCLMASK_CC			83 // 227
+#define	ADCS_GET_UNSOLICIT_TLM_MSG_SETUP_CC		84 // 228
+#define ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP_CC	85 // 233
+#define ADCS_GET_EVENT_LOG_STATUS_RESPONSE_CC	86 // 235
+#define ADCS_GET_PORTMAP_CC	                    87 // 239
+
+#define ADCS_SEQ_DTUMB_CC						100
+#define ADCS_SEQ_SUNPT_CC						101
+#define ADCS_SEQ_VELPT_CC						102
+#define ADCS_SEQ_KSCPT_CC						103
+#define ADCS_SEQ_LGCPT_CC						104
+#define ADCS_SEQ_RPYPT_CC						105
+
+// #define ADCS_LOOPTEST_CC		106
+
+#define ADCS_SET_ERROR_LOG_CLEAR_CC				110 // 5
+
+#define ADCS_GET_CURRENT_UNIX_TIME_INTERNAL_CC  114 // 133
+
+
+
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                                                                           */
+/*                   << ADCS BCN, HK, AOD Structures >>                      */
+/*                                                                           */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+typedef struct
+{
+    /** Combined Power State
+     *  | 7 |  6 |  5 |  4 |  3 |  2 |  1 |  0 |
+     *  +--------------------------------------+
+     *  |Rsv|RWL0|RWL1|RWL2|MAG0|GYRO|FSS0|HSS0|
+     *  +--------------------------------------+
+     */
+    uint8 PowerState; // ID 183
+
+    uint8 ControlMode; // ID 185
+
+    float GYR0CalibratedRateXComponent;
+    float GYR0CalibratedRateYComponent;
+    float GYR0CalibratedRateZComponent; // ID 207, 12bytes
+
+} __attribute__((packed)) ADCS_BcnTlm_Payload_t; /* Total 14 bytes */
+
+typedef struct
+{
+    uint16 MAG0MCUCurrent; // 2 bytes, ID 167
+
+    int16  FSS0MCUTemperature;
+    uint16 FSS0MCUCurrent;
+    uint16 FSS0MCUVoltage;
+    uint8  FSS0CAMSRAMOvercurrent; // combined, 7 bytes, ID 168
+
+    float MTQ1PositiveCurrentAverage;
+    float MTQ1NegativeCurrentAverage;
+    float MTQ2PositiveCurrentAverage;
+    float MTQ2NegativeCurrentAverage;
+    float MTQ3PositiveCurrentAverage;
+    float MTQ3NegativeCurrentAverage;
+    uint8 MTQPolarity; // MTQ 1,2,3 (combined), 25 bytes, ID 169
+
+    int16  HSS0MCUTemperature;
+    uint16 HSS0MCUCurrent;
+    uint16 HSS0MCUVoltage; // 6 bytes, ID 217
+
+    int16  RWL0MCUTemperature;
+    uint16 RWL0MCUCurrent;
+    uint16 RWL0BatteryVoltage;
+    uint16 RWL0BatteryCurrent;
+    int16  RWL1MCUTemperature;
+    uint16 RWL1MCUCurrent;
+    uint16 RWL1BatteryVoltage;
+    uint16 RWL1BatteryCurrent;
+    int16  RWL2MCUTemperature;
+    uint16 RWL2MCUCurrent;
+    uint16 RWL2BatteryVoltage;
+    uint16 RWL2BatteryCurrent; // 24 bytes, ID 218
+
+    int16 MTQ0OpenLoopOnTimeCommand;
+    int16 MTQ1OpenLoopOnTimeCommand;
+    int16 MTQ2OpenLoopOnTimeCommand; // 6bytes, ID 182
+
+    uint8 FSS0CaptureResult;
+    uint8 FSS0DetectionResult; // 2bytes, ID 170
+
+    uint8 HSS0CaptureResult;
+    uint8 HSS0DetectionResult; // 2bytes, ID 179
+
+    uint32 bytesReceived; // 4bytes, ID 158
+
+    float  mtq0Mmax;  /**< MTQ0 maximum dipole moment  (measurment unit is [A.m^2] */
+    float  mtq1Mmax;  /**< MTQ1 maximum dipole moment  (measurment unit is [A.m^2] */
+    float  mtq2Mmax;  /**< MTQ2 maximum dipole moment  (measurment unit is [A.m^2] */
+    uint16 onTimeMax; /**< Maximum magnetorquer on-time  (measurment unit is [ms]) */
+    float  mtqFfac;
+        /**< LPF factor for magnetorquer commands. Set to zero for no filtering  (valid range is between 0  and 1 ) */ // 18 bytes, ID 198
+
+    uint8 css0Raw;
+    uint8 css1Raw;
+    uint8 css2Raw;
+    uint8 css3Raw;
+    uint8 css4Raw;
+    uint8 css5Raw;
+    uint8 css6Raw;
+    uint8 css7Raw;
+    uint8 css8Raw;
+    uint8 css9Raw;
+    uint8  rawCssIsValid:1; // 11bytes, ID 203
+
+    int16 cssCalVecX;
+    int16 cssCalVecY;
+    int16 cssCalVecZ;
+    uint8  calCssIsValid:1; // 7 bytes, ID 206
+} ADCS_HkTlm_Payload_t;  // 107 Bytes
+
+typedef struct
+{
+    uint32 unixTimeSeconds;
+    uint32 unixTimeNanoSeconds; // 8bytes, ID 133
+
+    float RWL0MeasuredSpeed;
+    float RWL1MeasuredSpeed;
+    float RWL2MeasuredSpeed; // 12 bytes, ID 205
+
+    int16 FSS0AlphaAngle;
+    int16 FSS0BetaAngle; // 4bytes, ID 170
+
+    int16  SatelliteGeocentricLatitude;
+    int16  SatelliteLongitude;
+    uint32 SatelliteAltitude;
+    int16  SunORCModelXComponent;
+    int16  SunORCModelYComponent;
+    int16  SunORCModelZComponent;
+    int16  SunBetaAngleWithOrbitPlane; // 16 bytes, ID 174
+
+    int16 hss0CalVecX;
+    int16 hss0CalVecY;
+    int16 hss0CalVecZ; // 6 bytes, ID 176
+
+    int16 mag0CalVecX;
+    int16 mag0CalVecY;
+    int16 mag0CalVecZ; // 6 bytes, ID 177
+
+    int16 fss0CalVecX;
+    int16 fss0CalVecY;
+    int16 fss0CalVecZ; // 6 bytes, ID 178
+
+    int16 hss0RawElevationAngle;
+    int16 hss0RawRotationAngle; // 4 bytes, ID 179
+
+    int16 MAG0RawVectorXComponent;
+    int16 MAG0RawVectorYComponent;
+    int16 MAG0RawVectorZComponent; // 6 bytes, ID 180
+
+    float GYR0RawRateXComponent;
+    float GYR0RawRateYComponent;
+    float GYR0RawRateZComponent; // 12 bytes, ID 204
+
+    uint32 TimeIntegerSeconds;
+    int16  EstimatedRollAngle;
+    int16  EstimatedPitchAngle;
+    int16  EstimatedYawAngle;
+    int16  EstimatedORCQuaternionQ0;
+    int16  EstimatedORCQuaternionQ1;
+    int16  EstimatedORCQuaternionQ2;
+    int16  EstimatedORCQuaternionQ3;
+    int16  EstimatedBodyRateORCXComponent;
+    int16  EstimatedBodyRateORCYComponent;
+    int16  EstimatedBodyRateORCZComponent;
+    int16  EstimatedBodyRateIRCXComponent;
+    int16  EstimatedBodyRateIRCYComponent;
+    int16  EstimatedBodyRateIRCZComponent;
+    int16  InnovationVectorXComponent;
+    int16  InnovationVectorYComponent;
+    int16  InnovationVectorZComponent;
+    int16  StdDevOfEstimatedRateXComponent;
+    int16  StdDevOfEstimatedRateYComponent;
+    int16  StdDevOfEstimatedRateZComponent;
+    int16  StdDevOfEstimatedQuaternionQ0Component;
+    int16  StdDevOfEstimatedQuaternionQ1Component;
+    int16  StdDevOfEstimatedQuaternionQ2Component; // 48 bytes, ID 210
+
+    float ixx;              /**< Moment of inertia Ixx  (measurment unit is [kg.m^2]) */
+    float iyy;              /**< Moment of inertia Iyy  (measurment unit is [kg.m^2]) */
+    float izz;              /**< Moment of inertia Izz  (measurment unit is [kg.m^2]) */
+    float ixy;              /**< Product of inertia Ixy  (measurment unit is [kg.m^2]) */
+    float ixz;              /**< Product of inertia Ixz  (measurment unit is [kg.m^2]) */
+    float iyz;              /**< Product of inertia Iyz  (measurment unit is [kg.m^2]) */
+    int16 sunPointBodyVecX; /**< Sun-pointing body vector X component  */
+    int16 sunPointBodyVecY; /**< Sun-pointing body vector Y component  */
+    int16 sunPointBodyVecZ; /**< Sun-pointing body vector Z component  */
+    int16 tgtTrackBodyVecX; /**< Target-tracking body vector X component  */
+    int16 tgtTrackBodyVecY; /**< Target-tracking body vector Y component  */
+    int16 tgtTrackBodyVecZ; /**< Target-tracking body vector Z component  */ // 36 bytes, ID 189
+} ADCS_AOD_t;                                                                // 164 Bytes
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                     ADCS Set Cmd Payload Structures                       */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+/* FORMAT OF STRUCT
+typedef struct { // ID
+
+}__attribute__((packed)) ADCS_***Cmd_Payload_t;
+*/
+
+typedef struct
+{                                  // ID 2
+    uint32 CurrentUnixseconds;     // Current Unix time s. (Unit of measure is [s])
+    uint32 CurrentUnixNanoseconds; // Current Unix time ns. (Unit of measure is [ns])
+} __attribute__((packed)) ADCS_CurrentUnixTimeCmd_Payload_t;
+
+typedef struct
+{ // ID 6
+    uint8   ActiveState : 1;
+    uint8   BufferFullAction : 1;
+    uint8_t Reserved : 6; // Padding
+} __attribute__((packed)) ADCS_ErrorLogSettingCmd_Payload_t;
+
+// typedef struct { // ID 7 - Noarg
+
+// }
+
+typedef struct
+{ // ID 42
+    uint8  ControlMode;
+    uint8  MainEstimatorMode;
+    uint8  BackupEstimatorMode;
+    uint16 ControlTimeout;
+} __attribute__((packed)) ADCS_ControlEstimationModeCmd_Payload_t;
+
+typedef struct
+{ // ID 43
+    uint16 Duration;
+} __attribute__((packed)) ADCS_DisableMagRwlMntMngCmd_Payload_t;
+
+typedef struct
+{ // ID 47
+    float ECIPointingVectorX;
+    float ECIPointingVectorY;
+    float ECIPointingVectorZ;
+} __attribute__((packed)) ADCS_ReferenceIRCVectorCmd_Payload_t;
+
+typedef struct
+{ // ID 48
+    float TargetLatitude;
+    float TargetLongiTude;
+    float TargetAltitude;
+} __attribute__((packed)) ADCS_ReferenceLLHTargetCmd_Payload_t;
+
+typedef struct
+{ // ID 51
+    uint8 OrbitMode;
+} __attribute__((packed)) ADCS_OrbitModeCmd_Payload_t;
+
+typedef struct
+{ // ID 52
+    uint8 DeployMAG0 : 1;
+    uint8 DeployMAG1 : 1;
+
+    uint8 Spare : 6; // Explicit declaration
+} __attribute__((packed)) ADCS_MagDeployCmd_Payload_t;
+
+typedef struct
+{ // ID 54
+    float Roll;
+    float Pitch;
+    float Yaw;
+} __attribute__((packed)) ADCS_ReferenceRPYvaluesCmd_Payload_t;
+
+typedef struct
+{ // ID 55
+    int16 MTQ0_OpenLoopCmd;
+    int16 MTQ1_OpenLoopCmd;
+    int16 MTQ2_OpenLoopCmd;
+} __attribute__((packed)) ADCS_OpenLoopCmdMTQCmd_Payload_t;
+
+typedef struct
+{ // ID 56
+    uint8 RWL0;
+    uint8 RWL1;
+    uint8 RWL2;
+    uint8 RWL3;
+    uint8 MAG0;
+    uint8 MAG1;
+    uint8 GYR0;
+    uint8 GYR1;
+    uint8 FSS0;
+    uint8 FSS1;
+    uint8 FSS2;
+    uint8 FSS3;
+    uint8 HSS0;
+    uint8 HSS1;
+    uint8 STR0;
+    uint8 STR1;
+    uint8 ExtSensor0;
+    uint8 ExtSensor1;
+    uint8 ExtGYR0;
+    uint8 ExtGYR1;
+} __attribute__((packed)) ADCS_PowerStateCmd_Payload_t;
+
+typedef struct
+{ // ID 57
+    uint8 RunMode;
+} __attribute__((packed)) ADCS_RunModeCmd_Payload_t;
+
+typedef struct
+{ // ID 58
+    uint8  ControlMode;
+    uint16 Controltimeout;
+} __attribute__((packed)) ADCS_ControlModeCmd_Payload_t;
+
+typedef struct
+{ // ID 59
+    float Rwl0Inertia;
+    float Rwl0MaxMomentum;
+    float Rwl0MaxToque;
+    float Rwl1Inertia;
+    float Rwl1MaxMomentum;
+    float Rwl1MaxToque;
+    float Rwl2Inertia;
+    float Rwl2MaxMomentum;
+    float Rwl2MaxToque;
+    float Rwl3Inertia;
+    float Rwl3MaxMomentum;
+    float Rwl3MaxToque;
+    float WheelRampTorque;
+
+    uint8 WheelScheme;
+    uint8 FailedWheelID;
+
+    float PyramidNominalMomentum;
+    float PyramidTiltAngle;
+} __attribute__((packed)) ADCS_WhlConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 61
+    float Ixx;
+    float Iyy;
+    float Izz;
+    float Ixy;
+    float Ixz;
+    float Iyz;
+
+    int16 SunPointingBodyVectorX;
+    int16 SunPointingBodyVectorY;
+    int16 SunPointingBodyVectorZ;
+
+    int16 TargetTrackingBodyVectorX;
+    int16 TargetTrackingBodyVectorY;
+    int16 TargetTrackingBodyVectorZ;
+
+    int16 SatTrackingBodyVectorX;
+    int16 SatTrackingBodyVectorY;
+    int16 SatTrackingBodyVectorZ;
+} __attribute__((packed)) ADCS_SatConfigCmd_Payload_t;
+
+typedef struct
+{                                           // ID 62 (GS should sent properly)
+    uint8_t DefaultControlMode;             // ENUM: Default control mode
+    float   DetumblingDampingGain;          // Kd
+    float   SunSpinGainSunlit;              // KDSun
+    float   SunSpinGainEclipse;             // KDecel
+    float   DetumblingSpinGain;             // Ks
+    float   FastBDotGain;                   // Kdf
+    float   YMomentumNutationDampingGain;   // Kn
+    float   YMomentumQuatGain;              // Kq
+    float   XAxisGGQuatGain;                // Kqx
+    float   YAxisGGQuatGain;                // Kqy
+    float   ZAxisGGQuatGain;                // Kqz
+    float   WheelDesaturationGain;          // Kh
+    float   YMomentumProportionalGain;      // Kp1
+    float   YMomentumDerivativeGain;        // Kd1
+    float   RWheelProportionalGain;         // Kp2
+    float   RWheelDerivativeGain;           // Kd2
+    float   TrackingProportionalGain;       // Kp3
+    float   TrackingDerivativeGain;         // Kd3
+    float   TrackingIntegralGain;           // Ki3
+    float   ReferenceSpinRate;              // wy-ref [degps]
+    float   ReferenceWheelMomentum;         // H-ref [Nms]
+    float   YWheelBiasMomentum;             // Hy-bias [Nms]
+    float   ReferenceSpinRateRWspinControl; // [degps]
+    float   SunKeepOutAngle;                // [deg]
+    float   RollLimitAngle;                 // [deg]
+
+    /* 3 one-bit flags + 5-bit reserved packed into 1 byte */
+    struct __attribute__((packed))
+    {
+        uint8_t YawCompensationForEarthRotation : 1; // BOOL
+        uint8_t EnableSunTrackingInEclipse : 1;      // BOOL
+        uint8_t EnableSunAvoidance : 1;              // BOOL
+        uint8_t Reserved : 5;                        // Padding to match spec
+    } flags;
+} __attribute__((packed)) ADCS_ControllerConfig_Payload_t;
+
+typedef struct
+{ // ID 63
+    int16 MMT_Ch1Offset;
+    int16 MMT_Ch2Offset;
+    int16 MMT_Ch3Offset;
+
+    int16 MMT_SensitivityMAT_S11;
+    int16 MMT_SensitivityMAT_S22;
+    int16 MMT_SensitivityMAT_S33;
+    int16 MMT_SensitivityMAT_S12;
+    int16 MMT_SensitivityMAT_S13;
+    int16 MMT_SensitivityMAT_S21;
+    int16 MMT_SensitivityMAT_S23;
+    int16 MMT_SensitivityMAT_S31;
+    int16 MMT_SensitivityMAT_S32;
+} __attribute__((packed)) ADCS_Mag0MMTCalibConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 64
+    uint8_t DefaultRunMode;
+    uint8_t DefaultOperationalState;
+    uint8_t DefaultControlModeInOpStateSafe;
+    uint8_t DefaultControlModeInOpStateAuto;
+} __attribute__((packed)) ADCS_DefaultModeConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 65
+    /* Stack & Actuators (ENUM, 1B each) */
+    uint8 StackX_mounting; // StackX mounting (Table 43)
+    uint8 StackY_mounting; // StackY mounting (Table 43)
+    uint8 StackZ_mounting; // StackZ mounting (Table 43)
+    uint8 MTQ0_mounting;   // MTQ0 mounting (Table 43)
+    uint8 MTQ1_mounting;   // MTQ1 mounting (Table 43)
+    uint8 MTQ2_mounting;   // MTQ2 mounting (Table 43)
+    uint8 Wheel0_mounting; // Wheel0 mounting (Table 43)
+    uint8 Wheel1_mounting; // Wheel1 mounting (Table 43)
+    uint8 Wheel2_mounting; // Wheel2 mounting (Table 43)
+    uint8 Wheel3_mounting; // Wheel3 mounting (Table 43)
+
+    /* Pyramid RWL angles (INT16; deg = raw/100.0) */
+    int16 PyramidRWL_alpha; // alpha angle
+    int16 PyramidRWL_beta;  // beta angle
+    int16 PyramidRWL_gamma; // gamma angle
+
+    /* CSS mounting (ENUM, 1B each) */
+    uint8 CSS0_mounting;
+    uint8 CSS1_mounting;
+    uint8 CSS2_mounting;
+    uint8 CSS3_mounting;
+    uint8 CSS4_mounting;
+    uint8 CSS5_mounting;
+    uint8 CSS6_mounting;
+    uint8 CSS7_mounting;
+    uint8 CSS8_mounting;
+    uint8 CSS9_mounting;
+
+    /* FSS0..3 angles (INT16; deg = raw/100.0) */
+    int16 FSS0_alpha;
+    int16 FSS0_beta;
+    int16 FSS0_gamma;
+    int16 FSS1_alpha;
+    int16 FSS1_beta;
+    int16 FSS1_gamma;
+    int16 FSS2_alpha;
+    int16 FSS2_beta;
+    int16 FSS2_gamma;
+    int16 FSS3_alpha;
+    int16 FSS3_beta;
+    int16 FSS3_gamma;
+
+    /* HSS0..1 angles (INT16; deg = raw/100.0) */
+    int16 HSS0_alpha;
+    int16 HSS0_beta;
+    int16 HSS0_gamma;
+    int16 HSS1_alpha;
+    int16 HSS1_beta;
+    int16 HSS1_gamma;
+
+    /* MAG0..1 angles (INT16; deg = raw/100.0) */
+    int16 MAG0_alpha;
+    int16 MAG0_beta;
+    int16 MAG0_gamma;
+    int16 MAG1_alpha;
+    int16 MAG1_beta;
+    int16 MAG1_gamma;
+
+    /* STR0..1 angles (INT16; deg = raw/100.0) */
+    int16 STR0_alpha;
+    int16 STR0_beta;
+    int16 STR0_gamma;
+    int16 STR1_alpha;
+    int16 STR1_beta;
+    int16 STR1_gamma;
+
+    /* External sensor 0/1 angles (INT16; deg = raw/100.0) */
+    int16 ExtSensor0_alpha;
+    int16 ExtSensor0_beta;
+    int16 ExtSensor0_gamma;
+    int16 ExtSensor1_alpha;
+    int16 ExtSensor1_beta;
+    int16 ExtSensor1_gamma;
+
+    /* External gyro axis mounting (ENUM, 1B each; Table 43) */
+    uint8 ExtGyro0_axis1_mounting;
+    uint8 ExtGyro0_axis2_mounting;
+    uint8 ExtGyro0_axis3_mounting;
+    uint8 ExtGyro1_axis1_mounting;
+    uint8 ExtGyro1_axis2_mounting;
+    uint8 ExtGyro1_axis3_mounting;
+} __attribute__((packed)) ADCS_MountingConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 66
+    int16 MMT_Ch1Offset;
+    int16 MMT_Ch2Offset;
+    int16 MMT_Ch3Offset;
+
+    int16 MMT_SensitivityMAT_S11;
+    int16 MMT_SensitivityMAT_S22;
+    int16 MMT_SensitivityMAT_S33;
+    int16 MMT_SensitivityMAT_S12;
+    int16 MMT_SensitivityMAT_S13;
+    int16 MMT_SensitivityMAT_S21;
+    int16 MMT_SensitivityMAT_S23;
+    int16 MMT_SensitivityMAT_S31;
+    int16 MMT_SensitivityMAT_S32;
+} __attribute__((packed)) ADCS_Mag1MMTCalibConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 67
+    uint8 DefaultMainEstimatorMode;
+    uint8 DefaultBackupEstimatorMode;
+    float MAGMeasurementNoise;
+    float CSSMeasurementNoise;
+    float FSSMeasurementNoise;
+    float HSSMeasurementNoise;
+    float STRMeasurementNoise;
+    float MMTRKFSystemNoise;
+    float EKFSystemNoise;
+    float NutationEpsilonCorrection;
+    float NutationPsiCorrection;
+
+    uint8 UseFSSinEKF : 1;
+    uint8 UseCSSinEKF : 1;
+    uint8 UseHSSinEKF : 1;
+    uint8 UseSTRinEKF : 1;
+    uint8 TriadVector1 : 4;
+    uint8 TriadVector2 : 4;
+
+    uint8 Spare : 4; // Explicit declaration
+
+} __attribute__((packed)) ADCS_EstimatorConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 68
+    double Epoch;
+    double Inclination;
+    double RAAN;
+    double Eccentricity;
+    double AOP;
+    double MeanAnomaly;
+    double MeanMotion;
+    double B_StarDrag;
+} __attribute__((packed)) ADCS_SatOrbitParamConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 69
+    uint8 RSWSelectionFlags;
+    uint8 MAGSelectionFlags;
+    uint8 FSSSelectionFlags;
+    uint8 HSSSelectionFlags;
+    uint8 GYRSelectionFlags;
+    uint8 STRSelectionFlags;
+    uint8 GNSSSelectionFlags;
+    uint8 ExtSensorSelectionFlags;
+} __attribute__((packed)) ADCS_NodeSelectionConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 70
+    float  MTQ0MaxDipoleMoment;
+    float  MTQ1MaxDipoleMoment;
+    float  MTQ2MaxDipoleMoment;
+    uint16 MaxMTQOnTime;
+    uint16 MinMTQOnTime;
+    float  MagneticControlFilterFactor;
+} __attribute__((packed)) ADCS_MTQConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 71
+    uint8 MainEstimatorMode;
+    uint8 BackupEstimatorMode;
+} __attribute__((packed)) ADCS_EstimationModeCmd_Payload_t;
+
+typedef struct
+{ // ID 72
+    uint8 OperationalState;
+} __attribute__((packed)) ADCS_OperationalStateCmd_Payload_t;
+
+typedef struct
+{ // ID 77
+    uint8 Mag0SensingElement : 1;
+    uint8 Mag1SensingElement : 1;
+
+    uint8 Spare : 6; // Explicit declaration
+} __attribute__((packed)) ADCS_MagSensingElmConfigCmd_Payload_t;
+
+typedef struct
+{ // ID 79
+    uint16 NextFrameNumber;
+} __attribute__((packed)) ADCS_TransferFrameCmd_Payload_t;
+
+typedef struct
+{ // ID 112
+    uint8 UARTTlmReturnInterval : 4;
+    uint8 UART2TlmReturnInterval : 4;
+    uint8 CANTlmRetrunInterval : 4;
+    uint8 Reserved : 4;
+
+    uint8 UARTTlmEDInclusionBitmask[5];
+    uint8 UART2TlmEDInclusionBitmask[5];
+    uint8 CANTlmEDInclusionBitmask[5];
+} __attribute__((packed)) ADCS_UnsolicitTlmMsgSetupCmd_Payload_t;
+
+typedef struct
+{ // ID 116
+    uint8 Flag;
+} ADCS_UnsolicitEventMsgSetupCmd_ExternalPayload_t;
+
+typedef struct
+{ // ID 116
+    uint8_t InfoUART : 1;
+    uint8_t MinorUART : 1;
+    uint8_t MajorUART : 1;
+    uint8_t CriticalUART : 1;
+
+    uint8_t InfoUART2 : 1;
+    uint8_t MinorUART2 : 1;
+    uint8_t MajorUART2 : 1;
+    uint8_t CriticalUART2 : 1;
+
+    uint8_t InfoCAN : 1;
+    uint8_t MinorCAN : 1;
+    uint8_t MajorCAN : 1;
+    uint8_t CriticalCAN : 1;
+
+    uint8_t Spare : 4; // Explicit declaration
+} __attribute__((packed)) ADCS_UnsolicitEventMsgSetupCmd_InternalPayload_t;
+
+typedef struct
+{ // ID 117
+    uint8  FilterType;
+    uint32 UnixStartTime;
+    uint32 UnixEndTime;
+    uint32 NumberOfEntries;
+    uint32 WriteCounter;
+    uint8  TlmLogReturnInterval : 4;
+    uint8  Reserved : 4;
+    uint8  LogIDbitmask[5];
+} __attribute__((packed)) ADCS_RequestTlmLogTransferSetupCmd_Payload_t;
+
+typedef struct
+{ // ID 120
+    uint8_t  FilterType;
+    uint32_t UnixStartTime;
+    uint32_t UnixEndTime;
+    uint32_t NumberOfEntry;
+    uint32_t WriteCounter;
+
+    struct __attribute__((packed))
+    {
+        uint8_t IncludeCriticalEVS : 1;
+        uint8_t IncludeMajorWarningEVS : 1;
+        uint8_t IncludeMinorWarningEVS : 1;
+        uint8_t IncludeInfoEVS : 1;
+        uint8_t IncludeCubeCom : 1;
+        uint8_t IncludeRWL0 : 1;
+        uint8_t IncludeRWL1 : 1;
+        uint8_t IncludeRWL2 : 1;
+        uint8_t IncludeRWL3 : 1;
+        uint8_t IncludeFSS0 : 1;
+        uint8_t IncludeFSS1 : 1;
+        uint8_t IncludeFSS2 : 1;
+        uint8_t IncludeFSS3 : 1;
+        uint8_t IncludeHSS0 : 1;
+        uint8_t IncludeHSS1 : 1;
+        uint8_t IncludeSTR0 : 1;
+        uint8_t IncludeSTR1 : 1;
+        uint8_t IncludeMAG0 : 1;
+        uint8_t IncludeMAG1 : 1;
+        uint8_t IncludeExt0 : 1;
+        uint8_t IncludeExt1 : 1;
+        uint8_t Padding : 3;
+    } flags;
+} __attribute__((packed)) ADCS_InitiateEventLogTransferCmd_Payload_t;
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+/*                      ADCS Get Cmd Payload Structures                      */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+/* FORMAT OF STRUCT
+typedef struct { // ID
+
+}__attribute__((packed)) ADCS_***Tlm_Payload_t;
+*/
+
+typedef struct
+{ // ID 132
+    uint8   ActiveState : 1;
+    uint8   BufferFullAction : 1;
+    uint8_t Reserved : 6; // Padding
+} __attribute__((packed)) ADCS_ErrorLogSettingTlm_Payload_t;
+
+typedef struct
+{                                  // ID 133
+    uint32 CurrentUnixseconds;     // Current Unix time s. (Unit of measure is [s])
+    uint32 CurrentUnixNanoseconds; // Current Unix time ns. (Unit of measure is [ns])
+} __attribute__((packed)) ADCS_CurrentUnixTimeTlm_Payload_t;
+
+typedef struct
+{ // ID 134
+    uint8_t  State;
+    uint8_t  LastResult;
+    uint32_t Timestamp;
+} __attribute__((packed)) ADCS_PersistConfigDiagnosticTlm_Payload_t;
+
+typedef struct
+{ // ID 135
+    uint16_t UART_TcCnt;
+    uint16_t UART_TlmCnt;
+    uint16_t UART_ErrSW;
+    uint16_t UART_ErrHW;
+
+    uint16_t UART2_TcCnt;
+    uint16_t UART2_TlmCnt;
+    uint16_t UART2_ErrSW;
+    uint16_t UART2_ErrHW;
+
+    uint16_t CAN_TcCnt;
+    uint16_t CAN_TlmCnt;
+    uint16_t CAN_ErrSW;
+    uint16_t CAN_ErrHW;
+
+    uint16_t I2C_TcCnt;
+    uint16_t I2C_TlmCnt;
+    uint16_t I2C_ErrSW;
+    uint16_t I2C_ErrHW;
+} __attribute__((packed)) ADCS_CommunicationStatusTlm_Payload_t;
+
+typedef struct
+{ // ID 150
+    uint8  ControlMode;
+    uint8  MainEstimatorMode;
+    uint8  BackupEstimatorMode;
+    uint16 ControlTimeout;
+} __attribute__((packed)) ADCS_ControlEstimationModeTlm_Payload_t;
+
+typedef struct
+{ // ID 156
+    float ECIPointingVectorX;
+    float ECIPointingVectorY;
+    float ECIPointingVectorZ;
+} __attribute__((packed)) ADCS_ReferenceIRCVectorTlm_Payload_t;
+
+typedef struct
+{ // ID 157
+    float Latitude;
+    float Longitude;
+    float Altitude;
+} __attribute__((packed)) ADCS_ReferenceLLHTargetTlm_Payload_t;
+
+typedef struct
+{ // ID 162
+    uint8 OrbitMode;
+} __attribute__((packed)) ADCS_OrbitModeTlm_Payload_t;
+
+typedef struct
+{ // ID 167
+    int16  Mag0MCUTemperature;
+    uint16 Mag0MCUCurrent;
+    uint16 Mag0MCUVoltage;
+    int16  Mag0PrimaryTemperature;
+    int16  Mag0RedundantTemperature;
+    uint32 Mag0BurnCurrent;
+    uint8  Mag0DeployPinState : 1;
+    uint8  Mag0BurnPinState : 1;
+    uint8  Mag0BurnUnderCurrent : 1;
+    uint8  Mag0BurnOverCurrent : 1;
+    uint8  Mag0DeployTimeout : 1;
+    uint8  Padding1 : 3;
+
+    int16  Mag1MCUTemperature;
+    uint16 Mag1MCUCurrent;
+    uint16 Mag1MCUVoltage;
+    int16  Mag1PrimaryTemperature;
+    int16  Mag1RedundantTemperature;
+    uint32 Mag1BurnCurrent;
+    uint8  Mag1DeployPinState : 1;
+    uint8  Mag1BurnPinState : 1;
+    uint8  Mag1BurnUnderCurrent : 1;
+    uint8  Mag1BurnOverCurrent : 1;
+    uint8  Mag1DeployTimeout : 1;
+    uint8  Padding2 : 3; // Explicit declaration
+} __attribute__((packed)) ADCS_HealthTlmMMTTlm_Payload_t;
+
+typedef struct
+{ // ID 170
+    uint32 TimeSecond;
+    uint32 TimeNanoSecond;
+    int16  FSS0AlphaAngle;
+    int16  FSS0BetaAngle;
+    uint8  FSS0CaptureResult;
+    uint8  FSS0DetectionResult;
+    int16  FSS1AlphaAngle;
+    int16  FSS1BetaAngle;
+    uint8  FSS1CaptureResult;
+    uint8  FSS1DetectionResult;
+    int16  FSS2AlphaAngle;
+    int16  FSS2BetaAngle;
+    uint8  FSS2CaptureResult;
+    uint8  FSS2DetectionResult;
+    int16  FSS3AlphaAngle;
+    int16  FSS3BetaAngle;
+    uint8  FSS3CaptureResult;
+    uint8  FSS3DetectionResult;
+    uint8   ValidResult:1; // FSS0, 1, 2, 3
+} __attribute__((packed)) ADCS_RawCubeSenseSunTlm_Payload_t;
+
+typedef struct
+{ // ID 173
+    uint32 TimeSecond;
+    uint32 TimeNanoSecond;
+    int16  EstRoll;
+    int16  EstPitch;
+    int16  EstYaw;
+    int16  EstORCQ0;
+    int16  EstORCQ1;
+    int16  EstORCQ2;
+    int16  EstORCQ3;
+    int16  EstGYRbiasX;
+    int16  EstGYRbiasY;
+    int16  EstGYRbiasZ;
+    int16  EstORCBodyRateX;
+    int16  EstORCBodyRateY;
+    int16  EstORCBodyRateZ;
+    int16  EstIRCBodyRateX;
+    int16  EstIRCBodyRateY;
+    int16  EstIRCBodyRateZ;
+    float  EstGyroscTrqX;
+    float  EstGyroscTrqY;
+    float  EstGyroscTrqZ;
+    int16  InnvVecX;
+    int16  InnvVecY;
+    int16  InnvVecZ;
+    int16  StdEstRateX;
+    int16  StdEstRateY;
+    int16  StdEstRateZ;
+    int16  StdEstQ0;
+    int16  StdEstQ1;
+    int16  StdEstQ2;
+    uint8  ActiveEstMode;
+} __attribute__((packed)) ADCS_BackupEstimatorTlm_Payload_t;
+
+typedef struct
+{ // ID 181
+    float Roll;
+    float Pitch;
+    float Yaw;
+} __attribute__((packed)) ADCS_ReferenceRPYvaluesTlm_Payload_t;
+
+typedef struct
+{ // ID 182
+    int16 MTQ0_OpenLoopCmd;
+    int16 MTQ1_OpenLoopCmd;
+    int16 MTQ2_OpenLoopCmd;
+} __attribute__((packed)) ADCS_OpenLoopCmdMTQTlm_Payload_t;
+
+typedef struct
+{ // ID 183
+    uint8 RWL0;
+    uint8 RWL1;
+    uint8 RWL2;
+    uint8 RWL3;
+
+    uint8 MAG0;
+    uint8 MAG1;
+
+    uint8 GYR0;
+    uint8 GYR1;
+
+    uint8 FSS0;
+    uint8 FSS1;
+    uint8 FSS2;
+    uint8 FSS3;
+
+    uint8 HSS0;
+    uint8 HSS1;
+
+    uint8 STR0;
+    uint8 STR1;
+
+    uint8 ExtSensor0;
+    uint8 ExtSensor1;
+
+    uint8 ExtGYR0;
+    uint8 ExtGYR1;
+} __attribute__((packed)) ADCS_PowerStateTlm_Payload_t;
+
+typedef struct
+{ // ID 184
+    uint8_t RunMode;
+} __attribute__((packed)) ADCS_RunModeTlm_Payload_t;
+
+typedef struct
+{ // ID 185
+    uint8  ControlMode;
+    uint16 ControlTimeout;
+} __attribute__((packed)) ADCS_ControlModeTlm_Payload_t;
+
+typedef struct
+{ // ID 186
+    float Rwl0Inertia;
+    float Rwl0MaxMomentum;
+    float Rwl0MaxToque;
+    float Rwl1Inertia;
+    float Rwl1MaxMomentum;
+    float Rwl1MaxToque;
+    float Rwl2Inertia;
+    float Rwl2MaxMomentum;
+    float Rwl2MaxToque;
+    float Rwl3Inertia;
+    float Rwl3MaxMomentum;
+    float Rwl3MaxToque;
+    float WheelRampTorque;
+
+    uint8 WheelScheme;
+    uint8 FailedWheelID;
+
+    float PyramidNominalMomentum;
+    float PyramidTiltAngle;
+} __attribute__((packed)) ADCS_WhlConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 189
+    float Ixx;
+    float Iyy;
+    float Izz;
+    float Ixy;
+    float Ixz;
+    float Iyz;
+
+    int16 SunPointingBodyVectorX;
+    int16 SunPointingBodyVectorY;
+    int16 SunPointingBodyVectorZ;
+
+    int16 TargetTrackingBodyVectorX;
+    int16 TargetTrackingBodyVectorY;
+    int16 TargetTrackingBodyVectorZ;
+
+    int16 SatTrackingBodyVectorX;
+    int16 SatTrackingBodyVectorY;
+    int16 SatTrackingBodyVectorZ;
+} __attribute__((packed)) ADCS_SatelliteConfigTlm_Payload_t;
+
+typedef struct
+{                               // ID 190
+    uint8_t DefaultControlMode; // ENUM (Table 14)
+
+    float DetumblingDampingGain;       // Kd
+    float SunSpinGain_Sunlit;          // KDSun
+    float SunSpinGain_Eclipse;         // KDecel
+    float DetumblingSpinGain;          // Ks
+    float FastBDotGain;                // Kdf
+    float YMomNutationDampingGain;     // Kn
+    float YMomNutationDampingQuatGain; // Kq
+    float XGGQuatGain;                 // Kqx
+    float YGGQuatGain;                 // Kqy
+    float ZGGQuatGain;                 // Kqz
+    float WheelDesatControlGain;       // Kh
+    float YMomProportionalGain;        // Kp1
+    float YMomDerivativeGain;          // Kd1
+    float RWheelProportionalGain;      // Kp2
+    float RWheelDerivativeGain;        // Kd2
+    float TrackingProportionalGain;    // Kp3
+    float TrackingDerivativeGain;      // Kd3
+    float TrackingIntegralGain;        // Ki3
+    float ReferenceSpinRate_degps;     // wy-ref [degps]
+    float ReferenceWheelMomentum_Nms;  // H-ref [Nms], must be < 0
+    float YWheelBiasMomentum_Nms;      // Hy-bias [Nms]
+    float RefSpinRate_RW_degps;        // for ConSunYawSpin RW control [degps]
+    float SunKeepOutAngle_deg;         // [deg]
+    float RollLimitAngle_deg;          // [deg]
+
+    /* 3 one-bit flags + 5-bit reserved packed into 1 byte */
+    struct __attribute__((packed))
+    {
+        uint8_t YawCompensationForEarthRotation : 1; // BOOL
+        uint8_t EnableSunTrackingInEclipse : 1;      // BOOL
+        uint8_t EnableSunAvoidance : 1;              // BOOL
+        uint8_t Reserved : 5;                        // Padding to match spec
+    } flags;
+} __attribute__((packed)) ADCS_ControllerConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 191
+    int16 MMT_Ch1Offset;
+    int16 MMT_Ch2Offset;
+    int16 MMT_Ch3Offset;
+
+    int16 MMT_SensitivityMAT_S11;
+    int16 MMT_SensitivityMAT_S22;
+    int16 MMT_SensitivityMAT_S33;
+    int16 MMT_SensitivityMAT_S12;
+    int16 MMT_SensitivityMAT_S13;
+    int16 MMT_SensitivityMAT_S21;
+    int16 MMT_SensitivityMAT_S23;
+    int16 MMT_SensitivityMAT_S31;
+    int16 MMT_SensitivityMAT_S32;
+} __attribute__((packed)) ADCS_Mag0MMTCalibConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 192
+    uint8_t DefaultRunMode;
+    uint8_t DefaultOperationalState;
+    uint8_t DefaultControlModeInOpStateSafe;
+    uint8_t DefaultControlModeInOpStateAuto;
+} __attribute__((packed)) ADCS_DefaultModeConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 193
+    /* Stack & Actuators (ENUM, 1B each) */
+    uint8_t StackX_mounting; // StackX mounting (Table 43)
+    uint8_t StackY_mounting; // StackY mounting (Table 43)
+    uint8_t StackZ_mounting; // StackZ mounting (Table 43)
+    uint8_t MTQ0_mounting;   // MTQ0 mounting (Table 43)
+    uint8_t MTQ1_mounting;   // MTQ1 mounting (Table 43)
+    uint8_t MTQ2_mounting;   // MTQ2 mounting (Table 43)
+    uint8_t Wheel0_mounting; // Wheel0 mounting (Table 43)
+    uint8_t Wheel1_mounting; // Wheel1 mounting (Table 43)
+    uint8_t Wheel2_mounting; // Wheel2 mounting (Table 43)
+    uint8_t Wheel3_mounting; // Wheel3 mounting (Table 43)
+
+    /* Pyramid RWL angles (INT16; deg = raw/100.0) */
+    int16_t PyramidRWL_alpha; // alpha angle
+    int16_t PyramidRWL_beta;  // beta angle
+    int16_t PyramidRWL_gamma; // gamma angle
+
+    /* CSS mounting (ENUM, 1B each) */
+    uint8_t CSS0_mounting;
+    uint8_t CSS1_mounting;
+    uint8_t CSS2_mounting;
+    uint8_t CSS3_mounting;
+    uint8_t CSS4_mounting;
+    uint8_t CSS5_mounting;
+    uint8_t CSS6_mounting;
+    uint8_t CSS7_mounting;
+    uint8_t CSS8_mounting;
+    uint8_t CSS9_mounting;
+
+    /* FSS0..3 angles (INT16; deg = raw/100.0) */
+    int16_t FSS0_alpha;
+    int16_t FSS0_beta;
+    int16_t FSS0_gamma;
+    int16_t FSS1_alpha;
+    int16_t FSS1_beta;
+    int16_t FSS1_gamma;
+    int16_t FSS2_alpha;
+    int16_t FSS2_beta;
+    int16_t FSS2_gamma;
+    int16_t FSS3_alpha;
+    int16_t FSS3_beta;
+    int16_t FSS3_gamma;
+
+    /* HSS0..1 angles (INT16; deg = raw/100.0) */
+    int16_t HSS0_alpha;
+    int16_t HSS0_beta;
+    int16_t HSS0_gamma;
+    int16_t HSS1_alpha;
+    int16_t HSS1_beta;
+    int16_t HSS1_gamma;
+
+    /* MAG0..1 angles (INT16; deg = raw/100.0) */
+    int16_t MAG0_alpha;
+    int16_t MAG0_beta;
+    int16_t MAG0_gamma;
+    int16_t MAG1_alpha;
+    int16_t MAG1_beta;
+    int16_t MAG1_gamma;
+
+    /* STR0..1 angles (INT16; deg = raw/100.0) */
+    int16_t STR0_alpha;
+    int16_t STR0_beta;
+    int16_t STR0_gamma;
+    int16_t STR1_alpha;
+    int16_t STR1_beta;
+    int16_t STR1_gamma;
+
+    /* External sensor 0/1 angles (INT16; deg = raw/100.0) */
+    int16_t ExtSensor0_alpha;
+    int16_t ExtSensor0_beta;
+    int16_t ExtSensor0_gamma;
+    int16_t ExtSensor1_alpha;
+    int16_t ExtSensor1_beta;
+    int16_t ExtSensor1_gamma;
+
+    /* External gyro axis mounting (ENUM, 1B each; Table 43) */
+    uint8_t ExtGyro0_axis1_mounting;
+    uint8_t ExtGyro0_axis2_mounting;
+    uint8_t ExtGyro0_axis3_mounting;
+    uint8_t ExtGyro1_axis1_mounting;
+    uint8_t ExtGyro1_axis2_mounting;
+    uint8_t ExtGyro1_axis3_mounting;
+} __attribute__((packed)) ADCS_MountingConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 194
+    int16 MMT_Ch1Offset;
+    int16 MMT_Ch2Offset;
+    int16 MMT_Ch3Offset;
+
+    int16 MMT_SensitivityMAT_S11;
+    int16 MMT_SensitivityMAT_S22;
+    int16 MMT_SensitivityMAT_S33;
+    int16 MMT_SensitivityMAT_S12;
+    int16 MMT_SensitivityMAT_S13;
+    int16 MMT_SensitivityMAT_S21;
+    int16 MMT_SensitivityMAT_S23;
+    int16 MMT_SensitivityMAT_S31;
+    int16 MMT_SensitivityMAT_S32;
+} __attribute__((packed)) ADCS_Mag1MMTCalibConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 195
+    uint8 DefaultMainEstimatorMode;
+    uint8 DefaultBackupEstimatorMode;
+    float MAGMeasurementNoise;
+    float CSSMeasurementNoise;
+    float FSSMeasurementNoise;
+    float HSSMeasurementNoise;
+    float STRMeasurementNoise;
+    float MMTRKFSystemNoise;
+    float EKFSystemNoise;
+    float NutationEpsilonCorrection;
+    float NutationPsiCorrection;
+
+    uint8 UseFSSinEKF : 1;
+    uint8 UseCSSinEKF : 1;
+    uint8 UseHSSinEKF : 1;
+    uint8 UseSTRinEKF : 1;
+    uint8 TriadVector1 : 4;
+    uint8 TriadVector2 : 4;
+
+    uint8 Spare : 4; // Explicit declaration
+
+} __attribute__((packed)) ADCS_EstimatorConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 196
+    double Epoch;
+    double Inclination;
+    double RAAN;
+    double Eccentricity;
+    double AOP;
+    double MeanAnomaly;
+    double MeanMotion;
+    double B_StarDrag;
+} __attribute__((packed)) ADCS_SatOrbitParamConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 197
+    uint8 RWLSelectionFlags;
+    uint8 MAGSelectionFlags;
+    uint8 FSSSelectionFlags;
+    uint8 HSSSelectionFlags;
+    uint8 GYRSelectionFlags;
+    uint8 STRSelectionFlags;
+    uint8 GNSSSelectionFlags;
+    uint8 ExtSensorSelectionFlags;
+} __attribute__((packed)) ADCS_NodeSelectionConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 198
+    float  MTQ0MaxDipoleMoment;
+    float  MTQ1MaxDipoleMoment;
+    float  MTQ2MaxDipoleMoment;
+    uint16 MaxMTQOnTime;
+    uint16 MinMTQOnTime;
+    float  MagneticControlFilterFactor;
+} __attribute__((packed)) ADCS_MTQConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 199
+    uint8 MainEstimatorMode;
+    uint8 BackupEstimatorMode;
+} __attribute__((packed)) ADCS_EstimationModeTlm_Payload_t;
+
+typedef struct
+{ // ID 200
+    uint8_t OperationalMode;
+} __attribute__((packed)) ADCS_OperationalStateTlm_Payload_t;
+
+typedef struct
+{ // ID 203
+    uint32 TimeSeconds;
+    uint32 TimeNanoSeconds;
+    uint8  CSS0;
+    uint8  CSS1;
+    uint8  CSS2;
+    uint8  CSS3;
+    uint8  CSS4;
+    uint8  CSS5;
+    uint8  CSS6;
+    uint8  CSS7;
+    uint8  CSS8;
+    uint8  CSS9;
+    uint8   CSSValidFlag:1;
+} __attribute__((packed)) ADCS_RawCSSSensorTlm_Payload_t;
+
+typedef struct
+{ // ID 204
+    uint32 TimeSeconds;
+    uint32 TimeNanoSeconds;
+    float  GYR0RawRateX;
+    float  GYR0RawRateY;
+    float  GYR0RawRateZ;
+    float  GYR1RawRateX;
+    float  GYR1RawRateY;
+    float  GYR1RawRateZ;
+    uint8   GYR0ValidFlag:1; // GYR0, 1
+    uint8   GYR1ValidFlag:1; // GYR1, 0
+} __attribute__((packed)) ADCS_RawGYRSensorTlm_Paylaod_t;
+
+typedef struct
+{ // ID 207
+    uint32 TimeSeconds;
+    uint32 TimeNanoSeconds;
+    float  GYR0CalibratedRateX;
+    float  GYR0CalibratedRateY;
+    float  GYR0CalibratedRateZ;
+    float  GYR1CalibratedRateX;
+    float  GYR1CalibratedRateY;
+    float  GYR1CalibratedRateZ;
+    float  ExtGYR0CalibratedRateX;
+    float  ExtGYR0CalibratedRateY;
+    float  ExtGYR0CalibratedRateZ;
+    float  ExtGYR1CalibratedRateX;
+    float  ExtGYR1CalibratedRateY;
+    float  ExtGYR1CalibratedRateZ;
+    uint8   GYR0ValidFlag:1; // GYR0, 1
+    uint8   GYR1ValidFlag:1; // GYR1, 0
+    uint8   EXTGYR0ValidFlag:1; // GYR0, 0
+    uint8   EXTGYR1ValidFlag:1; // GYR1, 0
+} __attribute__((packed)) ADCS_CalibratedGYRSensorTlm_Payload_t;
+
+typedef struct
+{ // ID 210
+    uint32 TimeSecond;
+    uint32 TimeNanoSecond;
+    int16  EstRoll;
+    int16  EstPitch;
+    int16  EstYaw;
+    int16  EstORCQ0;
+    int16  EstORCQ1;
+    int16  EstORCQ2;
+    int16  EstORCQ3;
+    int16  EstGYRbiasX;
+    int16  EstGYRbiasY;
+    int16  EstGYRbiasZ;
+    int16  EstORCBodyRateX;
+    int16  EstORCBodyRateY;
+    int16  EstORCBodyRateZ;
+    int16  EstIRCBodyRateX;
+    int16  EstIRCBodyRateY;
+    int16  EstIRCBodyRateZ;
+    float  EstGyroscTrqX;
+    float  EstGyroscTrqY;
+    float  EstGyroscTrqZ;
+    int16  InnvVecX;
+    int16  InnvVecY;
+    int16  InnvVecZ;
+    int16  StdEstRateX;
+    int16  StdEstRateY;
+    int16  StdEstRateZ;
+    int16  StdEstQ0;
+    int16  StdEstQ1;
+    int16  StdEstQ2;
+    uint8  ActiveEstMode;
+} __attribute__((packed)) ADCS_MainEstimatorTlm_Payload_t;
+
+typedef struct
+{ // ID 211
+    uint32 TimeSecond;
+    uint32 TimeNanoSecond;
+    float  EstORCQ0;
+    float  EstORCQ1;
+    float  EstORCQ2;
+    float  EstORCQ3;
+    float  EstORCBodyRateX;
+    float  EstORCBodyRateY;
+    float  EstORCBodyRateZ;
+} __attribute__((packed)) ADCS_MainEstimatorHighResTlm_Payload_t;
+
+typedef struct
+{ // ID 219
+    uint16 FrameSize;
+    uint8  FrameByte[256];
+
+} __attribute__((packed)) ADCS_DataFrameTlm_Payload_t;
+
+typedef struct
+{ // ID 220
+    uint16 FrameNumber;
+    uint8  Checksum;
+    uint8  LastFrame : 1;
+    uint8  FrameError : 1;
+
+    uint8 Spare : 6; // Explicit declaration
+} __attribute__((packed)) ADCS_InfoFrameInMemoryTlm_Payload_t;
+
+typedef struct
+{ // ID 221
+    uint8 Mag0SensingElement : 1;
+    uint8 Mag1SensingElement : 1;
+
+    uint8 Spare : 6; // Explicit declaration
+} __attribute__((packed)) ADCS_MagSensingElmConfigTlm_Payload_t;
+
+typedef struct
+{ // ID 227
+    uint8 FastInclusionBitmask[5];
+    uint8 SlowInclusionBitmask[5];
+} __attribute__((packed)) ADCS_TlmLogInclMaskTlm_Payload_t;
+
+typedef struct
+{ // ID 228
+    uint8 UARTTlmReturnInterval : 4;
+    uint8 UART2TlmReturnInterval : 4;
+    uint8 CANTlmRetrunInterval : 4;
+    uint8 Reserved : 4;
+
+    uint8 UARTTlmIDInclusionBitmask[5];
+    uint8 UART2TlmIDInclusionBitmask[5];
+    uint8 CANTlmIDInclusionBitmask[5];
+} __attribute__((packed)) ADCS_UnsolicitTlmMsgSetupTlm_Payload_t;
+
+typedef struct
+{ // ID 233
+    uint8_t InfoUART : 1;
+    uint8_t MinorUART : 1;
+    uint8_t MajorUART : 1;
+    uint8_t CriticalUART : 1;
+
+    uint8_t InfoUART2 : 1;
+    uint8_t MinorUART2 : 1;
+    uint8_t MajorUART2 : 1;
+    uint8_t CriticalUART2 : 1;
+
+    uint8_t InfoCAN : 1;
+    uint8_t MinorCAN : 1;
+    uint8_t MajorCAN : 1;
+    uint8_t CriticalCAN : 1;
+
+    uint8_t Spare : 4; // Explicit declaration
+} __attribute__((packed)) ADCS_UnsolicitEventMsgSetupTlm_Payload_t;
+
+typedef struct
+{ // ID 234
+    uint8  NumberOfQEntries;
+    uint8  NumberOfRQIterations;
+    uint32 NumberOfEntries;
+    uint32 OldestEntryUnixTime;
+    uint32 LatestEntryUnixTime;
+    uint32 WriteCounter;
+    uint8  ReadQState : 2;
+
+    uint8 Spare : 6; // Explicit declaration
+} __attribute__((packed)) ADCS_TlmLogStatusResponseTlm_Payload_t;
+
+typedef struct
+{ // ID 235
+    uint16_t NumQueuedEntry;
+    uint16_t NumBufferedEntry;
+    uint32_t NumEntry;
+    uint32_t NumEmptyEntry;
+    uint32_t OldEntryUnixTime;
+    uint32_t LastEntryUnixTime;
+    uint32_t NumCriticalEVS;
+    uint32_t NumMajorWarningEVS;
+    uint32_t NumMinorWarningEVS;
+    uint32_t NumInfoEVS;
+    uint32_t WriteCnt;
+    uint8_t  ReadQueState;
+} __attribute__((packed)) ADCS_EventLogStatusResponseTlm_Payload_t;
+
+typedef struct
+{ // ID 239
+    uint8  NodeType_Sensor1;
+    uint8  AbstNodeType_Sensor1;
+    uint32 SerialNum_Sensor1;
+    uint32 Address_Sensor1;
+
+    uint8  NodeType_Sensor2;
+    uint8  AbstNodeType_Sensor2;
+    uint32 SerialNum_Sensor2;
+    uint32 Address_Sensor2;
+
+    uint8  NodeType_Sensor3;
+    uint8  AbstNodeType_Sensor3;
+    uint32 SerialNum_Sensor3;
+    uint32 Address_Sensor3;
+
+    uint8  NodeType_Sensor4;
+    uint8  AbstNodeType_Sensor4;
+    uint32 SerialNum_Sensor4;
+    uint32 Address_Sensor4;
+
+    uint8  NodeType_Sensor5;
+    uint8  AbstNodeType_Sensor5;
+    uint32 SerialNum_Sensor5;
+    uint32 Address_Sensor5;
+
+    uint8  NodeType_Sensor6;
+    uint8  AbstNodeType_Sensor6;
+    uint32 SerialNum_Sensor6;
+    uint32 Address_Sensor6;
+
+    uint8  NodeType_Sensor7;
+    uint8  AbstNodeType_Sensor7;
+    uint32 SerialNum_Sensor7;
+    uint32 Address_Sensor7;
+
+    uint8  NodeType_Sensor8;
+    uint8  AbstNodeType_Sensor8;
+    uint32 SerialNum_Sensor8;
+    uint32 Address_Sensor8;
+
+    uint8  NodeType_Wheel1;
+    uint8  AbstNodeType_Wheel1;
+    uint32 SerialNum_Wheel1;
+    uint32 Address_Wheel1;
+
+    uint8  NodeType_Wheel2;
+    uint8  AbstNodeType_Wheel2;
+    uint32 SerialNum_Wheel2;
+    uint32 Address_Wheel2;
+
+    uint8  NodeType_Wheel3;
+    uint8  AbstNodeType_Wheel3;
+    uint32 SerialNum_Wheel3;
+    uint32 Address_Wheel3;
+
+    uint8  NodeType_Wheel4;
+    uint8  AbstNodeType_Wheel4;
+    uint32 SerialNum_Wheel4;
+    uint32 Address_Wheel4;
+
+} __attribute__((packed)) ADCS_PortMapTlm_Payload_t;
+
+/*************************************
+ * CubeADCS Event Entry
+ *************************************/
+typedef struct
+{
+    uint32_t Counter;
+    uint32_t UpTime;
+    uint32_t UnixTime;
+    uint16_t MilliSec;
+    struct __attribute__((packed))
+    {
+        uint16_t EventType : 9;
+        uint8_t  EventSource : 5;
+        uint8_t  EventClass : 2;
+    } Identifier;
+    uint8_t EventData[8];
+} __attribute__((packed)) ADCS_EventEntry_t;
+
+/*************************************
+ * CubeADCS Frame Something
+ *************************************/
+typedef struct
+{
+    uint32_t Counter;
+    uint32_t UpTime;
+    uint32_t UnixTime;
+    uint16_t MilliSec;
+    struct __attribute__((packed))
+    {
+        uint16_t EventType : 9;
+        uint8_t  EventSource : 5;
+        uint8_t  EventClass : 2;
+    } Identifier;
+    uint8_t EventData[8];
+} __attribute__((packed)) ADCS_Frame_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} ADCS_NoopCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} ADCS_ResetAppCmdCountersCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} ADCS_ResetDeviceCmdCountersCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} ADCS_SetCommunicationModeAsCanCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];/**< \brief Command header */
+} ADCS_ResetCountersCmd_t;
+
+typedef struct{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GpioEnHighCmd_t;
+
+typedef struct{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GpioEnLowCmd_t;
+
+typedef struct{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GpioBootHighCmd_t;
+
+typedef struct{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GpioBootLowCmd_t;
+
+typedef struct{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_ExitBootLoaderCmd_t;
+
+typedef struct{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_ResetCmd_t;
+
+/*************************************************************************/
+/*
+** Type definition (Housekeeping)
+*/
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} ADCS_SendHkCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} ADCS_SendBcnCmd_t;
+
+
+/********************************************************
+ * 
+ * COSMIC Actual Set Command structure
+ * Upper functions are just the references
+ * 
+ ********************************************************/
+typedef struct{ // ID 2
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_CurrentUnixTimeCmd_Payload_t Payload;
+} ADCS_CurrentUnixTimeCmd_t;
+
+typedef struct { // ID 5
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_ErrorLogClearCmd_t;
+
+typedef struct{ // ID 6
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ErrorLogSettingCmd_Payload_t Payload;
+} ADCS_ErrorLogSettingCmd_t;
+
+typedef struct { // ID 7
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_PersistConfigCmd_t;
+
+typedef struct{ // ID 42
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ControlEstimationModeCmd_Payload_t Payload;
+} ADCS_ControlEstimationModeCmd_t;
+
+typedef struct{ // ID 43
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_DisableMagRwlMntMngCmd_Payload_t Payload;
+} ADCS_DisableMagRwlMntMngCmd_t;
+
+typedef struct{ // ID 47
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ReferenceIRCVectorCmd_Payload_t Payload;
+} ADCS_ReferenceIRCVectorCmd_t;
+
+typedef struct{ // ID 48
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ReferenceLLHTargetCmd_Payload_t Payload;
+} ADCS_ReferenceLLHTargetCmd_t;
+
+typedef struct{ // ID 51
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_OrbitModeCmd_Payload_t Payload;
+} ADCS_OrbitModeCmd_t;
+
+typedef struct{ // ID 52
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_MagDeployCmd_Payload_t Payload;
+} ADCS_MagDeployCmd_t;
+
+typedef struct{ // ID 54
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ReferenceRPYvaluesCmd_Payload_t Payload;
+} ADCS_ReferenceRPYvaluesCmd_t;
+
+typedef struct{ // ID 55
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_OpenLoopCmdMTQCmd_Payload_t Payload;
+} ADCS_OpenLoopCmdMTQCmd_t;
+
+typedef struct { // ID 56
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_PowerStateCmd_Payload_t Payload;
+} ADCS_PowerStateCmd_t;
+
+typedef struct { // ID 57
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_RunModeCmd_Payload_t Payload;
+} ADCS_RunModeCmd_t;
+
+typedef struct { // ID 58
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ControlModeCmd_Payload_t Payload;
+} ADCS_ControlModeCmd_t;
+
+typedef struct { // ID 59
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_WhlConfigCmd_Payload_t Payload;
+} ADCS_WhlConfigCmd_t;
+
+typedef struct { // ID 61
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_SatConfigCmd_Payload_t Payload;
+} ADCS_SatConfigCmd_t;
+
+typedef struct { // ID 62
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_ControllerConfig_Payload_t Payload;
+} ADCS_ControllerConfig_t;
+
+typedef struct { // ID 63
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_Mag0MMTCalibConfigCmd_Payload_t Payload;
+} ADCS_Mag0MMTCalibConfigCmd_t;
+
+typedef struct { // ID 64
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_DefaultModeConfigCmd_Payload_t Payload;
+} ADCS_DefaultModeConfigCmd_t;
+
+typedef struct { // ID 65
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_MountingConfigCmd_Payload_t Payload;
+} ADCS_MountingConfigCmd_t;
+
+typedef struct { // ID 66
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_Mag1MMTCalibConfigCmd_Payload_t Payload;
+} ADCS_Mag1MMTCalibConfigCmd_t;
+
+typedef struct { // ID 67
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_EstimatorConfigCmd_Payload_t Payload;
+} ADCS_EstimatorConfigCmd_t;
+
+typedef struct{ // ID 68
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_SatOrbitParamConfigCmd_Payload_t Payload;
+} ADCS_SatOrbitParamConfigCmd_t;
+
+typedef struct{ // ID 69
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_NodeSelectionConfigCmd_Payload_t Payload;
+} ADCS_NodeSelectionConfigCmd_t;
+
+typedef struct{ // ID 70
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_MTQConfigCmd_Payload_t Payload;
+} ADCS_MTQConfigCmd_t;
+
+typedef struct{ // ID 71
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_EstimationModeCmd_Payload_t Payload;
+} ADCS_EstimationModeCmd_t;
+
+typedef struct{ // ID 72
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_OperationalStateCmd_Payload_t Payload;
+} ADCS_OperationalStateCmd_t;
+
+typedef struct{ // ID 77
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_MagSensingElmConfigCmd_Payload_t Payload;
+} ADCS_MagSensingElmConfigCmd_t;
+
+typedef struct { // ID 112
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_UnsolicitTlmMsgSetupCmd_Payload_t Payload;
+} ADCS_UnsolicitTlmMsgSetupCmd_t;
+
+typedef struct { // ID 116
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_UnsolicitEventMsgSetupCmd_ExternalPayload_t Payload;
+} ADCS_UnsolicitEventMsgSetupCmd_t;
+
+typedef struct { // ID 120
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    ADCS_InitiateEventLogTransferCmd_Payload_t Payload;
+} ADCS_InitiateEventLogTransferCmd_t;
+
+/********************************************************
+ * 
+ * COSMIC Actual Get Command structure
+ * Everything is No arguments
+ * 
+ ********************************************************/
+typedef struct{ // ID 132
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetErrorLogSettingCmd_t;
+
+ typedef struct{ // ID 133
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetCurrentUnixTimeCmd_t;
+
+typedef struct{ // ID 134
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetPersistConfigDiagnosticCmd_t;
+
+typedef struct{ // ID 135
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetCommunicationStatusCmd_t;
+
+typedef struct{ // ID 150
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetControlEstimationModeCmd_t;
+
+typedef struct{ // ID 156
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetReferenceIRCVectorCmd_t;
+
+typedef struct{ // ID 157
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetReferenceLLHTargetCmd_t;
+
+typedef struct{ // ID 162
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetOrbitModeCmd_t;
+
+typedef struct{ // ID 167
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetHealthTlmMMTCmd_t;
+
+typedef struct{  // ID 170
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetRawCubeSenseSunCmd_t;
+
+typedef struct{ // ID 181
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetReferenceRPYvaluesCmd_t;
+
+typedef struct{ // ID 182
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetOpenLoopCmdMTQCmd_t;
+
+typedef struct{ // ID 183
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetPowerStateCmd_t;
+
+typedef struct{ // ID 184
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetRunModeCmd_t;
+
+typedef struct{ // ID 185
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetControlModeCmd_t;
+
+typedef struct{ // ID 186
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetWhlConfigCmd_t;
+
+typedef struct{ // ID 189
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetSatelliteConfigCmd_t;
+
+typedef struct{ // ID 190
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetControllerConfigCmd_t;
+
+typedef struct{ // ID 191
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetMag0MMTCalibConfigCmd_t;
+
+typedef struct{ // ID 192
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetDefaultModeConfigCmd_t;
+
+typedef struct{ // ID 193
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetMountingConfigCmd_t;
+
+typedef struct{ // ID 194
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetMag1MMTCalibConfigCmd_t;
+
+typedef struct{ // ID 195
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetEstimatorConfigCmd_t;
+
+typedef struct{ // ID 196
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetSatOrbitParamConfigCmd_t;
+
+typedef struct{ // ID 197
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetNodeSelectionConfigCmd_t;
+
+typedef struct{ // ID 198
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetMTQConfigCmd_t;
+
+typedef struct{ // ID 199
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetEstimationModeCmd_t;
+
+typedef struct{ // ID 200
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetOperationalStateCmd_t;
+
+typedef struct{ // ID 203
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetRawCSSSensorCmd_t;
+
+typedef struct{ // ID 204
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetRawGYRSensorCmd_t;
+
+typedef struct{ // ID 207
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetCalibratedGYRSensorCmd_t;
+
+typedef struct{ // ID 221
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetMagSensingElmConfigCmd_t;
+
+typedef struct{ // ID 227
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetTlmLogInclMaskCmd_t;
+
+typedef struct{ // ID 228
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetUnsolicitTlmMsgSetupCmd_t;
+
+typedef struct{ // ID 233
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetUnsolicitEventMsgSetupCmd_t;
+
+typedef struct { // ID 235
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetEventLogStatusReponseCmd_t;
+
+typedef struct { // ID 239
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_GetPortMapCmd_t;
+
+
+// /********************************************************
+//  * 
+//  * ADCS Telemetry Msg structure
+//  * 
+//  ********************************************************/
+// /* Beacon SB MSG */
+// typedef struct
+// {
+//     CFE_MSG_TelemetryHeader_t  TelemetryHeader; /**< \brief Telemetry header */
+//     ADCS_BcnTlm_Payload_t Payload;         /**< \brief Telemetry payload */
+//     bool IsSunlight;
+// } ADCS_BcnTlm_t;
+
+// /* Housekeeping SB MSG */
+// typedef struct
+// {
+//     CFE_MSG_TelemetryHeader_t  TelemetryHeader; /**< \brief Telemetry header */
+//     ADCS_HkTlm_Payload_t Payload;         /**< \brief Telemetry payload */
+// } ADCS_HkTlm_t;
+
+// /* Report SB MSG */
+// typedef struct {
+//     CFE_MSG_TelemetryHeader_t TelemetryHeader;
+//     RPT_Report_t Report;
+// } ADCS_ReportTlm_t;
+
+
+/********************************************************
+ * 
+ * ADCS Additional Msg structure
+ * 
+ ********************************************************/
+/* Detumbling */
+typedef struct { 
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_SequenceCmdDetumblingCmd_t;
+
+/* Sun Pointing */
+typedef struct { 
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_SequenceCmdSunpointingCmd_t;
+
+/* Velocity Pointing */
+typedef struct { 
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_SequenceCmdVpointingCmd_t;
+
+/* KissCAM EARTH Pointing */
+typedef struct { 
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_SequenceCmdKSCpointingCmd_t;
+
+/* LG CAM EARTH Pointing */
+typedef struct { 
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} ADCS_SequenceCmdLGCpointingCmd_t;
+
+/* GS-based RPY Pointing */
+typedef struct { 
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+	ADCS_ReferenceRPYvaluesCmd_Payload_t Payload;
+} ADCS_SequenceCmdRPYpointingCmd_t;
+
+
+/*******************************************/
+/*                                         */
+/*            EPS  (BEE-1000)              */
+/*                                         */
+/*******************************************/
+// msg id
+#define EPS_CMD_ID                          0x1875   //6261
+#define EPS_SEND_HK_ID     0x1876
+#define EPS_SEND_BCN_ID    0x1877
+
+#define EPS_HK_TLM_ID      0x0875
+#define EPS_BCN_TLM_ID     0x0876
+#define EPS_REPORT_TLM_ID  0x0877
+
+#define EPS_DOCK_TLM_TOPICID    0x0878    /* <\brief For internal Vbatt inspection */
+
+// function codes
+#define EPS_NOOP_CC                 0
+#define EPS_RESET_COUNTERS_CC       1
+#define EPS_GET_COUNTERS_CC         2
+#define EPS_GET_APPDATA_CC          3
+#define EPS_REPORT_APPDATA_CC       4
+
+#define EPS_DEVICE_P60_CC_BASE      10
+
+
+#define EPS_P60_DOCK_SET_CHANNEL_SINGLE_CC (EPS_DEVICE_P60_CC_BASE + 0)
+#define EPS_P60_DOCK_GET_CHANNEL_SINGLE_CC (EPS_DEVICE_P60_CC_BASE + 1)
+#define EPS_P60_DOCK_SET_CHANNELS_CC       (EPS_DEVICE_P60_CC_BASE + 2)
+#define EPS_P60_DOCK_GET_CHANNELS_CC       (EPS_DEVICE_P60_CC_BASE + 3)
+#define EPS_P60_PDU_SET_CHANNEL_SINGLE_CC  (EPS_DEVICE_P60_CC_BASE + 4)
+#define EPS_P60_PDU_GET_CHANNEL_SINGLE_CC  (EPS_DEVICE_P60_CC_BASE + 5)
+#define EPS_P60_PDU_SET_CHANNELS_CC        (EPS_DEVICE_P60_CC_BASE + 6)
+#define EPS_P60_PDU_GET_CHANNELS_CC        (EPS_DEVICE_P60_CC_BASE + 7)
+#define EPS_P60_ACU_SET_MPPT_MODE_CC       (EPS_DEVICE_P60_CC_BASE + 8)
+#define EPS_P60_ACU_GET_MPPT_MODE_CC       (EPS_DEVICE_P60_CC_BASE + 9)
+
+#define EPS_P60_DOCK_GET_TABLE_HK_CC       (EPS_DEVICE_P60_CC_BASE + 10)
+#define EPS_P60_DOCK_GET_TABLE_CONF_CC     (EPS_DEVICE_P60_CC_BASE + 11)
+#define EPS_P60_DOCK_GET_TABLE_CAL_CC      (EPS_DEVICE_P60_CC_BASE + 12)
+#define EPS_P60_PDU_GET_TABLE_HK_CC        (EPS_DEVICE_P60_CC_BASE + 13)
+#define EPS_P60_PDU_GET_TABLE_CONF_CC      (EPS_DEVICE_P60_CC_BASE + 14)
+#define EPS_P60_PDU_GET_TABLE_CAL_CC       (EPS_DEVICE_P60_CC_BASE + 15)
+#define EPS_P60_ACU_GET_TABLE_HK_CC        (EPS_DEVICE_P60_CC_BASE + 16)
+#define EPS_P60_ACU_GET_TABLE_CONF_CC      (EPS_DEVICE_P60_CC_BASE + 17)
+#define EPS_P60_ACU_GET_TABLE_CAL_CC       (EPS_DEVICE_P60_CC_BASE + 18)
+
+#define EPS_P60_DOCK_RESET_GND_WDT_CC      (EPS_DEVICE_P60_CC_BASE + 20)
+#define EPS_P60_PDU_RESET_GND_WDT_CC       (EPS_DEVICE_P60_CC_BASE + 21)
+#define EPS_P60_ACU_RESET_GND_WDT_CC       (EPS_DEVICE_P60_CC_BASE + 22)
+
+#define EPS_P60_GET_PARAM_CC               (EPS_DEVICE_P60_CC_BASE + 30)
+#define EPS_P60_GET_PARAM_ARRAY_CC         (EPS_DEVICE_P60_CC_BASE + 31)
+#define EPS_P60_SET_PARAM_CC               (EPS_DEVICE_P60_CC_BASE + 32)
+#define EPS_P60_GET_TABLE_CC               (EPS_DEVICE_P60_CC_BASE + 33)
+#define EPS_P60_LOAD_TABLE_CC              (EPS_DEVICE_P60_CC_BASE + 34)
+#define EPS_P60_SAVE_TABLE_CC              (EPS_DEVICE_P60_CC_BASE + 35)
+#define EPS_P60_TABLE_GET_STATIC_CC        (EPS_DEVICE_P60_CC_BASE + 36)
+#define EPS_P60_TABLE_DUMP_STATIC_CC       (EPS_DEVICE_P60_CC_BASE + 37)
+
+/* Used for EO */
+#define EPS_P60_GET_DOCK_INFO_CC           (EPS_DEVICE_P60_CC_BASE + 40)
+#define EPS_P60_RESET_CC                   (EPS_DEVICE_P60_CC_BASE + 41)
+
+
+
+#define EPS_PACK    __attribute__((packed))
+
+/**
+ * P60 Command and Telemetry Message Definitions
+*/
+
+typedef struct EPS_PACK {
+    uint8_t  channel;
+    uint8_t  value;
+    uint16_t timeout;
+} EPS_P60_Dock_SetChannelSingle_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t  channel;
+} EPS_P60_Dock_GetChannelSingle_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t  channels[13];
+    uint16_t timeout;
+} EPS_P60_Dock_SetChannels_Payload_t;
+
+typedef struct EPS_PACK {
+    uint32_t timeout;
+} EPS_P60_Dock_ResetGndWdt_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t  channel;
+    uint8_t  value;
+    uint32_t timeout;
+} EPS_P60_PDU_SetChannelSingle_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t  channel;
+} EPS_P60_PDU_GetChannelSingle_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t  channels[9];
+    uint32_t timeout;
+} EPS_P60_PDU_SetChannels_Payload_t;
+
+typedef struct EPS_PACK {
+    uint32_t timeout;
+} EPS_P60_PDU_ResetGndWdt_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t  mode;
+    uint32_t timeout;
+} EPS_P60_ACU_SetMpptMode_Payload_t;
+
+typedef struct EPS_PACK {
+    uint32_t timeout;
+} EPS_P60_ACU_ResetGndWdt_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint8_t rowCount;
+    uint16_t size;
+} EPS_P60_TableGet_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint8_t rowCount;
+    uint16_t size;
+} EPS_P60_TableGetStatic_Payload_t;
+
+typedef struct EPS_PACK {
+    uint16_t size;
+} EPS_P60_TableDumpStatic_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint8_t to;
+    uint16_t timeout;
+} EPS_P60_TableSave_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint8_t from;
+    uint16_t timeout;
+} EPS_P60_TableLoad_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint16_t addr;
+    uint8_t type;
+    uint16_t size;
+    uint16_t timeout;
+    uint8_t  data[32];
+} EPS_P60_SetParam_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint16_t addr;
+    uint8_t type;
+    uint16_t size;
+} EPS_P60_GetParam_Payload_t;
+
+typedef struct EPS_PACK {
+    uint8_t node;
+    uint8_t tableId;
+    uint16_t addr;
+    uint8_t type;
+    uint16_t size;
+    uint16_t count;
+} EPS_P60_GetParamArray_Payload_t;
+
+// 본격 command 시작
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} EPS_NoArgCmd_t;
+
+/* Shortcuts */
+typedef EPS_NoArgCmd_t EPS_NoopCmd_t;
+typedef EPS_NoArgCmd_t EPS_GetCountersCmd_t;
+typedef EPS_NoArgCmd_t EPS_GetAppDataCmd_t;
+typedef EPS_NoArgCmd_t EPS_ResetCountersCmd_t;
+typedef EPS_NoArgCmd_t EPS_ReportAppDataCmd_t;
+
+/* EPS P60 Dock / PDU / ACU No-Arg */
+typedef EPS_NoArgCmd_t EPS_P60_Dock_GetChannelsCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_Dock_GetTableHkCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_Dock_GetTableConfCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_Dock_GetTableCalCmd_t;
+
+typedef EPS_NoArgCmd_t EPS_P60_PDU_GetChannelsCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_PDU_GetTableHkCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_PDU_GetTableConfCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_PDU_GetTableCalCmd_t;
+
+typedef EPS_NoArgCmd_t EPS_P60_ACU_GetMpptModeCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_ACU_GetTableHkCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_ACU_GetTableConfCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_ACU_GetTableCalCmd_t;
+
+typedef EPS_NoArgCmd_t EPS_P60_GetDockInfoCmd_t;
+typedef EPS_NoArgCmd_t EPS_P60_ResetCmd_t;
+typedef EPS_NoArgCmd_t EPS_SendHkCmd_t;
+typedef EPS_NoArgCmd_t EPS_SendBcnCmd_t;
+
+
+/*
+ * ========================================================================
+ *  EPS P60 Dock Commands
+ * ========================================================================
+ */
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_Dock_SetChannelSingle_Payload_t Payload;
+} EPS_P60_Dock_SetChannelSingleCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_Dock_SetChannels_Payload_t Payload;
+} EPS_P60_Dock_SetChannelsCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_Dock_GetChannelSingle_Payload_t Payload;
+} EPS_P60_Dock_GetChannelSingleCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_Dock_ResetGndWdt_Payload_t Payload;
+} EPS_P60_Dock_ResetGndWdtCmd_t;
+
+/*
+ * ========================================================================
+ *  EPS P60 PDU Commands
+ * ========================================================================
+ */
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_PDU_SetChannelSingle_Payload_t Payload;
+} EPS_P60_PDU_SetChannelSingleCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_PDU_SetChannels_Payload_t Payload;
+} EPS_P60_PDU_SetChannelsCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_PDU_GetChannelSingle_Payload_t Payload;
+} EPS_P60_PDU_GetChannelSingleCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_PDU_ResetGndWdt_Payload_t Payload;
+} EPS_P60_PDU_ResetGndWdtCmd_t;
+
+/*
+ * ========================================================================
+ *  EPS P60 ACU Commands
+ * ========================================================================
+ */
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_ACU_SetMpptMode_Payload_t Payload;
+} EPS_P60_ACU_SetMpptModeCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_ACU_ResetGndWdt_Payload_t Payload;
+} EPS_P60_ACU_ResetGndWdtCmd_t;
+
+/*
+ * ========================================================================
+ *  EPS Parameter / Table Commands
+ * ========================================================================
+ */
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_GetParam_Payload_t Payload;
+} EPS_P60_GetParamCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_GetParamArray_Payload_t Payload;
+} EPS_P60_GetParamArrayCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_SetParam_Payload_t Payload;
+} EPS_P60_SetParamCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_TableGet_Payload_t Payload;
+} EPS_P60_TableGetCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_TableGetStatic_Payload_t Payload;
+} EPS_P60_TableGetStaticCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_TableDumpStatic_Payload_t Payload;
+} EPS_P60_TableDumpStaticCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_TableSave_Payload_t Payload;
+} EPS_P60_TableSaveCmd_t;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    EPS_P60_TableLoad_Payload_t Payload;
+} EPS_P60_TableLoadCmd_t;
+
+
+/*******************************************/
+/*                                         */
+/*                  TO APP                 */
+/*                                         */
+/*******************************************/
+
+#define CFE_MISSION_TO_LAB_CMD_ID        0x1823
+
+#define TO_LAB_NOOP_CC            0 /*  no-op command     */
+#define TO_LAB_RESET_STATUS_CC    1 /*  reset status      */
+#define TO_LAB_ADD_PKT_CC         2 /*  add packet        */
+#define TO_LAB_SEND_DATA_TYPES_CC 3 /*  send data types   */
+#define TO_LAB_REMOVE_PKT_CC      4 /*  remove packet     */
+#define TO_LAB_REMOVE_ALL_PKT_CC  5 /*  remove all packet */
+#define TO_LAB_OUTPUT_ENABLE_CC   6 /*  output enable     */
+
+
+// typedef struct
+// {
+//     CFE_MSG_TelemetryHeader_t TelemetryHeader; /**< \brief Telemetry header */
+//     TO_LAB_HkTlm_Payload_t    Payload;         /**< \brief Telemetry payload */
+// } TO_LAB_HkTlm_t;
+
+// /******************************************************************************/
+
+// typedef struct
+// {
+//     CFE_MSG_TelemetryHeader_t  TelemetryHeader; /**< \brief Telemetry header */
+//     TO_LAB_DataTypes_Payload_t Payload;         /**< \brief Telemetry payload */
+// } TO_LAB_DataTypesTlm_t;
+
+/******************************************************************************/
+
+/*
+ * The following commands do not have any payload,
+ * but should still "reserve" a unique structure type to
+ * employ a consistent handler pattern.
+ *
+ * This matches the pattern in CFE core and other modules.
+ */
+typedef uint32 CFE_SB_MsgId_Atom_t;
+typedef struct
+{
+    CFE_SB_MsgId_Atom_t Value;
+} CFE_SB_MsgId_t;
+
+typedef struct
+{
+    uint8 Priority; /**< \brief  Specify high(1) or low(0) message priority for off-board routing, currently unused */
+    uint8 Reliability; /**< \brief  Specify high(1) or low(0) message transfer reliability for off-board routing,
+                          currently unused */
+} CFE_SB_Qos_t;
+
+
+typedef struct
+{
+    uint8 CommandCounter;
+    uint8 CommandErrorCounter;
+    uint8 spareToAlign[2];
+} TO_LAB_HkTlm_Payload_t;
+
+typedef struct
+{
+    uint16 synch;
+    uint8  bl1, bl2; /* boolean */
+    int8   b1, b2, b3, b4;
+    int16  w1, w2;
+    int32  dw1, dw2;
+    float  f1, f2;
+    double df1, df2;
+    char   str[10];
+} TO_LAB_DataTypes_Payload_t;
+#pragma pack(push, 1)
+typedef struct
+{
+    CFE_SB_MsgId_t Stream;
+    CFE_SB_Qos_t   Flags;
+    uint8          BufLimit;
+} TO_LAB_AddPacket_Payload_t;
+#pragma pack(pop)
+typedef struct
+{
+    CFE_SB_MsgId_t Stream;
+} TO_LAB_RemovePacket_Payload_t;
+
+typedef struct
+{
+    char dest_IP[16];
+} TO_LAB_EnableOutput_Payload_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} TO_LAB_SendHkCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} TO_LAB_NoopCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} TO_LAB_ResetCountersCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} TO_LAB_RemoveAllCmd_t;
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} TO_LAB_SendDataTypesCmd_t;
+
+#pragma pack(push, 1)
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    TO_LAB_AddPacket_Payload_t Payload;       /**< \brief Command payload */
+} TO_LAB_AddPacketCmd_t;
+#pragma pack(pop)
+
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    TO_LAB_RemovePacket_Payload_t Payload;       /**< \brief Command payload */
+} TO_LAB_RemovePacketCmd_t;
+
+
+
+
+// TOlab 수정하면서 Payload 없어짐
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    // TO_LAB_EnableOutput_Payload_t Payload;       /**< \brief Command payload */
+} TO_LAB_EnableOutputCmd_t;
+
+
+
+
+
+/*******************************************/
+/*                                         */
+/*                  SC APP                 */
+/*                                         */
+/*******************************************/
+
+// msgid
+#define SC_CMD_MID          (0x1820)
+
+
+#define SC_NOOP_CC 0
+
+/**
+ * \brief Reset Counters
+ *
+ *  \par Description
+ *       Resets the SC housekeeping counters
+ *
+ *  \par Command Structure
+ *       #SC_ResetCountersCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will be cleared
+ *       - The #SC_STARTATS_CMD_INF_EID informational event message will be
+ *         generated when the command is received
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message #SC_CMD_LEN_ERR_EID
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_NOOP_CC
+ */
+#define SC_RESET_COUNTERS_CC 1
+
+/**
+ * \brief Start an ATS
+ *
+ *  \par Description
+ *       Starts the specified ATS
+ *
+ *  \par Command Structure
+ *       #SC_StartAtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - ATP is not idle
+ *       - ATS specified is not loaded
+ *       - Invalid ATS ID
+ *       - All command were skipped
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_STOP_ATS_CC
+ */
+#define SC_START_ATS_CC 2
+/**
+ * \brief Stop an ATS
+ *
+ *  \par Description
+ *       Stops the specified ATS
+ *
+ *  \par Command Structure
+ *       #SC_StopAtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - the #SC_STOPATS_CMD_INF_EID event message will be generated
+ *
+ **
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_START_ATS_CC
+ */
+#define SC_STOP_ATS_CC 3
+
+/**
+ * \brief Start an RTS
+ *
+ *  \par Description
+ *       Starts the specified RTS
+ *
+ *  \par Command Structure
+ *       #SC_StartRtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_STARTRTS_CMD_DBG_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Invalid command field in first RTS command
+ *       - RTS not loaded
+ *       - RTS already running
+ *       - RTS is disabled
+ *       - Invalid RTS ID
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - #SC_HkTlm_Payload_t.RtsActiveErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_STOP_RTS_CC
+ */
+#define SC_START_RTS_CC 4
+
+/**
+ * \brief Stop an RTS
+ *
+ *  \par Description
+ *       Stops the specified RTS
+ *
+ *  \par Command Structure
+ *       #SC_StopRtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_STOPRTS_CMD_INF_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - RTS ID is invalid
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_START_RTS_CC
+ */
+#define SC_STOP_RTS_CC 5
+
+/**
+ * \brief DISABLE an RTS
+ *
+ *  \par Description
+ *       Disables the specified RTS
+ *
+ *  \par Command Structure
+ *       #SC_DisableRtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_DISABLE_RTS_INF_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - RTS ID is invalid
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_ENABLE_RTS_CC
+ */
+#define SC_DISABLE_RTS_CC 6
+
+/**
+ * \brief Enable an RTS
+ *
+ *  \par Description
+ *       Enables the specified RTS
+ *
+ *  \par Command Structure
+ *       #SC_EnableRtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_ENABLE_RTS_INF_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - RTS ID is invalid
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_DISABLE_RTS_CC
+ */
+#define SC_ENABLE_RTS_CC 7
+
+/**
+ * \brief Switch the running ATS
+ *
+ *  \par Description
+ *       Switches the running ATS and the ATS no running
+ *
+ *  \par Command Structure
+ *       #SC_SwitchAtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_SWITCH_ATS_CMD_INF_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Desitination ATS is not loaded
+ *       - There is no currently running ATS to switch from
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ */
+#define SC_SWITCH_ATS_CC 8
+
+/**
+ * \brief Jump the time in the running ATS
+ *
+ *  \par Description
+ *       Moves the 'current time' pointer in the ATS to another time
+ *
+ *  \par Command Structure
+ *       #SC_JumpAtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_JUMP_ATS_INF_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - All ATS Cmds were skipped in the jump, ATS is shut off
+ *       - No ATS is active
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ */
+#define SC_JUMP_ATS_CC 9
+
+/**
+ * \brief Set the Continue-On-Checksum-Failure flag
+ *
+ *  \par Description
+ *       Sets the flag which specifies whether or not to continue
+ *        processing an ATS if one of the commands in the ATS fails
+ *        checksum validation before being sent out.
+ *
+ *  \par Command Structure
+ *       #SC_ContinueAtsOnFailureCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_CONT_CMD_INF_EID will be sent
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Invalid State specified
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ */
+#define SC_CONTINUE_ATS_ON_FAILURE_CC 10
+
+/**
+ * \brief Append to an ATS table
+ *
+ *  \par Description
+ *       Adds contents of the Append table to the specified ATS table
+ *
+ *  \par Command Structure
+ *       #SC_AppendAtsCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - ATS specified is not loaded
+ *       - Invalid ATS ID
+ *       - Append table contents too large to fit in ATS free space
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - Error specific event message
+ *
+ *  \par Criticality
+ *       None
+ */
+#define SC_APPEND_ATS_CC 11
+
+/**
+ * \brief Request from cFE Table Services to manage a table
+ *
+ *  \par Description
+ *       This command signals a need for the host application (SC)
+ *       to allow cFE Table Services to manage the specified table.
+ *       For loadable tables, this command indicates that a table
+ *       update is available.  For dump only tables, this command
+ *       indicates that cFE Table Services wants to dump the table
+ *       data.  In either case, the host application must call the
+ *       table manage API function so that the pending function
+ *       can be executed within the context of the host.
+ *
+ *       Note: There is no reason for this command to be sent from
+ *       any source other than cFE Table Services.
+ *
+ *  \par Command Structure
+ *       #SC_ManageTableCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified via:
+ *       - cFE Table Services housekeeping telemetry
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Invalid table ID
+ *       - Unexpected result during manage of loadable table
+ *
+ *  \par Evidence of failure for this command may be verified via:
+ *       - cFE Table Services housekeeping telemetry
+ *       - Error specific SC event message
+ *
+ *  \par Criticality
+ *       None
+ */
+#define SC_MANAGE_TABLE_CC 12
+
+/**
+ * \brief START a group of RTS
+ *
+ *  \par Description
+ *       The load state for an RTS may be LOADED or NOT LOADED.
+ *       The enable state for an RTS may be ENABLED or DISABLED.
+ *       The run state for an RTS may be STARTED or STOPPED.
+ *       This command STARTS each RTS in the specified group that is
+ *       currently LOADED, ENABLED and STOPPED.
+ *
+ *  \par Command Structure
+ *       #SC_StartRtsGrpCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - #SC_STARTRTSGRP_CMD_INF_EID event will indicate the number of RTS
+ *         in the group that were actually STARTED by the command.
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Invalid group definition, first RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be greater than or equal to first RTS ID
+ *       - If the group definition is valid the command will report success, regardless of
+ *         whether any RTS in the group is actually STARTED by the command.
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - The #SC_CMD_LEN_ERR_EID event will indicate invalid command packet length.
+ *       - The #SC_STARTRTSGRP_CMD_ERR_EID event will indicate invalid group definition.
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_STOP_RTS_GRP_CC
+ */
+#define SC_START_RTS_GRP_CC 13
+
+/**
+ * \brief STOP a group of RTS
+ *
+ *  \par Description
+ *       The load state for an RTS may be LOADED or NOT LOADED.
+ *       The enable state for an RTS may be ENABLED or DISABLED.
+ *       The run state for an RTS may be STARTED or STOPPED.
+ *       This command STOPS each RTS in the specified group that is currently STARTED.
+ *
+ *  \par Command Structure
+ *       #SC_StopRtsGrpCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_STOPRTSGRP_CMD_INF_EID event will indicate the number of RTS
+ *         in the group that were actually STOPPED by the command
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Invalid group definition, first RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be greater than or equal to first RTS ID
+ *       - If the group definition is valid the command will report success, regardless of
+ *         whether any RTS in the group is actually STOPPED by the command.
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - The #SC_CMD_LEN_ERR_EID event will indicate invalid command packet length.
+ *       - The #SC_STOPRTSGRP_CMD_ERR_EID event will indicate invalid group definition.
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_START_RTS_GRP_CC
+ */
+#define SC_STOP_RTS_GRP_CC 14
+
+/**
+ * \brief DISABLE a group of RTS
+ *
+ *  \par Description
+ *       The enable state for an RTS may be ENABLED or DISABLED.
+ *       This command sets the enable state for the specified group of RTS to DISABLED.
+ *
+ *  \par Command Structure
+ *       #SC_DisableRtsGrpCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_DISRTSGRP_CMD_INF_EID event will indicate the number of RTS
+ *         in the group that were changed from ENABLED to DISABLED by the command
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Invalid group definition, first RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be greater than or equal to first RTS ID
+ *       - If the group definition is valid the command will report success, regardless of
+ *         whether the group contained an RTS that was not already DISABLED.
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - The #SC_CMD_LEN_ERR_EID event will indicate invalid command packet length.
+ *       - The #SC_DISRTSGRP_CMD_ERR_EID event will indicate invalid group definition.
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_ENABLE_RTS_GRP_CC
+ */
+#define SC_DISABLE_RTS_GRP_CC 15
+
+/**
+ * \brief ENABLE a group of RTS
+ *
+ *  \par Description
+ *       The enable state for an RTS may be ENABLED or DISABLED.
+ *       This command sets the enable state for the specified group of RTS to ENABLED.
+ *
+ *  \par Command Structure
+ *       #SC_EnableRtsGrpCmd_t
+ *
+ *  \par Command Verification
+ *       Successful execution of this command may be verified with
+ *       the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdCtr will increment
+ *       - The #SC_ENARTSGRP_CMD_INF_EID event will indicate success and display the
+ *         number of RTS that were changed from DISABLED to ENABLED by the command.
+ *
+ *  \par Error Conditions
+ *       This command may fail for the following reason(s):
+ *       - Command packet length not as expected
+ *       - Invalid group definition, first RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be 1 through #SC_NUMBER_OF_RTS
+ *       - Invalid group definition, last RTS ID must be greater than or equal to first RTS ID
+ *       - If the group definition is valid the command will report success, regardless of
+ *         whether the group contained an RTS that was not already ENABLED.
+ *
+ *  \par Evidence of failure may be found in the following telemetry:
+ *       - #SC_HkTlm_Payload_t.CmdErrCtr will increment
+ *       - The #SC_CMD_LEN_ERR_EID event will indicate invalid command packet length.
+ *       - The #SC_ENARTSGRP_CMD_ERR_EID event will indicate invalid group definition.
+ *
+ *  \par Criticality
+ *       None
+ *
+ *  \sa #SC_DISABLE_RTS_GRP_CC
+ */
+#define SC_ENABLE_RTS_GRP_CC 16
+
+
+
+#define SC_NUMBER_OF_RTS_IN_UINT16 16 /**< \brief Number of RTS represented in a uint16 */
+
+/**
+ * ATS/RTS Cmd Status Enumeratoion
+ */
+enum SC_Status
+{
+    SC_Status_EMPTY,           /**< \brief the object is not loaded */
+    SC_Status_LOADED,          /**< \brief the object is loaded */
+    SC_Status_IDLE,            /**< \brief the object is not executing */
+    SC_Status_EXECUTED,        /**< \brief the object has completed executing */
+    SC_Status_SKIPPED,         /**< \brief the object (ats command) was skipped */
+    SC_Status_EXECUTING,       /**< \brief the object is currently executing */
+    SC_Status_FAILED_CHECKSUM, /**< \brief the object failed a checksum test */
+    SC_Status_FAILED_DISTRIB,  /**< \brief the object could not be sent on the SWB */
+    SC_Status_STARTING         /**< \brief used when an inline switch is executed */
+};
+
+typedef uint8 SC_Status_Enum_t;
+
+#ifndef SC_OMIT_DEPRECATED
+/**
+ * \name Old-style ATS/RTS Cmd Status macros
+ * \{
+ */
+#define SC_EMPTY           SC_Status_EMPTY
+#define SC_LOADED          SC_Status_LOADED
+#define SC_IDLE            SC_Status_IDLE
+#define SC_EXECUTED        SC_Status_EXECUTED
+#define SC_SKIPPED         SC_Status_SKIPPED
+#define SC_EXECUTING       SC_Status_EXECUTING
+#define SC_FAILED_CHECKSUM SC_Status_FAILED_CHECKSUM
+#define SC_FAILED_DISTRIB  SC_Status_FAILED_DISTRIB
+#define SC_STARTING        SC_Status_STARTING
+/**\}*/
+#endif
+
+/************************************************************************
+ * Macro Definitions
+ ************************************************************************/
+
+/**
+ * Enumeration for SC processes
+ * This specifies which process runs next
+ */
+enum SC_ProcessNum
+{
+    SC_Process_ATP  = 0,   /**< \brief ATP process next */
+    SC_Process_RTP  = 1,   /**< \brief RTP process next */
+    SC_Process_NONE = 0xFF /**< \brief No pending process */
+};
+
+typedef uint8 SC_Process_Enum_t;
+
+#ifndef SC_OMIT_DEPRECATED
+/**
+ * \name Old-style defines for which process runs next
+ * \{
+ */
+#define SC_ATP  SC_Process_ATP
+#define SC_RTP  SC_Process_RTP
+#define SC_NONE SC_Process_NONE
+/**\}*/
+#endif
+
+#define SC_MAX_TIME 0xFFFFFFFF /**< \brief Maximum time in SC */
+#define SC_MAX_WAKEUP_CNT 0xFFFFFFFF /**< \brief Maximum wakeup count in SC */
+
+/**
+ * Enumeration for ATS identifiers
+ *
+ * ATS identifiers are alphabetic letters that correspond to ATS numbers
+ */
+enum SC_AtsId
+{
+    SC_AtsId_NO_ATS, /**<\ brief No ATS */
+    SC_AtsId_ATSA,   /**< \brief ATS A */
+    SC_AtsId_ATSB    /**< \brief ATS B */
+};
+
+typedef uint8 SC_AtsId_Enum_t;
+
+#ifndef SC_OMIT_DEPRECATED
+/**
+ * \name Old-style defines for each ATS
+ * \{
+ */
+#define SC_NO_ATS SC_AtsId_NO_ATS
+#define SC_ATSA   SC_AtsId_ATSA
+#define SC_ATSB   SC_AtsId_ATSB
+/**\}*/
+#endif
+
+/**
+ * Enumeration of config parameters for which time reference to use
+ */
+enum SC_TimeRef
+{
+    SC_TimeRef_USE_CFE_TIME, /**< \brief Use cFE configured time */
+    SC_TimeRef_USE_TAI,      /**< \brief Use TAI Time */
+    SC_TimeRef_USE_UTC,      /**< \brief USE UTC Time */
+    SC_TimeRef_MAX
+};
+
+typedef uint8 SC_TimeRef_Enum_t;
+
+#ifndef SC_OMIT_DEPRECATED
+/**
+ * \name Old-style constants for config parameters for which TIME to use
+ * \{
+ */
+#define SC_USE_CFE_TIME SC_TimeRef_USE_CFE_TIME
+#define SC_USE_TAI      SC_TimeRef_USE_TAI
+#define SC_USE_UTC      SC_TimeRef_USE_UTC
+/**\}*/
+#endif
+
+#define SC_INVALID_RTS_NUMBER 0 /**< \brief Invalid RTS number */
+
+/**
+ * SC Continue After Failure Enumeration
+ */
+enum SC_AtsCont
+{
+    SC_AtsCont_FALSE = false, /**< \brief Do not continue on failure */
+    SC_AtsCont_TRUE  = true   /**< \brief Continue on failure */
+};
+
+typedef uint8 SC_AtsCont_Enum_t;
+
+#ifndef SC_OMIT_DEPRECATED
+/**
+ * \name Old-style SC Continue Flags
+ * \{
+ */
+#define SC_CONTINUE_TRUE  SC_AtsCont_TRUE
+#define SC_CONTINUE_FALSE SC_AtsCont_FALSE
+/**\}*/
+#endif
+
+
+
+
+typedef uint16 SC_RtsNum_t;
+
+/**
+ * @brief An identifier for ATS's
+ *
+ * This is a 1-based numeric value that refers to a specific ATS.
+ * The value of 0 is reserved and is considered invalid/null.
+ *
+ * The valid range is [1..SC_NUMBER_OF_ATS] (inclusive)
+ *
+ * @note Some code and documentation may also refer to this as an ATS Number.
+ * This is synonymous with an ATS ID.
+ *
+ * Unlike RTS, in many circumstances an alphabetic identifier is also used
+ * to identify an ATS (e.g. ATS A, ATS B, etc).  This is a simple mapping where
+ * A refers to ATS ID 1, B refers to ATS ID 2, etc.
+ */
+typedef uint16 SC_AtsNum_t;
+
+/**
+ * A command number for ATS's
+ *
+ * This is a 1-based numeric value that refers to a specific
+ * command within an ATS.  Each entry within an ATS has one of
+ * these identifiers on each command in it.
+ *
+ * @note RTS sequences do not use this identifier, as these
+ * commands only have a relative offset from the previous command.
+ *
+ * The value of 0 is reserved and is considered invalid/null.
+ *
+ * The valid range is [1..SC_MAX_ATS_CMDS] (inclusive)
+ *
+ * IMPORTANT: This number only serves to uniquely identify a
+ * specific command within an ATS.  It is _not_ necessarily the
+ * same as a sequence number within the ATS, as commands may be
+ * defined in the table any order (that is, they may have absolute
+ * time stamps that are not in sequence).
+ */
+typedef uint16 SC_CommandNum_t;
+
+/**
+ * @brief Represents an offset into an ATS or RTS buffer
+ *
+ * This is a 0-based numeric value that refers to a 32-bit word position
+ * within the ATS or RTS buffer.  This can be used to look up the
+ * specific command at that position.
+ *
+ * The valid range is [0..(SC_ATS_BUFF_SIZE/4)-1] for ATS
+ * or [0..(SC_RTS_BUFF_SIZE/4)-1] for RTS
+ *
+ * @note ATS/RTS Buffers are indexed using 32-bit words.
+ * To get a byte offset, this value needs to be multiplied by 4.
+ */
+typedef uint16 SC_EntryOffset_t;
+
+/**
+ * Convert from an ID or Number value (e.g. RTS/ATS identifier) to a native unsigned int
+ *
+ * This is mainly intended for printf()-style logging, where it should be paired
+ * with the "%u" conversion specifier.
+ */
+#define SC_IDNUM_AS_UINT(arg) ((unsigned int)(arg))
+
+/**
+ * Convert from a native integer value (e.g. a literal) to an ID or Number value
+ *
+ * This is mainly intended for initializing values from literals or integers
+ * This is the inverse macro of SC_IDNUM_AS_UINT()
+ */
+#define SC_IDNUM_FROM_UINT(arg) ((uint16)(arg))
+
+/* _INITIALIZER macros to be used in static (e.g. table) definitions that need to resolve at compile time */
+#define SC_RTS_NUM_INITIALIZER(i)     SC_IDNUM_FROM_UINT(i)
+#define SC_ATS_NUM_INITIALIZER(i)     SC_IDNUM_FROM_UINT(i)
+#define SC_COMMAND_NUM_INITIALIZER(i) SC_IDNUM_FROM_UINT(i)
+
+#define SC_IDNUM_EQUAL(arg1, arg2) (SC_IDNUM_AS_UINT(arg1) == SC_IDNUM_AS_UINT(arg2))
+#define SC_IDNUM_IS_NULL(arg)      (SC_IDNUM_AS_UINT(arg) == 0)
+
+/* _C macros to be used in other places that need to resolve at runtime time - these are type safe */
+#define SC_RTS_NUM_C(i)     ((SC_RtsNum_t)SC_IDNUM_FROM_UINT(i))
+#define SC_ATS_NUM_C(i)     ((SC_AtsNum_t)SC_IDNUM_FROM_UINT(i))
+#define SC_COMMAND_NUM_C(i) ((SC_CommandNum_t)SC_IDNUM_FROM_UINT(i))
+
+/* _NULL macros refer to a value that is always reserved */
+#define SC_RTS_NUM_NULL     SC_RTS_NUM_C(0)
+#define SC_ATS_NUM_NULL     SC_ATS_NUM_C(0)
+#define SC_COMMAND_NUM_NULL SC_COMMAND_NUM_C(0)
+
+
+#define SC_PACKET_MIN_SIZE 8
+
+/**
+ * \brief Maximum Packet Size
+ *
+ *  \par Description:
+ *       This parameter specifies the maximum size in bytes for an ATS or RTS command.
+ *  \par Limits:
+ *       This parameter must be greater than or equal to SC_PACKET_MIN_SIZE and
+ *       less than or equal to CFE_MISSION_SB_MAX_SB_MSG_SIZE.
+ */
+#define SC_PACKET_MAX_SIZE 256
+
+#define SC_NUMBER_OF_ATS 2 /**< \brief the number of Absolute Time Sequences */
+
+/**
+ * \brief  Number of RTS's
+ *
+ *  \par Description:
+ *       The number of RTS's allowed in the system
+ *
+ *  \par Limits:
+ *       This parameter can't be larger than 999.This parameter will dicate the size of
+ *       The RTS Info Table.
+ */
+#define SC_NUMBER_OF_RTS 64
+
+/************************************************************************
+ * Type Definitions
+ ************************************************************************/
+typedef struct CFE_TBL_NotifyCmd_Payload
+{
+    uint32 Parameter; /**< \brief Application specified command parameter */
+} CFE_TBL_NotifyCmd_Payload_t;
+/**
+ * \defgroup cfssctlmpayload CFS Stored Command Telemetry Payload
+ * \{
+ */
+
+/**
+ *  \brief Housekeeping Packet Payload Structure
+ */
+typedef struct
+{
+    SC_AtsId_Enum_t   CurrAtsId;                /**< \brief Current ATS number: 1 = ATS A, 2 = ATS B */
+    SC_Status_Enum_t  AtpState;                 /**< \brief Current ATP state: 2 = IDLE, 5 = EXECUTING */
+    SC_AtsCont_Enum_t ContinueAtsOnFailureFlag; /**< \brief Continue ATS execution on failure flag */
+
+    uint8 CmdErrCtr; /**< \brief Counts Request Errors */
+    uint8 CmdCtr;    /**< \brief Counts Ground Requests */
+    uint8 Padding8;  /**< \brief Structure padding */
+
+    uint16           SwitchPendFlag;  /**< \brief Switch pending flag: 0 = NO, 1 = YES */
+    uint16           NumRtsActive;    /**< \brief Number of RTSs currently active */
+    SC_RtsNum_t      RtsNum;          /**< \brief Next RTS number */
+    uint16           RtsActiveCtr;    /**< \brief Increments when an RTS is started without error */
+    uint16           RtsActiveErrCtr; /**< \brief Increments when an attempt to start an RTS fails */
+    uint16           AtsCmdCtr;       /**< \brief Total ATS cmd cnter counts commands sent by the ATS */
+    uint16           AtsCmdErrCtr;    /**< \brief Total ATS cmd Error ctr command errors in the ATS */
+    uint16           RtsCmdCtr;       /**< \brief Counts TOTAL rts cmds that were sent out from ALL active RTSs */
+    uint16           RtsCmdErrCtr;    /**< \brief Counts TOTAL number of errs from ALL RTSs that are active */
+    SC_AtsNum_t      LastAtsErrSeq;   /**< \brief Last ATS Errant Sequence Num Values: 1 or 2 */
+    SC_CommandNum_t  LastAtsErrCmd;   /**< \brief Last ATS Errant Command Num */
+    SC_RtsNum_t      LastRtsErrSeq;   /**< \brief Last RTS Errant Sequence Num */
+    SC_EntryOffset_t LastRtsErrCmd;   /**< \brief Offset in the RTS buffer for the last command error, in "words" */
+
+    SC_AtsNum_t AppendCmdArg;     /**< \brief ATS selection argument from most recent Append ATS command */
+    uint16      AppendEntryCount; /**< \brief Number of cmd entries in current Append ATS table */
+    uint16      AppendByteCount;  /**< \brief Size of cmd entries in current Append ATS table */
+    uint16      AppendLoadCount;  /**< \brief Total number of Append ATS table loads */
+    uint32      AtpCmdNumber;     /**< \brief Current command number */
+    uint32      AtpFreeBytes[SC_NUMBER_OF_ATS]; /**< \brief Free Bytes in each ATS  */
+    uint32      NextRtsWakeupCnt;               /**< \brief Next RTS Command Absolute Wakeup Count */
+    uint32      NextAtsTime;                    /**< \brief Next ATS Command Time (seconds) */
+
+    uint16 RtsExecutingStatus[(SC_NUMBER_OF_RTS + (SC_NUMBER_OF_RTS_IN_UINT16 - 1)) / SC_NUMBER_OF_RTS_IN_UINT16];
+    /**< \brief RTS executing status bit map where each uint16 represents 16 RTS numbers.  Note: array
+     index numbers and bit numbers use base zero indexing, but RTS numbers use base one indexing.  Thus,
+     the LSB (bit zero) of uint16 array index zero represents RTS number 1, and bit one of uint16 array
+     index zero represents RTS number 2, etc.  If an RTS is IDLE, then the corresponding bit is zero.
+     If an RTS is EXECUTING, then the corresponding bit is one. */
+
+    uint16 RtsDisabledStatus[(SC_NUMBER_OF_RTS + (SC_NUMBER_OF_RTS_IN_UINT16 - 1)) / SC_NUMBER_OF_RTS_IN_UINT16];
+    /**< \brief RTS disabled status bit map where each uint16 represents 16 RTS numbers.  Note: array
+     index numbers and bit numbers use base zero indexing, but RTS numbers use base one indexing.  Thus,
+     the LSB (bit zero) of uint16 array index zero represents RTS number 1, and bit one of uint16 array
+     index zero represents RTS number 2, etc.  If an RTS is ENABLED, then the corresponding bit is zero.
+     If an RTS is DISABLED, then the corresponding bit is one. */
+} __attribute__((packed)) SC_HkTlm_Payload_t;
+
+/**\}*/
+
+/**
+ * \defgroup cfssccmdpayload CFS Stored Command Command Payload Structures
+ * \{
+ */
+
+/**
+ *  \brief ATS Id Command Payload
+ */
+typedef struct
+{
+    SC_AtsNum_t AtsNum;  /**< \brief The ID of the ATS to start, 1 = ATS_A, 2 = ATS_B */
+    uint16      Padding; /**< \brief Structure padding */
+} __attribute__((packed)) SC_StartAtsCmd_Payload_t;
+
+/**
+ *  \brief RTS Id Command Payload
+ */
+typedef struct
+{
+    SC_RtsNum_t RtsNum;  /**< \brief The ID of the RTS to start, 1 through #SC_NUMBER_OF_RTS */
+    uint16      Padding; /**< \brief Structure padding */
+} __attribute__((packed)) SC_RtsCmd_Payload_t;
+
+/**
+ *  \brief Jump running ATS to a new time Command Payload
+ */
+typedef struct
+{
+    uint32 NewTime; /**< \brief the time to 'jump' to */
+} __attribute__((packed)) SC_JumpAtsCmd_Payload_t;
+
+/**
+ *  \brief Continue ATS on failure command Payload
+ */
+typedef struct
+{
+    SC_AtsCont_Enum_t ContinueState; /**< \brief true or false, to continue ATS after a failure  */
+    uint16            Padding;       /**< \brief Structure Padding */
+} __attribute__((packed)) SC_SetContinueAtsOnFailureCmd_Payload_t;
+
+/**
+ *  \brief Append to ATS Command Payload
+ */
+typedef struct
+{
+    SC_AtsNum_t AtsNum;  /**< \brief The ID of the ATS to append to, 1 = ATS_A, 2 = ATS_B */
+    uint16      Padding; /**< \brief Structure Padding */
+} __attribute__((packed)) SC_AppendAtsCmd_Payload_t;
+
+/**
+ *  \brief RTS Group Command Payload
+ */
+typedef struct
+{
+    SC_RtsNum_t FirstRtsNum; /**< \brief ID of the first RTS to act on, 1 through #SC_NUMBER_OF_RTS */
+    SC_RtsNum_t LastRtsNum;  /**< \brief ID of the last RTS to act on, 1 through #SC_NUMBER_OF_RTS */
+} __attribute__((packed)) SC_RtsGrpCmd_Payload_t;
+
+
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_StartAtsCmd_Payload_t Payload;
+} __attribute__((packed)) SC_StartAtsCmd_t;
+
+/**
+ *  \brief Jump running ATS to a new time Command
+ *
+ *  For command details see #SC_JUMP_ATS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_JumpAtsCmd_Payload_t Payload;
+} __attribute__((packed)) SC_JumpAtsCmd_t;
+
+/**
+ *  \brief Continue ATS on failure command
+ *
+ *  For command details see #SC_CONTINUE_ATS_ON_FAILURE_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_SetContinueAtsOnFailureCmd_Payload_t Payload;
+} __attribute__((packed)) SC_SetContinueAtsOnFailureCmd_t;
+
+/**
+ *  \brief Append to ATS Command
+ *
+ *  For command details see #SC_APPEND_ATS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_AppendAtsCmd_Payload_t Payload;
+} __attribute__((packed)) SC_AppendAtsCmd_t;
+
+/**
+ *  \brief Send HK Command
+ *
+ *  For command details see #SC_SEND_HK_MID
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} __attribute__((packed)) SC_SendHkCmd_t;
+
+/**
+ *  \brief Wakeup Command
+ *
+ *  For command details see #SC_WAKEUP_MID
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} SC_WakeupCmd_t;
+
+/**
+ *  \brief No operation Command
+ *
+ *  For command details see #SC_NOOP_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} SC_NoopCmd_t;
+
+/**
+ *  \brief Reset Counters Command
+ *
+ *  For command details see #SC_RESET_COUNTERS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} SC_ResetCountersCmd_t;
+
+/**
+ *  \brief Stop ATS Command
+ *
+ *  For command details see #SC_STOP_ATS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} SC_StopAtsCmd_t;
+
+/**
+ *  \brief Switch ATS Command
+ *
+ *  For command details see #SC_SWITCH_ATS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} SC_SwitchAtsCmd_t;
+
+/**
+ *  \brief Start RTS Command
+ *
+ *  For command details see #SC_START_RTS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsCmd_Payload_t     Payload;
+} __attribute__((packed)) SC_StartRtsCmd_t;
+
+/**
+ *  \brief Stop RTS Command
+ *
+ *  For command details see #SC_STOP_RTS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsCmd_Payload_t     Payload;
+} __attribute__((packed)) SC_StopRtsCmd_t;
+
+/**
+ *  \brief Disable RTS Command
+ *
+ *  For command details see #SC_DISABLE_RTS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsCmd_Payload_t     Payload;
+} __attribute__((packed)) SC_DisableRtsCmd_t;
+
+/**
+ *  \brief Enable RTS Command
+ *
+ *  For command details see #SC_ENABLE_RTS_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsCmd_Payload_t     Payload;
+} __attribute__((packed)) SC_EnableRtsCmd_t;
+
+/**
+ *  \brief Continue ATS on failure command
+ *
+ *  For command details see #SC_CONTINUE_ATS_ON_FAILURE_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_SetContinueAtsOnFailureCmd_Payload_t Payload;
+} __attribute__((packed)) SC_ContinueAtsOnFailureCmd_t;
+
+/**
+ *  \brief Manage Table Command
+ *
+ *  For command details see #SC_MANAGE_TABLE_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    CFE_TBL_NotifyCmd_Payload_t Payload;
+} __attribute__((packed)) SC_ManageTableCmd_t;
+
+/**
+ *  \brief RTS Group Command
+ *
+ *  For command details see #SC_START_RTS_GRP_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsGrpCmd_Payload_t  Payload;
+} __attribute__((packed)) SC_StartRtsGrpCmd_t;
+
+/**
+ *  \brief RTS Group Command
+ *
+ *  For command details see #SC_STOP_RTS_GRP_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsGrpCmd_Payload_t  Payload;
+} __attribute__((packed)) SC_StopRtsGrpCmd_t;
+
+/**
+ *  \brief RTS Group Command
+ *
+ *  For command details see #SC_DISABLE_RTS_GRP_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsGrpCmd_Payload_t  Payload;
+} __attribute__((packed)) SC_DisableRtsGrpCmd_t;
+
+/**
+ *  \brief RTS Group Command
+ *
+ *  For command details see #SC_ENABLE_RTS_GRP_CC
+ */
+typedef struct
+{
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    SC_RtsGrpCmd_Payload_t  Payload;
+} __attribute__((packed)) SC_EnableRtsGrpCmd_t;
+
+/*******************************************/
+/*                                         */
+/*               Solar Panel              */
+/*                                         */
+/*******************************************/
+#define SP_CMD_ID          0x1871
+
+
+#define SP_NOOP_CC           0
+#define SP_RESET_COUNTERS_CC 1
+
+#define SP_Deploy1_CC        4
+#define SP_Deploy2_CC        5
+#define SP_Deploy3_CC        6
+#define SP_Deploy4_CC        7
+
+/*******************************************/
+/*                                         */
+/*              COMS Commands              */
+/*                                         */
+/*******************************************/
+
+
+
+
+/*******************************************/
+/*                                         */
+/*                  UANT                   */
+/*                                         */
+/*******************************************/
+
+#define    UANT_APP_CMD_ID       0x1840
+
+
+
+#define    UANT_APP_NOOP_CC 0         
+#define    UANT_APP_RESET_COUNTERS_CC 1   
+#define    UANT_APP_SOFT_REBOOT_CC 2      
+
+    /* Burn control */
+#define    UANT_APP_BURN_CHANNEL_CC   3      
+#define   UANT_APP_STOP_BURN_CC   4        
+
+    /* Telemetry */
+#define    UANT_APP_GET_STATUS_CC    5        
+#define   UANT_APP_GET_BACKUP_STATUS_CC 6 
+#define   UANT_APP_GET_BOARD_STATUS_CC 7  
+#define    UANT_APP_GET_TEMPERATURE_CC 8  
+#define    UANT_APP_GET_SETTINGS_CC 9     
+#define   UANT_APP_SET_SETTINGS_CC  10
+#define   UANT_APP_AUTODEPLOY_CC   11  
+
+
+#define UANT_BURN_CHANNEL_INTERNAL_CC    23
+#define UANT_GET_STATUS_INTERNAL_CC      24
+
+
+
+
+
+
+
+
+
+
 typedef struct {
     uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE];
     char                     name[64]; 
@@ -2957,22 +5483,32 @@ typedef struct {
     uint32_t                 end_byte;
     uint32_t                 interval;
     uint8_t                  padding[3];
-} FTP_sendfileCmd_t;
+} __attribute__((packed)) FTP_sendfileCmd_t;
 
 typedef struct {
     uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
     char                     path[64]; 
     uint32_t                  padding;
 
-} FTP_filenameCmd_t;
+} __attribute__((packed)) FTP_filenameCmd_t;
 
+typedef struct {
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    char                     path[64]; 
+    uint32_t                 DirListOffset;
+    uint8_t                  GetSizeTimeMode;
+    uint8_t                  Spare01_0;
+    uint8_t                  Spare01_1;
+    uint8_t                  Spare01_2;
+
+} __attribute__((packed)) FTP_dirlistpktCmd_t;
 
 typedef struct {
     uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
     uint8_t                   addr;
     uint8_t                   channel;
     uint8_t                   duration;
-} UANT_BurnChannelCmd_t;
+} __attribute__((packed)) UANT_BurnChannelCmd_t;
 
 typedef struct {
     uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
@@ -2980,14 +5516,14 @@ typedef struct {
     uint16_t                  MinutesUntilDeploy;
     uint8_t                   BackupActive;
     uint8_t                   MaxBurnDuration;
-} UANT_SetSettingsCmd_t;
+} __attribute__((packed)) UANT_SetSettingsCmd_t;
 
 typedef struct {
     uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
     uint16_t                  SecondsDelay;
     uint8_t                   addrslave1;
     uint8_t                   addrslave2;
-} UANT_AutoDeployCmd_t;
+} __attribute__((packed)) UANT_AutoDeployCmd_t;
 
 
 typedef struct {
@@ -2995,92 +5531,555 @@ typedef struct {
     uint16_t                 min_deploy;
     uint8_t                  backup;
     uint8_t                  max_burn_duration;
-} SANT_SetSettingsCmd_t;
+} __attribute__((packed)) SANT_SetSettingsCmd_t;
+
+
+
+
+/*******************************************/
+/*                                         */
+/*               KISSCAM APP               */
+/*                                         */
+/*******************************************/
+#define PAYUZUC_CMD_ID             0x1830
+
+#define PAYUZUC_NOOP_CC             0
+#define PAYUZUC_RESET_COUNTERS_CC   1
+
+#define PAYUZUC_PING_CC             2
+#define PAYUZUC_SET_MODE_CC         3
+#define PAYUZUC_MEMORY_STATUS_CC    4
+#define PAYUZUC_SET_EXPOSURE_CC     5
+#define PAYUZUC_CAPTURE_CC          6
+#define PAYUZUC_DOWNLOAD_CC         7
+#define PAYUZUC_READ_REGISTER_CC    8
+#define PAYUZUC_WRITE_REGISTER_CC   9
+#define PAYUZUC_DOWNLOAD_ALL_CC     10
+#define PAYUZUC_MOSAIC_CC           11
+
+#define PAYUZUC_DOWNLOAD_ALL_CHILD_CC   23
+
+
+
+
+
+typedef struct PAYUZUC_Ping_Payload {
+    /**
+     * `0x00` for MCU only
+     * `0x01` for MCU & Img sensor
+     */
+    uint8 PN;
+} __attribute__((packed)) PAYUZUC_Ping_Payload_t;
+
+
+/**
+ * Set Mode Command
+ */
+typedef struct PAYUZUC_SetMode_Payload {
+    /**
+     * `0` for sleep
+     * `1` for SD
+     * `2` for HD
+     */
+    uint8 MD;
+} __attribute__((packed)) PAYUZUC_SetMode_Payload_t;
+
+
+/**
+ * Memory Status Command
+ * 
+ * No Arg Command
+ */
+
+
+/**
+ * Set Exposure Command
+ */
+typedef struct PAYUZUC_SetExposure_Payload {
+    uint8 EX1;
+    uint8 EX2;
+} __attribute__((packed)) PAYUZUC_SetExposure_Payload_t;
+
+
+/**
+ * Capture Command
+ */
+typedef struct PAYUZUC_Capture_Payload {
+    uint8 MEM; /* Memory slot number. In HD mode, this paramter is ignored */
+    uint8 TST;
+} __attribute__((packed)) PAYUZUC_Capture_Payload_t;
+
+
+/**
+ * Download Command
+ * @param MEM Memory Slot: Can be `0` ~ `5`
+ * @param PRE Preview Flag : `0` or `1`
+ * @param LN1 MSB line number
+ * @param LN2 LSB line number
+ */
+typedef struct PAYUZUC_Download_Payload {
+    uint8 MEM;
+    uint8 PRE;
+    uint8 LN1;
+    uint8 LN2;
+} __attribute__((packed)) PAYUZUC_Download_Payload_t;
+
+
+/**
+ * Read Register Command
+ */
+typedef struct PAYUZUC_ReadRegister_Payload {
+    uint8 AD1;
+    uint8 AD2;
+} __attribute__((packed)) PAYUZUC_ReadRegister_Payload_t;
+
+
+/**
+ * Write Register Command
+ */
+typedef struct PAYUZUC_WriteRegister_Payload {
+    uint8 AD1;
+    uint8 AD2;
+    uint8 RG1;
+    uint8 RG2;
+} __attribute__((packed)) PAYUZUC_WriteRegister_Payload_t;
+
+
+/**
+ * Download All Command
+ * @param MEM Memory Slot: Can be `0` ~ `5`
+ * @param PRE Preview Flag : `0` or `1`
+ * @param StartLine Starting line number: from `0` to `479`
+ * @param LineNum Total number to download : `0` for one line download
+ */
+typedef struct PAYUZUC_DownloadAll_Payload {
+    uint8 MEM;
+    uint8 PRE;
+
+    uint16_t StartLine;
+    uint16_t LineNum;
+} __attribute__((packed)) PAYUZUC_DownloadAll_Payload_t;
+
+
+/**
+ * MOSAIC Command
+ * @param MEM Memory Slot: Recommend `4` or `5`
+ */
+typedef struct PAYUZUC_Mosaic_Payload {
+    
+    uint8_t MEM;
+
+} __attribute__((packed)) PAYUZUC_Mosaic_Payload_t;
+
+
+
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+} __attribute__((packed)) PAYUZUC_NoopCmd_t;
+
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+} __attribute__((packed)) PAYUZUC_ResetCountersCmd_t;
+
+
+/**
+ * Ping Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_Ping_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_PingCmd_t;
+
+
+/**
+ * Set Mode Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_SetMode_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_SetModeCmd_t;
+
+
+/**
+ * Memory Status Command
+ * 
+ * No Arg Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+} __attribute__((packed)) PAYUZUC_MemoryStatusCmd_t;
+
+
+/**
+ * Set Exposure Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_SetExposure_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_SetExposureCmd_t;
+
+
+/**
+ * Capture Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_Capture_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_CaptureCmd_t;
+
+
+/**
+ * Download Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_Download_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_DownloadCmd_t;
+
+
+/**
+ * Read Register Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_ReadRegister_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_ReadRegisterCmd_t;
+
+
+/**
+ * Write Register Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_WriteRegister_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_WriteRegisterCmd_t;
+
+
+/**
+ * Download All Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_DownloadAll_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_DownloadAllCmd_t;
+
+/**
+ * Mosaic Command
+ */
+typedef struct {
+    uint8_t               CmdHeader[CFE_SB_CMD_HDR_SIZE]; 
+    PAYUZUC_Mosaic_Payload_t Payload;
+} __attribute__((packed)) PAYUZUC_MosaicCmd_t;
+
+
+
+
+
+
+
+
+// ADDED FOR FTP TEST 1210
+// to lab upload
+typedef struct {
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    char                     app[20]; 
+    char                     filename[64];
+
+} __attribute__((packed)) TO_LoadCmd_t;
+
+// rename to lab
+typedef struct {
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    char                     source[64]; 
+    char                     target[64];
+
+} __attribute__((packed)) TO_RenameCmd_t;
+
+
+// delete to lab
+typedef struct {
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    char                     filename[64];
+
+} __attribute__((packed)) TO_DeleteCmd_t;
+
+
+// 20 20 64, Start app cmd
+
+typedef uint32_t CFE_ES_MemOffset_t;
+typedef uint8_t CFE_ES_ExceptionAction_Enum_t;
+typedef uint16_t  CFE_ES_TaskPriority_Atom_t;
+
+typedef struct CFE_ES_StartAppCmd_Payload
+{
+
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    char Application[CFE_MISSION_MAX_API_LEN];   /**< \brief Name of Application to be started */
+    char AppEntryPoint[CFE_MISSION_MAX_API_LEN]; /**< \brief Symbolic name of Application's entry point */
+    char AppFileName[CFE_MISSION_MAX_PATH_LEN];  /**< \brief Full path and filename of Application's
+                                                    executable image */
+
+    CFE_ES_MemOffset_t StackSize; /**< \brief Desired stack size for the new application */
+
+    CFE_ES_ExceptionAction_Enum_t ExceptionAction; /**< \brief #CFE_ES_ExceptionAction_RESTART_APP=On exception,
+                                                       restart Application,
+                                                       #CFE_ES_ExceptionAction_PROC_RESTART=On exception,
+                                                       perform a Processor Reset */
+    CFE_ES_TaskPriority_Atom_t Priority;           /**< \brief The new Applications runtime priority. */
+} CFE_ES_StartAppCmd_t;
+
+
+
+
+// COSMIC HELP
+//EPS P31U SET CONFIG2
+
+typedef struct {
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+
+    uint16_t batt_maxvoltage;
+    uint16_t batt_safevoltage;
+    uint16_t batt_criticalvoltage;
+    uint16_t batt_normalvoltage;
+
+    uint32_t reserved1_0;
+    uint32_t reserved1_1;
+
+    uint8_t  reserved2_0;
+    uint8_t  reserved2_1;
+    uint8_t  reserved2_2;
+    uint8_t  reserved2_3;
+} __attribute__((packed)) EPS_P31U_SETCONFIG2;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8_t cmd;
+} __attribute__((packed)) EPS_P31U_CONFIG2;
+
+
+typedef struct {
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8_t  channel;
+    uint8_t  value;
+    uint16_t delay;
+} __attribute__((packed)) EPS_P31U_SET_OUT_SINGLE;
+
+typedef struct {
+    uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8_t SP;
+    uint8_t deploy;
+} __attribute__((packed)) SP_DEPLOY;
+
+
 
 
 
 
 
 typedef struct {
-    /* PAYR */
-    PAYR_BurnCmd_t payrburncmd;
-    PAYR_BurnLoopCmd_t payrburnloofcmd;
+    CFE_ES_StartAppCmd_t          cfeesstartappcmd;
+    TO_LoadCmd_t                  toloadcmd;
+    TO_DeleteCmd_t                todeletecmd;
+    TO_RenameCmd_t                torenamecmd;
+    // EPS
 
-    /* STX */
-    STX_PULSAR_GenericSetValueCmd_t stxgenericsetvalue;
-    STX_PULSAR_SetValueBoolCmd_t    stxsetvaluebool;
-    STX_PULSAR_GenericGetValueCmd_t stxgenericgetvalue;
-    
-    /* PAYC*/
-    PAYC_SetConfCmd_t paycsetconfcmd;
-    PAYC_SnapCmd_t paycsnapcmd;
-    PAYC_StoreCmd_t paycstorecmd;
-    PAYC_StoreFileListLocationCmd_t paycstorefilelistlocationcmd;
-    PAYC_SetDirPathCmd_t paycsetdirpathcmd;
-    PAYC_DownloadCmd_t paycdownloadcmd;
 
-    /* PAYS */
-    PAYS_D1064_ReadSaveStatusCmd_t paysd1064readsavestatuscmd;
+    /* No-arg commands */
+    EPS_NoopCmd_t                 epsnoopcmd;
+    EPS_ResetCountersCmd_t        epsresetcounterscmd;
+    EPS_GetCountersCmd_t          epsgetcounterscmd; 
+    EPS_GetAppDataCmd_t           epsgetappdatacmd;
+    EPS_ReportAppDataCmd_t        epsreportappdatacmd;
 
-    /* IFC app */
-    IFC_HandleNoArgsCmd_t ifchandlenoarg;
-    IFC_HandleU8ArgsCmd_t ifchandleu8arg;
-    IFC_HandleU32ArgsCmd_t ifchandleu32arg;
-    IFC_WriteCmd_t ifcwritecmd;
-    IFC_ReadCmd_t ifcreadcmd;
-    IFC_GpioNumCmd_t ifcgpionumcmd;
-    IFC_IoOpenCmd_t ifcioopencmd;
-    IFC_GpioWriteCmd_t ifcgpiowritecmd;
-    IFC_UartSetTermiosCmd_t ifcuartsettermioscmd;
-    IFC_I2cDuplexTransferCmd_t ifci2cduplextransfercmd;
-    IFC_SpiDuplexTransferCmd_t ifcspiduplextransfercmd;
-    IFC_IoHandleAllocateCmd_t ifciohandleallocatecmd;
+    EPS_P60_Dock_SetChannelSingleCmd_t    epsp60docksetchannelsinglecmd;
+    EPS_P60_Dock_SetChannelsCmd_t         epsp60docksetchannelscmd;
+    EPS_P60_Dock_GetChannelSingleCmd_t    epsp60dockgetchannelsinglecmd;
+    EPS_P60_Dock_GetChannelsCmd_t     epsp60dockgetchannelscmd;
+    EPS_P60_PDU_SetChannelSingleCmd_t     epsp60pdusetchannelsinglecmd;
+    EPS_P60_PDU_SetChannelsCmd_t          epsp60pdusetchannelscmd;
+    EPS_P60_PDU_GetChannelSingleCmd_t     epsp60pdugetchannelsinglecmd;
+    EPS_P60_PDU_GetChannelsCmd_t      epsp60pdugetchannelscmd;
+    EPS_P60_ACU_SetMpptModeCmd_t          epsp60acusetmpptmodecmd;
+    EPS_P60_ACU_GetMpptModeCmd_t      epsp60acugetmpptmodecmd;
 
-    //eps unusual case
-    u32u8bool_t u32u8bool;
-    u32u8_t u32u8;
-    u32u32u8u8_t u32u32u8u8;
-    u32u8u8u8_t u32u8u8u8;
-    u32u32u8u8u16u8_t u32u32u8u8u16u8;
-    u32u32u32u8u8u16u8_t u32u32u32u8u8u16u8;
-    u32bool13_t u32bool13;
-    u32bool9_t u32bool9;
-    EPS_P60_ParamSetCmd_t epsp60paramsetcmd;
+    EPS_P60_Dock_GetTableHkCmd_t      epsp60dockgettablehkcmd;
+    EPS_P60_Dock_GetTableConfCmd_t    epsp60dockgettableconfcmd;
+    EPS_P60_Dock_GetTableCalCmd_t     epsp60dockgettablecalcmd;
+    EPS_P60_PDU_GetTableHkCmd_t       epsp60pdugettablehkcmd;
+    EPS_P60_PDU_GetTableConfCmd_t     epsp60pdugettableconfcmd;
+    EPS_P60_PDU_GetTableCalCmd_t      epsp60pdugettablecalcmd;
+    EPS_P60_ACU_GetTableHkCmd_t       epsp60acugettablehkcmd;
+    EPS_P60_ACU_GetTableConfCmd_t     epsp60acugettableconfcmd;
+    EPS_P60_ACU_GetTableCalCmd_t      epsp60acugettablecalcmd;
 
-    //grx
-    GRX_AssemblePublishCmd_t grxassemblepublishcmd;
-    GRX_CmdLOGCmd_t grxcmdlogcmd;
-    GRX_CmdLogOnTimeCmd_t grxcmdlogontimecmd;
-    GRX_CmdLogOnChangedCmd_t grxcmdlogonchangedcmd;
-    GRX_CmdLogOnNewCmd_t grxcmdlogonnewcmd;
-    GRX_CmdUnlogCmd_t grxcmdunlogcmd;
-    GRX_CmdUnlogAllCmd_t grxcmdunlogallcmd;
-    GRX_CmdElevationCutoffCmd_t grxcmdelevationcutoffcmd;
-    GRX_CmdInterfaceModeCmd_t grxcmdinterfacemodecmd;
-    GRX_CmdSerialConfigCmd_t grxcmdserialconfigcmd;
-    GRX_LogRegisterHandlerCmd_t grxlogresisterhandlercmd;
-    GRX_LogUnregisterHandlerCmd_t grxlogunresisterhandlercmd;
-    GRX_LogAddCallbackCmd_t grxlogaddcallbackcmd;
-    GRX_LogSetHandlerStatusCmd_t grxlogsethandlerstatuscmd;
+    EPS_P60_Dock_ResetGndWdtCmd_t         epsp60dockresetgndwdtcmd;
+    EPS_P60_PDU_ResetGndWdtCmd_t          epsp60pduresetgndwdtcmd;
+    EPS_P60_ACU_ResetGndWdtCmd_t          epsp60acuresetgndwdtcmd;
 
-    /* ADCS */
-    ADCS_CurrentUnixTimeCmd_t adcs_Unixtime;
-    ADCS_Reference_LLHTargetCommandCmd_t adcs_RefLLHTarget;
-    ADCS_GnssMeasurementsCmd_t adcs_GnssMeasurements;
-    ADCS_ReferenceRPYValueCmd_t adcs_RefRPY;
-    ADCS_OpenLoopCommandMtqCmd_t adcs_OpenLoopCmdMtq;
-    ADCS_ControlModeCmd_t adcs_ControlMode;
-    ADCS_ConfigAdcsSatelliteCmd_t adcs_ConfigAdcsSat;
-    ADCS_ControllerConfigurationCmd_t adcs_ControllerConfig;
-    ADCS_ConfigMag0OrbitCalCmd_t adcs_ConfigMag0OrbitCal;
-    ADCS_MountingConfigurationCmd_t adcs_MountingConfig;
-    ADCS_EstimatorConfigurationCmd_t adcs_EstimatorConfig;
-    ADCS_ConfigOrbitSatParamsCmd_t adcs_ConfigOrbitSatParams;
-    ADCS_NodeSelectionCmd_t adcs_NodeSelection;
-    ADCS_MtqConfigCmd_t adcs_MtqConfig;
-    ADCS_EstimationModeCmd_t adcs_EstMode;
-    ADCS_OpenLoopCommandRwlCmd_t adcs_OpenLoopCmdRwl;
-    ADCS_OpenLoopCommandHxyzRwCmd_t adcs_OpenLoopCmdHxyzRw;
+    /* Param / Table commands */
+    EPS_P60_GetParamCmd_t                 epsp60getparamcmd;
+    EPS_P60_GetParamArrayCmd_t            epsp60getparamarraycmd;
+    EPS_P60_SetParamCmd_t                 epsp60setparamcmd;
+    EPS_P60_TableGetCmd_t                 epsp60tablegetcmd;
+    EPS_P60_TableLoadCmd_t                epsp60tableloadcmd;
+    EPS_P60_TableSaveCmd_t                epsp60tablesavecmd;
+    EPS_P60_TableGetStaticCmd_t           epsp60tablegetstaticcmd;
+    EPS_P60_TableDumpStaticCmd_t          epsp60tabledumpstaticcmd;
+
+    EPS_P60_GetDockInfoCmd_t          epsp60getdockinfocmd;
+    EPS_P60_ResetCmd_t                epsp60resetcmd;
+
+    // ADCS
+
+    /* Core no-arg commands (CC 0–4) */
+    ADCS_NoopCmd_t                         adcsnoopcmd;                   // CC 0
+    ADCS_ResetCountersCmd_t                adcsresetcounterscmd;          // CC 1
+
+    ADCS_ResetAppCmdCountersCmd_t          adcsresetappcmdcounterscmd;    // CC 2 (no-arg)
+    ADCS_ResetDeviceCmdCountersCmd_t       adcsresetdevicecmdcounterscmd; // CC 3 (no-arg)
+    ADCS_SetCommunicationModeAsCanCmd_t    adcssetcommunicationmodeascan; // CC 4 (no-arg)
+
+    /* GPIO / Boot control (CC 5–10) */
+    ADCS_GpioEnHighCmd_t                   adcsgpioenhighcmd;             // CC 5
+    ADCS_GpioEnLowCmd_t                    adcsgpioenlowcmd;              // CC 6
+    /* CC 7 없음 */
+    ADCS_GpioBootHighCmd_t                 adcsgioboothighcmd;            // CC 8
+    ADCS_GpioBootLowCmd_t                  adcsgiobootlowcmd;             // CC 9
+    ADCS_ExitBootLoaderCmd_t               adcsexitbootloadercmd;         // CC 10
+
+    /* Main set commands (CC 11–42) */
+    ADCS_ResetCmd_t                        adcsresetcmd;                  // CC 11
+    ADCS_CurrentUnixTimeCmd_t              adcscurrentunixtimecmd;        // CC 12
+    ADCS_ErrorLogSettingCmd_t              adcserrorlogsettingcmd;        // CC 13
+    ADCS_PersistConfigCmd_t                adcspersistconfigcmd;          // CC 14
+    ADCS_ControlEstimationModeCmd_t        adcscontrolestimationmodecmd;  // CC 15
+    ADCS_DisableMagRwlMntMngCmd_t          adcsdisablemagrwlmntmngcmd;    // CC 16
+    ADCS_ReferenceIRCVectorCmd_t           adcsreferenceircvectorcmd;     // CC 17
+    ADCS_ReferenceLLHTargetCmd_t           adcsreferencellhtargetcmd;     // CC 18
+    ADCS_OrbitModeCmd_t                    adcsorbitmodecmd;              // CC 19
+    ADCS_MagDeployCmd_t                    adcsmagdeploycmd;              // CC 20
+    ADCS_ReferenceRPYvaluesCmd_t           adcsreferencerpyvaluescmd;     // CC 21
+    ADCS_OpenLoopCmdMTQCmd_t               adcsopenloopcmdmtqcmd;         // CC 22
+    ADCS_PowerStateCmd_t                   adcspowerstatecmd;             // CC 23
+    ADCS_RunModeCmd_t                      adcsrunmodecmd;                // CC 24
+    ADCS_ControlModeCmd_t                  adcscontrolmodecmd;            // CC 25
+    ADCS_WhlConfigCmd_t                    adcswhlconfigcmd;              // CC 26
+    ADCS_SatConfigCmd_t                    adcssatconfigcmd;              // CC 27
+    ADCS_ControllerConfig_t                adcscontrollerconfigcmd;       // CC 28
+    ADCS_Mag0MMTCalibConfigCmd_t           adcsmag0mmtcalibconfigcmd;     // CC 29
+    ADCS_DefaultModeConfigCmd_t            adcsdefaultmodeconfigcmd;      // CC 30
+    ADCS_MountingConfigCmd_t               adcsmountingconfigcmd;         // CC 31
+    ADCS_Mag1MMTCalibConfigCmd_t           adcsmag1mmtcalibconfigcmd;     // CC 32
+    ADCS_EstimatorConfigCmd_t              adcsestimatorconfigcmd;        // CC 33
+    ADCS_SatOrbitParamConfigCmd_t          adcssatorbitparamconfigcmd;    // CC 34
+    ADCS_NodeSelectionConfigCmd_t          adcsnodeselectionconfigcmd;    // CC 35
+    ADCS_MTQConfigCmd_t                    adcsmtqconfigcmd;              // CC 36
+    ADCS_EstimationModeCmd_t               adcsestimationmodecmd;         // CC 37
+    ADCS_OperationalStateCmd_t             adcsoperationalstatecmd;       // CC 38
+    ADCS_MagSensingElmConfigCmd_t          adcsmagsensingelmconfigcmd;    // CC 39
+    ADCS_UnsolicitTlmMsgSetupCmd_t         adcsunsolicittlmmsgsetupcmd;   // CC 40
+    ADCS_UnsolicitEventMsgSetupCmd_t       adcsunsoliciteventmsgsetupcmd; // CC 41
+    ADCS_InitiateEventLogTransferCmd_t     adcsinitiateeventlogtransfercmd;// CC 42
+
+    /* Telemetry GET commands (CC 51–87) */
+    ADCS_GetErrorLogSettingCmd_t           adcsgeterrorlogsettingcmd;         // CC 51
+    ADCS_GetCurrentUnixTimeCmd_t           adcsgetcurrentunixtimecmd;         // CC 52
+    ADCS_GetPersistConfigDiagnosticCmd_t   adcsgetpersistconfigdiagnosticcmd; // CC 53
+    ADCS_GetCommunicationStatusCmd_t       adcsgetcommunicationstatuscmd;     // CC 54
+    ADCS_GetControlEstimationModeCmd_t     adcsgetcontrolestimationmodecmd;   // CC 55
+    ADCS_GetReferenceIRCVectorCmd_t        adcsgetreferenceircvectorcmd;      // CC 56
+    ADCS_GetReferenceLLHTargetCmd_t        adcsgetreferencellhtargetcmd;      // CC 57
+    ADCS_GetOrbitModeCmd_t                 adcsgetorbitmodecmd;               // CC 58
+    ADCS_GetHealthTlmMMTCmd_t              adcsgethealthtlmmmtcmd;            // CC 59
+    ADCS_GetRawCubeSenseSunCmd_t           adcsgetrawcubesensesuncmd;         // CC 60
+    ADCS_GetReferenceRPYvaluesCmd_t        adcsgetreferencerpyvaluescmd;      // CC 61
+    ADCS_GetOpenLoopCmdMTQCmd_t            adcsgetopenloopcmdmtqcmd;          // CC 62
+    ADCS_GetPowerStateCmd_t                adcsgetpowerstatecmd;              // CC 63
+    ADCS_GetRunModeCmd_t                   adcsgetrunmodecmd;                 // CC 64
+    ADCS_GetControlModeCmd_t               adcsgetcontrolmodecmd;             // CC 65
+    ADCS_GetWhlConfigCmd_t                 adcsgetwhlconfigcmd;               // CC 66
+    ADCS_GetSatelliteConfigCmd_t           adcsgetsatelliteconfigcmd;         // CC 67
+    ADCS_GetControllerConfigCmd_t          adcsgetcontrollerconfigcmd;        // CC 68
+    ADCS_GetMag0MMTCalibConfigCmd_t        adcsgetmag0mmtcalibconfigcmd;      // CC 69
+    ADCS_GetDefaultModeConfigCmd_t         adcsgetdefaultmodeconfigcmd;       // CC 70
+    ADCS_GetMountingConfigCmd_t            adcsgetmountingconfigcmd;          // CC 71
+    ADCS_GetMag1MMTCalibConfigCmd_t        adcsgetmag1mmtcalibconfigcmd;      // CC 72
+    ADCS_GetEstimatorConfigCmd_t           adcsgetestimatorconfigcmd;         // CC 73
+    ADCS_GetSatOrbitParamConfigCmd_t       adcsgetsatorbitparamconfigcmd;     // CC 74
+    ADCS_GetNodeSelectionConfigCmd_t       adcsgetnodeselectionconfigcmd;     // CC 75
+    ADCS_GetMTQConfigCmd_t                 adcsgetmtqconfigcmd;               // CC 76
+    ADCS_GetEstimationModeCmd_t            adcsgetestimationmodecmd;          // CC 77
+    ADCS_GetOperationalStateCmd_t          adcsgetoperationalstatecmd;        // CC 78
+    ADCS_GetRawCSSSensorCmd_t              adcsgetrawcsssensorcmd;            // CC 79
+    ADCS_GetRawGYRSensorCmd_t              adcsgetrawgyrsensorcmd;            // CC 80
+    ADCS_GetCalibratedGYRSensorCmd_t       adcsgetcalibratedgyrsensorcmd;     // CC 81
+    ADCS_GetMagSensingElmConfigCmd_t       adcsgetmagsensingelmconfigcmd;     // CC 82
+    ADCS_GetTlmLogInclMaskCmd_t            adcsgettlmloginclmaskcmd;          // CC 83
+    ADCS_GetUnsolicitTlmMsgSetupCmd_t      adcsgetunsolicittlmmsgsetupcmd;    // CC 84
+    ADCS_GetUnsolicitEventMsgSetupCmd_t    adcsgetunsoliciteventmsgsetupcmd;  // CC 85
+    ADCS_GetEventLogStatusReponseCmd_t     adcsgeteventlogstatusresponsecmd;  // CC 86
+    ADCS_GetPortMapCmd_t                   adcsgetportmapcmd;                 // CC 87
+
+    /* ADCS sequences (CC 100–105) */
+    ADCS_SequenceCmdDetumblingCmd_t        adcsseqdetumblingcmd;          // CC 100
+    ADCS_SequenceCmdSunpointingCmd_t       adcsseqsunpointingcmd;         // CC 101
+    ADCS_SequenceCmdVpointingCmd_t         adcsseqvpointingcmd;           // CC 102
+    ADCS_SequenceCmdKSCpointingCmd_t       adcsseqkscpointingcmd;         // CC 103
+    ADCS_SequenceCmdLGCpointingCmd_t       adcsseqlgcpointingcmd;         // CC 104
+    ADCS_SequenceCmdRPYpointingCmd_t       adcsseqrpypointingcmd;         // CC 105
+
+    /* Additional (CC 110, 114) */
+    ADCS_ErrorLogClearCmd_t                adcserrorlogclearcmd;          // CC 110
+    ADCS_GetCurrentUnixTimeCmd_t           adcsgetcurrentunixtimeinternalcmd; // CC 114
+
+    /* HK / BCN (no CC mapping, but required) */
+    ADCS_SendHkCmd_t                       adcssendhkcmd;
+    ADCS_SendBcnCmd_t                      adcssendbcncmd;
+
+
+    // SC command
+
+    SC_SendHkCmd_t                 scsendhkcmd;      
+    SC_WakeupCmd_t                 scwakeupcmd;      
+
+    SC_NoopCmd_t                   scnoopcmd;             
+    SC_ResetCountersCmd_t          scresetcounterscmd;      
+
+    /* ATS 관련 */
+    SC_StartAtsCmd_t               scstartatscmd;       
+    SC_StopAtsCmd_t                scstopatscmd;      
+    SC_SwitchAtsCmd_t              scswitchatscmd;     
+    SC_JumpAtsCmd_t                scjumpatscmd;      
+
+    SC_ContinueAtsOnFailureCmd_t   sccontinueatsonfailurecmd; 
+    SC_AppendAtsCmd_t              scappendatscmd;           
+
+    /* Table 관리 */
+    SC_ManageTableCmd_t            scmanagetablecmd;       
+
+    /* RTS 단일 제어 */
+    SC_StartRtsCmd_t               scstartrtscmd;        
+    SC_StopRtsCmd_t                scstoprtscmd;       
+    SC_DisableRtsCmd_t             scdisablertscmd;       
+    SC_EnableRtsCmd_t              scenablertscmd;       
+
+    /* RTS 그룹 제어 */
+    SC_StartRtsGrpCmd_t            scstartrtsgrpcmd;      
+    SC_StopRtsGrpCmd_t             scstoprtsgrpcmd;      
+    SC_DisableRtsGrpCmd_t          scdisablertsgrpcmd;     
+    SC_EnableRtsGrpCmd_t           scenablertsgrpcmd;       
+
+
+
+    // EO APP
+    TO_LAB_NoopCmd_t          tolabnoopcmd;
+    TO_LAB_ResetCountersCmd_t tolabresetcounterscmd;
+    TO_LAB_AddPacketCmd_t     tolabaddpacketcmd;
+    TO_LAB_SendDataTypesCmd_t tolabsenddatatypescmd;
+    TO_LAB_RemovePacketCmd_t  tolabremovepacketcmd;
+    TO_LAB_RemoveAllCmd_t     tolabremoveallcmd;
+    TO_LAB_EnableOutputCmd_t  tolabenableoutputcmd;
+
 
 
     /* COSMIC SANT */
@@ -3093,6 +6092,35 @@ typedef struct {
 
     FTP_sendfileCmd_t      ftpsendfilecmd;
     FTP_filenameCmd_t      ftpfilenamecmd;
+    FTP_dirlistpktCmd_t      ftpdirlistpktcmd;
+
+    /* PAYUZUC (KISSCAM) Commands */
+
+    PAYUZUC_NoopCmd_t               payuzucnoopcmd;
+    PAYUZUC_ResetCountersCmd_t      payuzucresetcounterscmd;
+
+    PAYUZUC_PingCmd_t               payuzucpingcmd;
+    PAYUZUC_SetModeCmd_t            payuzucsetmodecmd;
+    PAYUZUC_MemoryStatusCmd_t       payuzucmemorystatuscmd;
+    PAYUZUC_SetExposureCmd_t        payuzucsetexposurecmd;
+    PAYUZUC_CaptureCmd_t            payuzuccapturecmd;
+    PAYUZUC_DownloadCmd_t           payuzucdownloadcmd;
+    PAYUZUC_ReadRegisterCmd_t       payuzucreadregistercmd;
+    PAYUZUC_WriteRegisterCmd_t      payuzucwriteregistercmd;
+    PAYUZUC_DownloadAllCmd_t        payuzucdownloadallcmd;
+    PAYUZUC_MosaicCmd_t             payuzucmosaiccmd;
+
+    /* PAYUZUC extra child command */
+    PAYUZUC_DownloadAllCmd_t        payuzucdownloadallchildcmd;
+
+
+
+
+    // COSMIC HELP
+     EPS_P31U_SETCONFIG2     epsp31usetconfig2;
+     EPS_P31U_CONFIG2        epsp31uconfig2;
+     EPS_P31U_SET_OUT_SINGLE epsp31usetoutsingle;
+     SP_DEPLOY               spdeploy;
 
 
 

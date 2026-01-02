@@ -11,52 +11,21 @@
 #include <locale.h>
 
 
-char * devname = "/dev/GPIO8C";
+const char * devname = "/dev/ttyACM0"; //arduino device
 struct termios new_gpio_tio;
 int gpio = 0;
-int duration = 60 * 14;
-int port_default = 1;
+int duration = 840;
+char on = '1'; //amp on cmd
+char off = '0'; //ampf off cmd
 int status  = 0;
-static int gpio_set_on(int port) {
+
+static int gpio_set_on(char cmd) {
     tcflush(gpio, TCIOFLUSH);
     char buf[64];
-    sprintf(buf, "gpio set %d\r", port);
-    // buf[10] = 13;
-    if(write(gpio, buf, strlen(buf)+1) > 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
-    memset(buf, 0, sizeof(buf));
-
-}
-
-static int gpio_clear_off(int port) {
-    tcflush(gpio, TCIOFLUSH);
-    char buf[64];
-    sprintf(buf, "gpio clear %d\r", port);
-    // buf[13] = 13;
-    if(write(gpio, buf, strlen(buf)+1) > 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
-    memset(buf, 0, sizeof(buf));
-}
-
-static int gpio_buf_clean(int port ) {
-    char buf[64];
-
-    tcflush(gpio, TCIOFLUSH);
-    buf[0] = 0;
+    sprintf(buf, "%c", cmd);
     buf[1] = 13;
-    if(write(gpio, buf, 2) > 0)
+    printf("%c \n", buf[0]);
+    if(write(gpio, buf, 1) > 0)
     {
         return 0;
     }
@@ -66,59 +35,75 @@ static int gpio_buf_clean(int port ) {
     }
     memset(buf, 0, sizeof(buf));
 
+}
+
+static int gpio_set_off(char cmd) {
     tcflush(gpio, TCIOFLUSH);
+    char buf[64];
+    sprintf(buf, "%c", cmd);
+    buf[1] = 13;
+    if(write(gpio, buf, 1) > 0)
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+    memset(buf, 0, sizeof(buf));
 }
 
 int init_gpio() {
     gpio = open(devname, O_RDWR | O_NOCTTY | O_NDELAY); // Or O_RDWR | O_NOCTTY? // @@ 로테이터 열기
+    
     // open 함수 https://www.it-note.kr/19
     // O_RDWR은 파일 디스크립터인 fd를 읽기와 쓰기 모드로 열기 위한 지정이며
     // O_NOCCTY와 O_NONBLOCK는 시리얼 통신 장치에 맞추어 추가했습니다.
 
     if (gpio < 0)
     {
-		return -1;
-	}
+        return -1;
+    }
     // tcgetattr(rotator, &new_gpio_tio);
     tcflush(gpio, TCIOFLUSH);
-    new_gpio_tio.c_cflag = B19200;
-    new_gpio_tio.c_cflag |= (CLOCAL | CREAD); 	// Receiver and local mode
-    new_gpio_tio.c_cflag &= ~HUPCL;				// Do not change modem signals
+    new_gpio_tio.c_cflag = B9600;
+    new_gpio_tio.c_cflag |= (CLOCAL | CREAD);   // Receiver and local mode
+    new_gpio_tio.c_cflag &= ~HUPCL;             // Do not change modem signals
     new_gpio_tio.c_cflag &= ~CSIZE;
-    new_gpio_tio.c_cflag |= CS8;					// 8 bit // @@ S대역 포지셔너(로테이터) 컨트롤러이랑 같은 옵션이듯 // @@ 시리얼 통신 설정방법: https://softtone-someday.tistory.com/15, https://blog.naver.com/choi125496/130034222760
-    new_gpio_tio.c_cflag &= ~CSTOPB;				// 1 stop bit
-    new_gpio_tio.c_cflag &= ~PARENB;				// No parity check
-    new_gpio_tio.c_cflag &= ~CRTSCTS;			// Enable hardware / software flow control
-    new_gpio_tio.c_iflag &= ~IXON;				// No handshaking
+    new_gpio_tio.c_cflag |= CS8;                    // 8 bit // @@ S대역 포지셔너(로테이터) 컨트롤러이랑 같은 옵션이듯 // @@ 시리얼 통신 설정방법: https://softtone-someday.tistory.com/15, https://blog.naver.com/choi125496/130034222760
+    new_gpio_tio.c_cflag &= ~CSTOPB;                // 1 stop bit
+    new_gpio_tio.c_cflag &= ~PARENB;                // No parity check
+    new_gpio_tio.c_cflag &= ~CRTSCTS;           // Enable hardware / software flow control
+    new_gpio_tio.c_iflag &= ~IXON;              // No handshaking
 
     // Raw output
-    new_gpio_tio.c_oflag &= ~OPOST; 				// Prevent special interpretation of output bytes (e.g. newline chars)
-
+    new_gpio_tio.c_oflag &= ~OPOST;                 // Prevent special interpretation of output bytes (e.g. newline chars)
     // Canonical input
-    new_gpio_tio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);	// Non-canonical read
+    new_gpio_tio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);    // 
 
     // Initialize control characters
     new_gpio_tio.c_cc[VTIME]    = 5;
-    new_gpio_tio.c_cc[VMIN]     = 1;		// Block 0.5(VTIME) sec after read first(VMIN) character
+    new_gpio_tio.c_cc[VMIN]     = 1;        // Block 0.5(VTIME) sec after read first(VMIN) character
 
     tcflush(gpio, TCIOFLUSH);
-
+    
 
 
     if (tcsetattr(gpio, TCSANOW, &new_gpio_tio) != 0)
     {
-
+        
         return -1;
     }
-
+        
     return 0;
 }
 
 int main() {
     status = init_gpio();
-    printf("\n");
+    printf("%d \n", status);
     if(status)
     {
+        printf("error!!");
         printf("Failed to Initialize GPIO.\n");
         return -1;
     }
@@ -128,9 +113,9 @@ int main() {
     }
 
     printf("Device name : %s\n", devname);
-    printf("Filestream : %d", gpio);
+    printf("Filestream : %d\n", gpio);
     printf("Default Max ON Duration : %dseconds\n", duration);
-    printf("Selected port : %d\n", port_default);
+    //printf("Selected port : %d\n", port);
     printf("Start GPIO Safety Process.\n");
 
     time_t ref, now;
@@ -140,8 +125,13 @@ int main() {
     tm_info = localtime(&ref);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_info);
 
-    gpio_set_on(port_default);
-    printf("GPIO ON at port : %d, Start time : %s\n", port_default, buffer);
+    if(gpio_set_on(on) == 0){
+        printf("Command on success at %s", buffer);
+    }
+    else{
+        printf("Command on fail at %s", buffer);
+    };
+    tcflush(gpio, TCIOFLUSH);
 
     memset(buffer, 0, sizeof(buffer));
 
@@ -152,29 +142,23 @@ int main() {
         {
             sleep(1);
             continue;
-
+            
         }
         else
             break;
-
+        
     }
     time(&now);
-    gpio_buf_clean(port_default);
-    gpio_clear_off(port_default);
+    gpio_set_off(off);
+    tcflush(gpio, TCIOFLUSH);
+
     tm_info = localtime(&now);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_info);
-    printf("GPIO OFF at port : %d, End time : %s\n", port_default, buffer);
     memset(buffer, 0, sizeof(buffer));
 
     printf("Now Finish GPIO Task.\n");
 
-    if (gpio > 0)
-    {
-        gpio_buf_clean(port_default);
-        tcflush(gpio, TCIOFLUSH);
-        tcsetattr(gpio, TCSANOW, &new_gpio_tio);
-        tcflush(gpio, TCIOFLUSH);
-        close(gpio);
-    }
+    close(gpio);
+    
     return 0;
 }
