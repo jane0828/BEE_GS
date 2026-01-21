@@ -463,12 +463,13 @@ struct StateCheckUnit{
     int loadindex;
     int tleallindex;
     int iteration = 3;
-    int SpanTime = 1;
+    int SpanTime = 5;
     int CMDCount = 0;
     int Successed = 0;
-    bool DoBeaconCheck = true;
+    bool Display_Autopilot = true;
+    bool DoBeaconCheck = false;
     bool DoPing = true;
-    bool DoCMD = false;
+    bool DoCMD = true;
     bool DoFTPDL = false;
     bool DoFTPUL = false;
     bool DoBaudCalibration = false;
@@ -579,6 +580,7 @@ uint32_t chksum_crc32(uint8_t *block, unsigned int length);
 #define BEE_LEN_REPORT              sizeof(Report)
 #define BEE_LEN_EVENT               sizeof(Event)
 #define BEE_LEN_GETFILEINFO         sizeof(GETFILEINFO)
+#define BEE_LEN_DIRLISTPKT          sizeof(DIRLISTPKT)
 
 // Telecommunication Default Settings
 #define MIM_DEFAULT_TIMEOUT         1000

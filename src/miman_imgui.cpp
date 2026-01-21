@@ -273,6 +273,8 @@ void ImGui_ModelWindow(float fontscale)
     ImGui::End();
 }
 
+
+
 void ImGui_TrackWindow(float fontscale)
 {
     ImGui::Begin("Track Window", &p_open, mim_winflags);
@@ -427,13 +429,96 @@ void ImGui_TrackWindow(float fontscale)
 
     }
 
-    ImGui::SameLine();
-    ImGui::SetWindowFontScale(fontscale);
-
-    // ... (AutoPilot child window 그대로 유지)
-
     ImGui::End();
 }
+
+void ImGui_AutoPilotWindow(float fontscale)
+{
+    static bool p_open = true;
+
+    ImGui::Begin("AutoPilot", &p_open, mim_winflags);
+    ImGui::SetWindowFontScale(fontscale);
+
+    // ===== Autopilot controls =====
+    ImGui::Text("AutoPilot Controls");
+    ImGui::Checkbox("Beacon Check", &State.DoBeaconCheck);
+    // ImGui::SameLine();
+    ImGui::Checkbox("Ping", &State.DoPing);
+    ImGui::SameLine();
+    ImGui::Checkbox("CMD", &State.DoCMD);
+
+    // ImGui::Checkbox("FTP DL", &State.DoFTPDL);
+    // ImGui::SameLine();
+    // ImGui::Checkbox("FTP UL", &State.DoFTPUL);
+    // ImGui::SameLine();
+    ImGui::Checkbox("AMP", &State.AMPmode);
+
+    // ImGui::Checkbox("Baud Calibration", &State.DoBaudCalibration);
+    // ImGui::SameLine();
+    // ImGui::Checkbox("Freq Calibration", &State.DoFreqCalibration);
+
+    ImGui::Text("iteration");
+    ImGui::SameLine();
+    ImGui::InputInt("##AutoPilotIter", &State.iteration);
+
+    ImGui::Text("Time Span");
+    ImGui::SameLine();
+    ImGui::InputInt("##AutoPilotSpan", &State.SpanTime);
+
+    if (!State.Autopilot)
+    {
+        if (ImGui::Button("Start AutoPilot", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 1.8f)))
+        {
+            State.Autopilot = true;
+            pthread_create(&p_thread[13], NULL, AutoPilot, NULL);
+        }
+    }
+    else
+    {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.650f, 0.266f, 0.322f, 1.0f));
+        if (ImGui::Button("Stop AutoPilot", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 1.8f)))
+        {
+            State.Autopilot = false;
+            pthread_join(p_thread[13], NULL);
+        }
+        ImGui::PopStyleColor();
+    }
+
+    // ===== Live status =====
+    ImGui::Separator();
+    ImGui::Text("Live Counters");
+    ImGui::Text("BeaconCounter : %d", BeaconCounter);
+    ImGui::Text("PingCounter   : %d", PingCounter);
+    ImGui::Text("CMDCount      : %d", State.CMDCount);
+
+    // ===== CMD Generator (simple) =====
+    ImGui::Separator();
+    ImGui::Text("CMD Generator");
+
+    static uint32_t test_msgid;
+    static uint16_t test_fnccode;
+    static CFE_MSG_CommandHeader dummy_hdr;
+
+    ImGui::InputScalar("MsgID",   ImGuiDataType_U32, &test_msgid,  NULL, NULL, "0x%08X");
+    ImGui::InputScalar("FncCode", ImGuiDataType_U16, &test_fnccode, NULL, NULL, "%u");
+
+    CMDDataGenerator(test_msgid, test_fnccode, &dummy_hdr, sizeof(dummy_hdr));
+
+    ImGui::Separator();
+    ImGui::Text("SatCMD Queue");
+    for (int i = 0; i < 256; i++)
+    {
+        if (SatCMD[i] != NULL)
+            ImGui::Text("SatCMD[%d] : READY", i);
+    }
+
+    ImGui::SetWindowFontScale(1.0f);
+    ImGui::End();
+}
+
+
+
+
 
 void ImGui_FrequencyWindow(float fontscale)
 {   

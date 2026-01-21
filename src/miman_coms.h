@@ -392,6 +392,7 @@ typedef enum
     REPORT_KIND_EPS_P60_ACU_GET_TABLE_HK,
 
 
+
     REPORT_KIND_SC_GENERIC,
 
 } ReportKind_t;
@@ -579,7 +580,6 @@ typedef struct EPS_P60_ACU_GET_TABLE_HK {
 
 
 
-
 typedef struct
 {
     bool     valid;
@@ -608,6 +608,7 @@ typedef struct
         EPS_P60_DOCK_GET_TABLE_HK              eps_p60dockgettablehk;
         EPS_P60_PDU_GET_TABLE_HK               eps_p60pdugettablehk;
         EPS_P60_ACU_GET_TABLE_HK               eps_p60acugettablehk;
+
 
 
     } u;

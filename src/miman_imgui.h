@@ -49,11 +49,15 @@ void ImGui_ClearColorBuf(GLFWwindow * window, ImVec4 clear_color);
 void ImGui_MainMenu();
 void ImGui_ModelWindow(float fontscale);
 void ImGui_TrackWindow(float fontscale);
+void ImGui_AutoPilotWindow(float fontscale);
 void ImGui_FrequencyWindow(float fontscale);
 void ImGui_RotatorWindow(float fontscale);
 void ImGui_BeaconWindow(float fontscale);
 void ImGui_ControlWindow(float fontscale);
 void ImGui_CommandWindow(float fontscale);
+
+void ImGui_AutoPilotWindow(float fontscale);
+
 
 void ImGuiCustomStyle(ImGuiStyle* style);
 bool popup_setup(Setup * setup);

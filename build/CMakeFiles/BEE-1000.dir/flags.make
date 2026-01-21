@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/miman/Desktop/BEE-1000_GS/config -I/home/miman/Desktop/BEE-1000_GS/lib -I/home/miman/Desktop/BEE-1000_GS/lib/libsgp4 -I/home/miman/Desktop/BEE-1000_GS/lib/imgui -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/build -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libparam_client/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libutil/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libgscsp/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libgscsp/lib/libcsp/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libgscsp/lib/libcsp/src -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/build/lib/libgscsp/lib/libcsp/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libfp_client/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libftp_client/include -I/home/miman/Desktop/BEE-1000_GS/lib/gscsp/lib/libgosh_client/include -I/home/miman/Desktop/BEE-1000_GS/src
 
-CXX_FLAGS = 
+CXX_FLAGS = -g
 

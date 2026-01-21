@@ -236,6 +236,16 @@ void PathInitializer()
 
 void PathGenerator(int Selected)
 {
+
+
+        if (Selected < 0 || Selected >= 8192) return;
+    if (State.Satellites[Selected] == NULL) return;
+
+    if (Footprint == NULL) return;
+    if (Footprint->spline_vertices == NULL) return;
+
+
+    
     if(Selected == -1)
     {
         State.Fatellites->GeneratePath();

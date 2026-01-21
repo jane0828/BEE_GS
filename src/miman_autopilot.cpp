@@ -19,13 +19,14 @@ extern bool sgp4check;
 extern int PingCounter;
 extern int BeaconCounter;
 extern CmdGenerator_GS * SatCMD[256];
+static bool wdt_notsent;
 
 int FindValuablePath()
 {
     int Valuable = 0;
     for(int i = 0 ; i < 64; i++)
     {
-        if(State.Satellites[GetNowTracking()]->MaxElevation(i) > 10.0f)
+        if(State.Satellites[GetNowTracking()]->MaxElevation(i) > 9.0f)
         {
             Valuable = i;
             break;
@@ -103,6 +104,7 @@ int AutoPilot_task()
         {
             if((State.Satellites[SatIndex]->_nextaos[NextValuablePath] -  DateTime::Now(true)).TotalMinutes() < 5.0f)
                 break;
+            usleep(20000); // 20 ms
         }
         PathGenerator(GetNowTracking());
 
@@ -143,18 +145,64 @@ int AutoPilot_task()
             return 0;
         }
 
+
         if(State.AMPmode)
         {
-            while((State.Satellites[SatIndex]->_nextlos[NextValuablePath] - DateTime::Now(false)).TotalMinutes() > 15.0f)
-                continue;
+    // --- DEBUG: show computed minutes-to-LOS ---
+    double min_to_los =
+        (State.Satellites[SatIndex]->_nextlos[NextValuablePath] - DateTime::Now(true)).TotalMinutes();
+
+    // console.AddLog("[DBG][AMP] enter: SatIndex=%d Path=%d min_to_los=%.3f Autopilot=%d",
+    //                SatIndex, NextValuablePath, min_to_los, (int)State.Autopilot);
+
+    // throttle log inside loop (e.g., once per 1 second)
+    DateTime last_log = DateTime::Now(false);
+
+    while (State.Autopilot)
+    {
+        min_to_los =
+            (State.Satellites[SatIndex]->_nextlos[NextValuablePath] - DateTime::Now(false)).TotalMinutes();
+
+        if (min_to_los <= 15.0)
+            break;
+
+        // print at most once per 1 sec
+        if ((DateTime::Now(false) - last_log).TotalSeconds() >= 1.0)
+        {
+            // console.AddLog("[DBG][AMP] waiting: min_to_los=%.3f (cond: %.3f > 15) now=%d/%d %02d:%02d:%02d",
+            //                min_to_los, min_to_los,
+            //                DateTime::Now(false).Month(), DateTime::Now(false).Day(),
+            //                DateTime::Now(false).Hour(), DateTime::Now(false).Minute(), DateTime::Now(false).Second());
+            last_log = DateTime::Now(false);
+        }
+
+        usleep(50000); // 50 ms
+    }
+
+    // console.AddLog("[DBG][AMP] exit-wait: min_to_los=%.3f Autopilot=%d",
+                //    min_to_los, (int)State.Autopilot);
+
+    if (!State.Autopilot)
+        return 0;
+
+
+
+            // while((State.Satellites[SatIndex]->_nextlos[NextValuablePath] - DateTime::Now(false)).TotalMinutes() > 15.0f)
+            //     {
+            //                     console.AddLog("[AUTO]##AMP Process running");
+            //     if (!State.Autopilot) break;
+            //     usleep(50000); // 50 ms
+            //     }
             if(State.AmpTime > 0)
             {
                 console.AddLog("[ERRPR]##Cannot Turn on AMP Now. Wati until the timer goes on.");
                 console.AddLog("[ERROR]##If you don't want it, restart the software.");
                 console.AddLog("[ERROR]##Remind the AMP would be turned off after the timer goes on");
                 console.AddLog("[ERROR]##even if you restart the software.");
-                while(State.AmpTime > 0)
-                    continue;
+            while (State.AmpTime > 0 && State.Autopilot)
+            {
+                usleep(20000); // 20 ms
+            }
             }
                 
             pid_t pid = fork();
@@ -163,7 +211,7 @@ int AutoPilot_task()
             }
             else if (pid == 0) {
                 // Child process
-                execl("./amp/ampcontrol", "ampcontrol", NULL);
+                execl("../amp/ampcontrol", "ampcontrol", NULL);
                 console.AddLog("[OK]##Forked Safe Amplifier Process.");
             }
             else
@@ -188,7 +236,7 @@ int AutoPilot_task()
             sleep(State.SpanTime);
             
             pthread_create(&p_thread[4], NULL, csp_ping_console, NULL);
-            if(PingCounter >= 1)
+            if(PingCounter >= 5)
             {
                 PingAvailable = true;
                 break;
@@ -202,6 +250,7 @@ int AutoPilot_task()
             pthread_join(p_thread[4], NULL);
         }
 
+
         if(!State.Autopilot)
         {
             console.AddLog("[OK]##[Auto]Autopilot Stopped by User.");
@@ -209,34 +258,192 @@ int AutoPilot_task()
         }
 
         uint32_t now_total_rx_bytes = get_rx_bytes();
-
+        wdt_notsent = true;   
         //Send Watchdog
-        if(State.Autopilot && State.DoPing && NowOn(SatIndex, NextValuablePath))
-        {
-            console.AddLog("[Auto]Synchronizing Watchdog Counter GS100 - AX100");
-            csp_transaction(CSP_PRIO_HIGH, setup->gs100_node, AX100_PORT_GNDWDT_RESET, 1000, NULL, 0, NULL, 0) > 0;
-            while(State.Autopilot)
-            {
-                sleep(1);
-                if(csp_transaction(CSP_PRIO_HIGH, setup->ax100_node, AX100_PORT_GNDWDT_RESET, 1000, NULL, 0, NULL, 0) > 0)
-                console.AddLog("[OK]##[Auto]Watchdog Control OK.(No Reply)");
-                else
-                console.AddLog("[ERROR]##[Auto]Watchdog Control Failed.(No Reply)");
-                if(now_total_rx_bytes != get_rx_bytes())
-                {
-                    console.AddLog("[OK]##Watchdog Reset Success. Total RX Bytes Start :%u, End : %u", now_total_rx_bytes, get_rx_bytes());
-                    break;
-                }
-                else if (!NowOn(SatIndex, NextValuablePath))
-                {
-                    console.AddLog("[ERROR]##Watchdog Reset is too hard. Total RX Bytes Start :%u, End : %u", now_total_rx_bytes, get_rx_bytes());
-                    break;
-                }
-            }
 
-            
+if (wdt_notsent &&
+    State.Autopilot &&
+    State.DoCMD &&
+    NowOn(SatIndex, NextValuablePath))
+{
+    /* ================= Get EPS HK 3형제 ==================-*/
 
-        }
+for (int i = 0; i < 2 && State.Autopilot; i++)
+{
+    uint8_t cmd4[8] = {0x18,0x75,0xC0,0x00,0x00,0x01,0x14,0x47};
+
+    packetsign* pkt =
+        (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd4));
+
+    pkt->Identifier = HVD_TEST;
+    pkt->PacketType = MIM_PT_TMTC_TEST;
+    pkt->Length     = sizeof(cmd4);
+    memcpy(pkt->Data, cmd4, sizeof(cmd4));
+
+    pthread_create(&p_thread[4], NULL,
+                   task_uplink_onorbit, (void*)pkt);
+    pthread_join(p_thread[4], NULL);
+    free(pkt);
+
+    console.AddLog("[Auto]EPS P60 DOCK GET TABLE HK Command Sent (%d/2)", i+1);
+    sleep(10);
+}
+
+for (int i = 0; i < 2 && State.Autopilot; i++)
+{
+    uint8_t cmd5[8] = {0x18,0x75,0xC0,0x00,0x00,0x01,0x17,0x44};
+
+    packetsign* pkt1 =
+        (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd5));
+    pkt1->Identifier = HVD_TEST;
+    pkt1->PacketType = MIM_PT_TMTC_TEST;
+    pkt1->Length     = sizeof(cmd5);
+    memcpy(pkt1->Data, cmd5, sizeof(cmd5));
+
+    pthread_create(&p_thread[4], NULL,
+                   task_uplink_onorbit, (void*)pkt1);
+    pthread_join(p_thread[4], NULL);
+    free(pkt1);
+
+    console.AddLog("[Auto]EPS P60 PDU GET TABLE HK Command Sent (%d/2)", i+1);
+    sleep(10);
+}
+
+for (int i = 0; i < 2 && State.Autopilot; i++)
+{
+    uint8_t cmd6[8] = {0x18,0x75,0xC0,0x00,0x00,0x01,0x1a,0x00};
+
+    packetsign* pkt2 =
+        (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd6));
+    pkt2->Identifier = HVD_TEST;
+    pkt2->PacketType = MIM_PT_TMTC_TEST;
+    pkt2->Length     = sizeof(cmd6);
+    memcpy(pkt2->Data, cmd6, sizeof(cmd6));
+
+    pthread_create(&p_thread[4], NULL,
+                   task_uplink_onorbit, (void*)pkt2);
+    pthread_join(p_thread[4], NULL);
+    free(pkt2);
+
+    console.AddLog("[Auto]EPS P60 ACU GET TABLE HK Command Sent (%d/2)", i+1);
+    sleep(10);
+}
+
+    console.AddLog("[Auto]Start GND WDT reset sequence");
+
+    /* ================= AX100 ================= */
+    uint8_t cmd1[8] = {0x18,0x50,0xC0,0x00,0x00,0x01,0x06,0x70};
+
+    for (int i = 0; i < 2 && State.Autopilot; i++)
+    {
+        packetsign* pkt =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd1));
+
+        pkt->Identifier = HVD_TEST;
+        pkt->PacketType = MIM_PT_TMTC_TEST;
+        pkt->Length     = sizeof(cmd1);
+        memcpy(pkt->Data, cmd1, sizeof(cmd1));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)pkt);
+        pthread_join(p_thread[4], NULL);
+        free(pkt);
+
+        console.AddLog("[Auto]AX100 GND WDT CMD sent (%d/2)", i+1);
+        sleep(10);
+    }
+
+    if (!State.Autopilot) return 0;
+
+    /* ================= EPS P60 DOCK ================= */
+    uint8_t cmd2[12] =
+        {0x18,0x75,0xC0,0x00,0x00,0x05,0x1e,0xa2,0xe8,0x03,0x00,0x00};
+
+    for (int i = 0; i < 2 && State.Autopilot; i++)
+    {
+        packetsign* pkt =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd2));
+
+        pkt->Identifier = HVD_TEST;
+        pkt->PacketType = MIM_PT_TMTC_TEST;
+        pkt->Length     = sizeof(cmd2);
+        memcpy(pkt->Data, cmd2, sizeof(cmd2));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)pkt);
+        pthread_join(p_thread[4], NULL);
+        free(pkt);
+
+        console.AddLog("[Auto]EPS P60 DOCK GND WDT CMD sent (%d/2)", i+1);
+        sleep(10);
+    }
+
+    console.AddLog("[Auto]GND WDT sequence completed");
+
+
+
+    /* ================= Get EPS HK 3형제 ==================-*/
+for (int i = 0; i < 2 && State.Autopilot; i++)
+{
+    uint8_t cmd7[8] = {0x18,0x75,0xC0,0x00,0x00,0x01,0x14,0x47};
+
+    packetsign* pkt3 =
+        (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd7));
+    pkt3->Identifier = HVD_TEST;
+    pkt3->PacketType = MIM_PT_TMTC_TEST;
+    pkt3->Length     = sizeof(cmd7);
+    memcpy(pkt3->Data, cmd7, sizeof(cmd7));
+
+    pthread_create(&p_thread[4], NULL,
+                   task_uplink_onorbit, (void*)pkt3);
+    pthread_join(p_thread[4], NULL);
+    free(pkt3);
+
+    console.AddLog("[Auto]EPS P60 DOCK GET TABLE HK Command Sent (%d/2)", i+1);
+    sleep(10);
+}
+for (int i = 0; i < 2 && State.Autopilot; i++)
+{
+    uint8_t cmd8[8] = {0x18,0x75,0xC0,0x00,0x00,0x01,0x17,0x44};
+
+    packetsign* pkt4 =
+        (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd8));
+    pkt4->Identifier = HVD_TEST;
+    pkt4->PacketType = MIM_PT_TMTC_TEST;
+    pkt4->Length     = sizeof(cmd8);
+    memcpy(pkt4->Data, cmd8, sizeof(cmd8));
+
+    pthread_create(&p_thread[4], NULL,
+                   task_uplink_onorbit, (void*)pkt4);
+    pthread_join(p_thread[4], NULL);
+    free(pkt4);
+
+    console.AddLog("[Auto]EPS P60 PDU GET TABLE HK Command Sent (%d/2)", i+1);
+    sleep(10);
+}
+for (int i = 0; i < 2 && State.Autopilot; i++)
+{
+    uint8_t cmd9[8] = {0x18,0x75,0xC0,0x00,0x00,0x01,0x1a,0x00};
+
+    packetsign* pkt5 =
+        (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd9));
+    pkt5->Identifier = HVD_TEST;
+    pkt5->PacketType = MIM_PT_TMTC_TEST;
+    pkt5->Length     = sizeof(cmd9);
+    memcpy(pkt5->Data, cmd9, sizeof(cmd9));
+
+    pthread_create(&p_thread[4], NULL,
+                   task_uplink_onorbit, (void*)pkt5);
+    pthread_join(p_thread[4], NULL);
+    free(pkt5);
+
+    console.AddLog("[Auto]EPS P60 ACU GET TABLE HK Command Sent (%d/2)", i+1);
+    sleep(10);
+}
+
+    wdt_notsent = false;
+
+}
 
         if(!State.Autopilot)
         {
@@ -249,8 +456,13 @@ int AutoPilot_task()
         if((State.DoFTPDL || State.DoFTPUL) && NowOn(SatIndex, NextValuablePath))
         {
             int NowBecCount = BeaconCounter;
-            while(NowBecCount == BeaconCounter && State.Autopilot && NowOn(SatIndex, NextValuablePath))
-                continue;
+        while (NowBecCount == BeaconCounter &&
+            State.Autopilot &&
+            NowOn(SatIndex, NextValuablePath))
+        {
+            usleep(5000); 
+        }
+
             uint32_t initial = get_rx_bytes();
             DateTime inittime = DateTime::Now(false);
             
@@ -320,50 +532,50 @@ int AutoPilot_task()
             return 0;
         }
 
-        //CMD
-        if(State.Autopilot && State.DoCMD && NowOn(SatIndex, NextValuablePath))
-        {
-            for(int i = 0; i < 256; i++)
-            {
-                if(SatCMD[i] == NULL)
-                    continue;
-                if(State.Successed > State.CMDCount)
-                {
-                    State.CMDCount++;
-                    continue;
-                }
-                while(State.Autopilot)
-                {
-                    sleep(State.SpanTime);
+        // //CMD
+        // if(State.Autopilot && State.DoCMD && NowOn(SatIndex, NextValuablePath))
+        // {
+        //     for(int i = 0; i < 256; i++)
+        //     {
+        //         if(SatCMD[i] == NULL)
+        //             continue;
+        //         if(State.Successed > State.CMDCount)
+        //         {
+        //             State.CMDCount++;
+        //             continue;
+        //         }
+        //         while(State.Autopilot)
+        //         {
+        //             sleep(State.SpanTime);
                     
-                    if(SatCMD[i]->Checksum)
-                        SatCMD[i]->GenerateChecksum();
-                    packetsign * SendingCMD = SatCMD[i]->GenerateCMDPacket();
-                    pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void *)SendingCMD);
-                    pthread_join(p_thread[4], NULL);
-                    if(State.Successed < State.CMDCount)
-                    {
-                        State.Successed = State.CMDCount;
-                        break;
-                    }
-                    if(!NowOn(SatIndex, NextValuablePath))
-                    {
-                        break;
-                    }
-                }
-                if(!NowOn(SatIndex, NextValuablePath))
-                {
-                    break;
-                }
+        //             if(SatCMD[i]->Checksum)
+        //                 SatCMD[i]->GenerateChecksum();
+        //             packetsign * SendingCMD = SatCMD[i]->GenerateCMDPacket();
+        //             pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void *)SendingCMD);
+        //             pthread_join(p_thread[4], NULL);
+        //             if(State.Successed < State.CMDCount)
+        //             {
+        //                 State.Successed = State.CMDCount;
+        //                 break;
+        //             }
+        //             if(!NowOn(SatIndex, NextValuablePath))
+        //             {
+        //                 break;
+        //             }
+        //         }
+        //         if(!NowOn(SatIndex, NextValuablePath))
+        //         {
+        //             break;
+        //         }
 
-            }
-            if(!NowOn(SatIndex, NextValuablePath))
-            {
-                console.AddLog("[ERROR]##[Auto]Stop CMD after LOS. Success : %d", State.CMDCount);
-                State.CMDCount = 0;
-                break;
-            }
-        }
+        //     }
+        //     if(!NowOn(SatIndex, NextValuablePath))
+        //     {
+        //         console.AddLog("[ERROR]##[Auto]Stop CMD after LOS. Success : %d", State.CMDCount);
+        //         State.CMDCount = 0;
+        //         break;
+        //     }
+        // }
 
         if(!State.Autopilot)
         {
@@ -376,7 +588,9 @@ int AutoPilot_task()
         while(State.Autopilot && State.DoFTPDL && NowOn(SatIndex, NextValuablePath))
         {
             if(State.ftp_mode)
-                continue;
+                {usleep(10000); 
+                    continue;
+                }
             sleep(State.SpanTime);
             pthread_join(p_thread[8], NULL);
             if(!NowOn(SatIndex, NextValuablePath))
@@ -431,7 +645,7 @@ int AutoPilot_task()
         pthread_join(p_thread[4], NULL);
 
         while(State.Autopilot && NowOn(SatIndex, NextValuablePath))
-            continue;
+            usleep(20000);
         State.Doppler = false;
         pthread_join(p_thread[7], NULL);
         console.AddLog("[OK]##[Auto]Stop Doppler Correction.");
@@ -446,6 +660,8 @@ int AutoPilot_task()
         BeaconCounter = 0;
         PingCounter = 0;
 
+
+        //TLE update시 주석 해제 필수
         console.AddLog("[Auto]Update TLE...");
         for(int i = 0; i < 8192; i++)
         {
@@ -478,7 +694,7 @@ int AutoPilot_task()
         }
         else if (pid_off == 0) {
             // Child process
-            execl("./amp/ampoff", "ampoff", NULL);
+            execl("../amp/ampoff", "ampoff", NULL);
         }
         else
         {
@@ -486,6 +702,9 @@ int AutoPilot_task()
         }
         State.AMPON = false;
 
+
+
+        // TLE  업데이트시 주석 해ㅈ[ ㅍ;ㄹ수]
         csp_transaction(CSP_PRIO_HIGH, setup->gs100_node, AX100_PORT_GNDWDT_RESET, 1000, NULL, 0, NULL, 0) > 0;
         console.AddLog("Reset GS100 watchdog.");
         printf("Reset GS100 Watchdog.\n");
@@ -510,6 +729,25 @@ int AutoPilot_task()
         printf("Model Refresh.\n");
         sleep(3);
         SetNowTracking(NowTracking);
+
+// BEFORE calling PathGenerator()
+if (!State.Autopilot) {
+    console.AddLog("[OK]##[Auto]Autopilot Stopped by User (before PathGenerator).");
+    return 0;
+}
+
+int trk = GetNowTracking();
+if (trk < 0 || trk >= 8192 || State.Satellites[trk] == NULL) {
+    console.AddLog("[ERROR]##[Auto]Invalid tracking index before PathGenerator. trk=%d ptr=%p",
+                   trk, (trk >= 0 && trk < 8192) ? State.Satellites[trk] : NULL);
+    return -2;
+}
+
+PathGenerator(trk);
+
+
+
+
         PathGenerator(GetNowTracking());
         State.Display_load = false;
         State.Display_TLE = false;
@@ -577,3 +815,7 @@ int TLE_Autoupdate_Test()
     State.Display_TLE = false;
     printf("Finish Autopilot.\n");
 }
+
+
+
+

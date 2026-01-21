@@ -286,6 +286,19 @@ int main(int, char**)
             ImGui::SetNextWindowSize(ImVec2(DISPLAY_TRACK_W * ReactiveWidth, DISPLAY_TRACK_H * ReactiveHeight), ImGuiCond_Always);
             ImGui_TrackWindow(ReactiveHeight * 0.5);
 
+
+            if (State.Display_Autopilot)
+            {
+                float x = DISPLAY_COL1 * ReactiveWidth *1.924;
+                float y = DISPLAY_ROW2 * ReactiveHeight;
+                float w = DISPLAY_MODEL_W * ReactiveWidth/2.38;
+                float h = DISPLAY_MODEL_H * ReactiveHeight;
+
+                ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
+                ImGui::SetNextWindowSize(ImVec2(w, h), ImGuiCond_Always);
+                ImGui_AutoPilotWindow(ReactiveHeight * 0.5f);
+            }
+
             //Show Frequency Window
             ImGui::SetNextWindowPos(ImVec2(0, MENUPADDING), ImGuiCond_Always);
             ImGui::SetNextWindowSize(ImVec2(DISPLAY_FREQ_W * ReactiveWidth, ReactiveHeight * DISPLAY_FREQ_H), ImGuiCond_Always);
