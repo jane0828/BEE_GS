@@ -106,6 +106,8 @@
 
 #define CFE_SB_CMD_HDR_SIZE 8
 
+#define SAT_MAX_NUM 32768
+
 void todaystr(char * str, int length);
 void * AmpTimer(void *);
 void printftp(const char * input, ...);
@@ -689,800 +691,7 @@ typedef struct {
 
 
 
-/*************************************************************************/
-/*
-** FM system
-*/
-/*************************************************************************/
 
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} FM_NoArgsCmd_t;
-
-typedef FM_NoArgsCmd_t FM_NoopCmd_t;
-typedef FM_NoArgsCmd_t FM_ResetCountersCmd_t;
-typedef FM_NoArgsCmd_t FM_ResetFmCmd_t;
-typedef FM_NoArgsCmd_t FM_ResetProcessorCmd_t;
-typedef FM_NoArgsCmd_t FM_ResetPowerCmd_t;
-typedef FM_NoArgsCmd_t FM_TerminateEoCmd_t;
-typedef FM_NoArgsCmd_t FM_TerminateEoOverrideCmd_t;
-typedef FM_NoArgsCmd_t FM_InitiateBaselineCmd_t;
-typedef FM_NoArgsCmd_t FM_DeploayAntennaCmd_t;
-typedef FM_NoArgsCmd_t FM_UseNominalBaudRatesCmd_t;
-typedef FM_NoArgsCmd_t FM_StoreObsDataToCdsCmd_t;
-typedef FM_NoArgsCmd_t FM_RestoreObsDataFromCdsCmd_t;
-
-/*
-** FM_RESET_APP_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t AppId;
-} __attribute__((packed)) FM_ResetAppCmd_t;
-
-
-/*
-** FM_MODE_TRANSFER_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t Mode;
-    uint8_t Submode;
-} __attribute__((packed)) FM_ModeTransferCmd_t;
-
-
-/*
-** FM_SET_OPERATION_MODE_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t Mode;
-    uint8_t Submode;
-} __attribute__((packed)) FM_SetOperationModeCmd_t;
-
-
-/*
-** FM_SET_COMMISSIONING_PHASE_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t CommissioningPhase;
-} __attribute__((packed)) FM_SetCommissioningPhaseCmd_t;
-
-
-/*
-** FM_SET_SPACECRAFT_TIME_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t Seconds;
-    uint32_t Subseconds;
-} __attribute__((packed)) FM_SetSpacecraftTimeCmd_t;
-
-
-/*
-** FM_SET_ANTENNA_DEPLOY_FLAG_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t AntennaDeployFlag;
-} __attribute__((packed)) FM_SetAntennaDeployFlagCmd_t;
-
-
-/*
-** FM_SET_DAYLIGHT_DETECTION_FLAG_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t DaylightDetectionFlag;
-} __attribute__((packed)) FM_SetDaylightDetectionFlagCmd_t;
-
-
-/*
-** FM_SET_COMM_MISSING_FLAG_CC
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t CommunicationMissing;
-} __attribute__((packed)) FM_SetCommMissingFlagCmd_t;
-
-/* Reset */
-#define CFE_MISSION_MAX_API_LEN 20
-#define CFE_MISSION_MAX_PATH_LEN 64
-#define CFE_ES_START_APP_CC 4
-#define CFE_ES_RESTART_APP_CC 6
-#define CFE_ES_RESTART_CC 2
-#define CFE_ES_STOP_APP_CC 5
-
-#define CFE_PSP_RST_TYPE_PROCESSOR 1 /**< Volatile disk, CDS and User Reserved memory may be valid */
-#define CFE_PSP_RST_TYPE_POWERON   2 /**< All memory has been cleared */
-
-#define ES_CMD_MID                  0x1806
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} SCH_NoArgsCmd_t;
-
-typedef struct
-{
-CFE_MSG_CommandHeader CmdHeader;
-
-uint16_t SlotNumber; /**< \brief Slot Number of Activity whose state is to change */
-/**< \details Valid Range is zero to (#SCH_TOTAL_SLOTS - 1) */
-uint16_t EntryNumber; /**< \brief Entry Number of Activity whose state is to change
-\details Valid Range is zero to (#SCH_ENTRIES_PER_SLOT - 1) */
-
-} SCH_EntryCmd_t;
-
-
-/* MESSAGE ID (CMD) */
-#define SCH_CMD_MID                    0x1895 /**< \brief SCH Ground Commands Message ID */
-
-
-/* COMMAND CODES */
-#define SCH_ENABLE_CC           2   /* Enable Schedule Table Entry */
-#define SCH_DISABLE_CC          3   /* disable schedule table entry */
-
-// 전체 리스타트 명령.
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} CFE_ES_NoArgsCmd_t;
-
-typedef struct CFE_ES_RestartCmd_Payload
-{
-    uint16_t RestartType;  // 여기 1을 넣으세요
-} CFE_ES_RestartCmd_Payload_t;
-
-
-typedef struct CFE_ES_RestartCmd
-{
-    CFE_MSG_CommandHeader     CmdHeader;  // MID = 0x1806, CC = 2
-    CFE_ES_RestartCmd_Payload_t Payload;
-} CFE_ES_RestartCmd_t; 
- // 전체 리스타트 명령 끝.
-
-
- // 앱 리스타트 명령.
-
-typedef struct CFE_ES_AppNameCmd_Payload
-{
-    char Application[CFE_MISSION_MAX_API_LEN];   // 여기 "FM" (F, M, \0)을 넣으세요.
-} CFE_ES_AppNameCmd_Payload_t;
-
-
-typedef struct CFE_ES_AppNameCmd
-{
-    CFE_MSG_CommandHeader     CmdHeader;   // MID = 0x1806, CC = 6
-    CFE_ES_AppNameCmd_Payload_t Payload;
-} CFE_ES_AppNameCmd_t;
-
-typedef CFE_ES_AppNameCmd_t CFE_ES_StopAppCmd_t;
-typedef CFE_ES_AppNameCmd_t CFE_ES_RestartAppCmd_t;
-
- // 앱 리스타트 명령 끝.
-
- /**
-** \brief Start Application Command Payload
-**
-** For command details, see #CFE_ES_START_APP_CC
-**
-**/
-// typedef struct CFE_ES_StartAppCmd_Payload
-// {
-//     char Application[CFE_MISSION_MAX_API_LEN];   /**< \brief Name of Application to be started */
-//     char AppEntryPoint[CFE_MISSION_MAX_API_LEN]; /**< \brief Symbolic name of Application's entry point */
-//     char AppFileName[CFE_MISSION_MAX_PATH_LEN];  /**< \brief Full path and filename of Application's
-//                                                     executable image */
-
-//     uint32_t StackSize; /**< \brief Desired stack size for the new application */
-
-//     uint8_t ExceptionAction; /**< \brief #CFE_ES_ExceptionAction_RESTART_APP=On exception,
-//                                                        restart Application,
-//                                                        #CFE_ES_ExceptionAction_PROC_RESTART=On exception,
-//                                                        perform a Processor Reset */
-//     uint16_t Priority;           /**< \brief The new Applications runtime priority. */
-
-// } CFE_ES_StartAppCmd_Payload_t;
-
-// /**
-//  * \brief Start Application Command
-//  */
-// typedef struct CFE_ES_StartApp
-// {
-//     CFE_MSG_CommandHeader      CmdHeader; /**< \brief Command header */
-//     CFE_ES_StartAppCmd_Payload_t Payload;   /**< \brief Command payload */
-// } CFE_ES_StartAppCmd_t;
-
-
-/*************************************************************************/
-/*
-** GPS system
-*/
-/*************************************************************************/
-
-/*
-** Type definition (generic "no arguments" command)
-*/
-typedef struct
-{
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} GPS_NoArgsCmd_t;
-
-/*
-** The following commands all share the "NoArgs" format
-**
-** They are each given their own type name matching the command name, which
-** allows them to change independently in the future without changing the prototype
-** of the handler function
-*/
-typedef GPS_NoArgsCmd_t GPS_NoopCmd_t;
-typedef GPS_NoArgsCmd_t GPS_ResetCountersCmd_t;
-typedef GPS_NoArgsCmd_t GPS_ResetAppCmd_t;
-typedef GPS_NoArgsCmd_t GPS_ResetHwCmd_t;
-typedef GPS_NoArgsCmd_t GPS_ClearLogsCmd_t;
-typedef GPS_NoArgsCmd_t GPS_EnableTimeToneCmd_t;
-typedef GPS_NoArgsCmd_t GPS_DisableTimeToneCmd_t;
-typedef GPS_NoArgsCmd_t GPS_LogRequestDftCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int16_t MsgId;
-} __attribute__((packed)) GPS_MsgIdCmd_t;
-
-typedef GPS_MsgIdCmd_t GPS_LogOnceCmd_t;
-typedef GPS_MsgIdCmd_t GPS_LogOntimeCmd_t;
-typedef GPS_MsgIdCmd_t GPS_LogOnChangeCmd_t;
-
-/*************************************************************************/
-/*
-** MTQ System
-*/
-/*************************************************************************/
-
-typedef struct{
-    CFE_MSG_CommandHeader CmdHeader;
-} __attribute__((packed)) MTQ_NoArgsCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t                   Args[3];
-} __attribute__((packed)) MTQ_U8Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int8_t                    Args[3];
-} __attribute__((packed)) MTQ_C8ArrCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t                   Args[3];
-} __attribute__((packed)) MTQ_U8ArrCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t                  Args[3];
-} __attribute__((packed)) MTQ_U32ArrCmd_t;
-
-typedef MTQ_NoArgsCmd_t MTQ_NoopCmd_t;
-typedef MTQ_NoArgsCmd_t MTQ_ResetCountersCmd_t;
-typedef MTQ_NoArgsCmd_t MTQ_ResetCmd_t;
-
-typedef MTQ_U8Cmd_t     MTQ_ResetCompCmd_t;
-typedef MTQ_U8ArrCmd_t  MTQ_EnableCmd_t;
-typedef MTQ_U8ArrCmd_t  MTQ_DisableCmd_t;
-typedef MTQ_U8ArrCmd_t  MTQ_SetPolarityCmd_t;
-
-typedef MTQ_C8ArrCmd_t  MTQ_SetDutyCmd_t;
-
-typedef MTQ_U32ArrCmd_t MTQ_SetPeriodCmd_t;
-
-/*************************************************************************/
-/*
-** RWA System
-*/
-/*************************************************************************/
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-} __attribute__((packed)) RWA_NoArgsCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; 
-    uint8_t WhlNum;
-} __attribute__((packed)) RWA_DmaskCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t WhlNum;
-    uint8_t Arg;
-} __attribute__((packed)) RWA_U8Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t WhlNum;
-    int16_t Arg;
-} __attribute__((packed)) RWA_S16Cmd_t;
-
-typedef RWA_NoArgsCmd_t RWA_NoopCmd_t;
-typedef RWA_NoArgsCmd_t RWA_ResetCountersCmd_t;
-typedef RWA_NoArgsCmd_t RWA_ProcessCmd_t;
-typedef RWA_NoArgsCmd_t RWA_ResetAllCmd_t;
-
-typedef RWA_DmaskCmd_t  RWA_ResetWheelCmd_t;
-typedef RWA_DmaskCmd_t  RWA_ClearErrorsCmd_t;
-
-typedef RWA_U8Cmd_t     RWA_SetMotorPowerStateCmd_t;
-typedef RWA_U8Cmd_t     RWA_SetEncoderPowerStateCmd_t;
-typedef RWA_U8Cmd_t     RWA_SetHallPowerStateCmd_t;
-typedef RWA_U8Cmd_t     RWA_SetControlModeCmd_t;
-typedef RWA_U8Cmd_t     RWA_SetBackupWheelModeCmd_t;
-
-typedef RWA_S16Cmd_t    RWA_SetWheelReferenceSpeedCmd_t;
-typedef RWA_S16Cmd_t    RWA_SetWheelCommandedTorqueCmd_t;
-
-typedef struct {
-    int16_t K;
-    uint8_t Kmultiplier;
-} __attribute__((packed)) PwmGain;
-
-
-typedef struct {
-    uint16_t Ki;
-    uint8_t KiMultiplier;
-    uint16_t Kd;
-    uint8_t KdMultiplier;
-} __attribute__((packed)) MainGain;
-
-
-typedef struct {
-    uint16_t Ki;
-    uint8_t KiMultiplier;
-    uint16_t Kd;
-    uint8_t KdMultiplier;
-} __attribute__((packed)) BackupGain;
-
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t WhlNum;
-    PwmGain    Input;
-} __attribute__((packed)) RWA_SetPwmGainCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t WhlNum;
-    MainGain    Input;
-} __attribute__((packed)) RWA_SetMainGainCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t WhlNum;
-    BackupGain    Input;
-} __attribute__((packed)) RWA_SetBackupGainCmd_t;
-
-
-/* Note that the telemetry header is already aligned to 64-bit. */
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int16_t WheelRefSpeed[3];
-} RWA_SetWheelReferenceSpeedAllAxisCmd_t;
-
-/*************************************************************************/
-/*
-** Payload system
-*/
-/*************************************************************************/
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-} PAY_NoArgsCmd_t;
-
-typedef PAY_NoArgsCmd_t PAY_InitDeviceCmd_t;
-typedef PAY_NoArgsCmd_t PAY_NoopCmd_t;
-typedef PAY_NoArgsCmd_t PAY_ResetCountersCmd_t;
-typedef PAY_NoArgsCmd_t PAY_CamFindCmd_t;
-typedef PAY_NoArgsCmd_t PAY_CamConnectCmd_t;
-typedef PAY_NoArgsCmd_t PAY_CamStartOperationCmd_t;
-typedef PAY_NoArgsCmd_t PAY_CamStopOperationCmd_t;
-typedef PAY_NoArgsCmd_t PAY_CamDownloadNewImgCmd_t;
-typedef PAY_NoArgsCmd_t PAY_BBEShutdownCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t Index;
-} PAY_CamDownloadOldImgCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t CmdCode;
-} PAY_CamSendNoargCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t Exposure;
-} PAY_CamSetExposureCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t SCPD;
-} PAY_CamSetScpdCmd_t;
-
-/*************************************************************************/
-/*
-** SNSR System
-*/
-/*************************************************************************/
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-} __attribute__((packed)) SNSR_NoArgsCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t Arg;
-} __attribute__((packed)) SNSR_U8Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int8_t Arg;
-} __attribute__((packed)) SNSR_C8Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t Arg;
-} __attribute__((packed)) SNSR_U16Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int16_t Arg;
-} __attribute__((packed)) SNSR_S16Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t Arg;
-} __attribute__((packed)) SNSR_U32Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int32_t Arg;
-} __attribute__((packed)) SNSR_I32Cmd_t;
-
-
-typedef SNSR_NoArgsCmd_t SNSR_NoopCmd_t;
-typedef SNSR_NoArgsCmd_t SNSR_ResetCountersCmd_t;
-typedef SNSR_NoArgsCmd_t SNSR_SunAlarmOffCmd_t;
-
-/*
-** STT system
-*/
-typedef SNSR_NoArgsCmd_t    SNSR_STT_InitDeviceCmd_t;
-
-typedef SNSR_U8Cmd_t        SNSR_STT_BootCmd_t;
-
-typedef SNSR_U32Cmd_t       SNSR_STT_PingCmd_t;
-
-typedef SNSR_NoArgsCmd_t    SNSR_STT_RebootCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_STT_SetParamsDftCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t Image;
-    uint32_t Code;
-} __attribute__((packed)) SNSR_STT_UnlockCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t ParamId;
-    uint16_t ParamSize;
-    uint8_t Param[1];
-} __attribute__((packed)) SNSR_STT_SetParamCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t Length;
-    uint8_t Data[1];
-} __attribute__((packed)) SNSR_STT_SendRS485Cmd_t;
-
-/*
-** MMT Command Messages. 
-*/
-typedef SNSR_NoArgsCmd_t    SNSR_MMT_ResetCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    bool TM_M;
-    bool TM_T;
-    bool Start_MDT;
-    bool Set;
-    bool Reset;
-} __attribute__((packed)) SNSR_MMT_SetInternalControl0Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t CM_Freq;
-    bool INT_MDT_EN;
-    bool INT_Meas_Done_EN;
-} __attribute__((packed)) SNSR_MMT_SetInternalControl2Cmd_t;
-
-typedef SNSR_U8Cmd_t    SNSR_MMT_WriteToRegisterCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_MMT_GetProductIdCmd_t;
-
-/*
-** IMU Command Messages. 
-*/
-typedef SNSR_NoArgsCmd_t SNSR_IMU_ResetCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int16_t Offset[3];
-} __attribute__((packed)) SNSR_IMU_SetGyroOffsetCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t FifoMode;
-    uint8_t ExtSyncSet;
-    uint8_t ConfigDLPF;
-} __attribute__((packed)) SNSR_IMU_SetConfigurationCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t AccelFullScale;
-    uint8_t FilterChoice;
-} __attribute__((packed)) SNSR_IMU_SetGyroConfigurationCmd_t;
-
-typedef SNSR_U8Cmd_t    SNSR_IMU_SetAccelConfigurationCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t FifoSize;
-    uint8_t DEC2_CFG;
-    bool AccelFilterChoice;
-    uint8_t A_DLPF_CFG;
-} __attribute__((packed)) SNSR_IMU_SetAccelConfiguration2Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    bool DEVICE_RESET;
-    bool SLEEP;
-} __attribute__((packed)) SNSR_IMU_SetPowerManagement1Cmd_t;
-
-typedef SNSR_U8Cmd_t        SNSR_IMU_WriteToRegisterCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_IMU_WhoAmICmd_t;
-
-/*
-** Isolate/restore Command Messages. 
-*/
-typedef SNSR_NoArgsCmd_t    SNSR_IMU_IsolateCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_IMU_RestoreCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_MMT_IsolateCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_MMT_RestoreCmd_t;
-
-typedef SNSR_U8Cmd_t        SNSR_FSS_IsolateCmd_t;
-typedef SNSR_U8Cmd_t        SNSR_FSS_RestoreCmd_t;
-typedef SNSR_U8Cmd_t        SNSR_CSS_IsolateCmd_t;
-typedef SNSR_U8Cmd_t        SNSR_CSS_RestoreCmd_t;
-
-typedef SNSR_NoArgsCmd_t    SNSR_STT_IsolateCmd_t;
-typedef SNSR_NoArgsCmd_t    SNSR_STT_RestoreCmd_t;
-
-typedef struct {
-    CFE_MSG_TelemetryHeader TlmHeader;
-} __attribute__((packed)) SNSR_SunDetectionMsg_t;
-
-
-/*************************************************************************/
-/*
-** STX system
-*/
-/*************************************************************************/
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} STX_NoArgsCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-    uint8_t                   Arg;
-} STX_U8Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-    int16_t                   Length;
-    uint16_t                  BufPushDelay;
-    uint8_t                   Data[16];
-} STX_TransmitDataCmd_t;
-
-typedef STX_NoArgsCmd_t STX_NoopCmd_t;
-typedef STX_NoArgsCmd_t STX_ResetCountersCmd_t;
-typedef STX_NoArgsCmd_t STX_ProcessCmd_t;
-typedef STX_NoArgsCmd_t STX_ResetCmd_t;
-
-typedef STX_U8Cmd_t     STX_SetControlModeCmd_t;
-typedef STX_U8Cmd_t     STX_SetEncoderRateCmd_t;
-typedef STX_U8Cmd_t     STX_SetPaPowerCmd_t;
-typedef STX_U8Cmd_t     STX_SetSynthOffsetCmd_t;
-
-typedef STX_NoArgsCmd_t STX_TransmitReadyCmd_t;
-typedef STX_NoArgsCmd_t STX_TransmitEndCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t Offset;
-    uint32_t Length;
-    uint16_t BufPushDelay;
-    char Path[32];
-} STX_TransmitFileCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t Offset;
-    uint32_t Length;
-    uint16_t BufPushDelay;
-    char Path[64];
-} STX_TransmitFileLongPathCmd_t;
-
-/*************************************************************************/
-/*
-** TO system
-*/
-/*************************************************************************/
-
-/*
-** Type definition (generic "no arguments" command)
-*/
-typedef struct
-{
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} TO_NoArgsCmd_t;
-
-/*
-** The following commands all share the "NoArgs" format
-**
-** They are each given their own type name matching the command name, which
-** allows them to change independently in the future without changing the prototype
-** of the handler function
-*/
-typedef TO_NoArgsCmd_t TO_NoopCmd_t;
-typedef TO_NoArgsCmd_t TO_ResetCountersCmd_t;
-typedef TO_NoArgsCmd_t TO_ProcessCmd_t;
-typedef TO_NoArgsCmd_t TO_EnableBeaconCmd_t;
-
-/*************************************************************************/
-/*
-** Type definition (TO App housekeeping)
-*/
-
-typedef struct {
-    uint16_t Target;
-    uint16_t FileStatus;
-    uint32_t NumFiles;
-    uint32_t Offset;
-    uint32_t Frequency;
-    void* Conn;
-} TO_DownlinkQueryReplyCmd_Payload_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    TO_DownlinkQueryReplyCmd_Payload_t Payload;
-} TO_DownlinkQueryReplyCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    int32_t timeoutsmin;
-} TO_DisableBeaconCmd_t;
-
-/*************************************************************************/
-/*
-** UTRX system
-*/
-/*************************************************************************/
-
-/*
-** Type definition (generic "no arguments" command)
-*/
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-} UTRX_NoArgsCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; 
-    uint8_t                   Arg;
-} UTRX_u8Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; 
-    uint32_t                  Arg;
-} UTRX_u32Cmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader; 
-    float                   Arg;
-} UTRX_fCmd_t;
-
-
-typedef UTRX_NoArgsCmd_t    UTRX_NoopCmd_t;
-typedef UTRX_NoArgsCmd_t    UTRX_ResetCountersCmd_t;
-typedef UTRX_NoArgsCmd_t    UTRX_RebootCmd_t;
-
-typedef UTRX_u32Cmd_t       UTRX_SetTxFreqCmd_t;
-typedef UTRX_u32Cmd_t       UTRX_SetTxBaudCmd_t;
-
-typedef UTRX_fCmd_t         UTRX_SetTxModIndexCmd_t;
-
-typedef UTRX_u8Cmd_t        UTRX_SetTxModeCmd_t;
-
-typedef UTRX_u32Cmd_t       UTRX_SetRxFreqCmd_t;
-typedef UTRX_u32Cmd_t       UTRX_SetRxBaudCmd_t;
-
-typedef UTRX_fCmd_t         UTRX_SetRxModIndexCmd_t;
-
-typedef UTRX_u8Cmd_t        UTRX_SetRxModeCmd_t;
-
-typedef UTRX_u32Cmd_t       UTRX_SetRxBandwidthCmd_t;
-
-/*************************************************************************/
-/*
-** TS system
-*/
-/*************************************************************************/
-
-/*
-** Type definition (generic "no arguments" command)
-*/
-typedef struct
-{
-    CFE_MSG_CommandHeader CmdHeader; /**< \brief Command header */
-} TS_NoArgsCmd_t;
-typedef TS_NoArgsCmd_t TS_NoopCmd_t;
-typedef TS_NoArgsCmd_t TS_ResetCountersCmd_t;
-typedef TS_NoArgsCmd_t TS_ProcessCmd_t;
-
-typedef TS_NoArgsCmd_t TS_ClearAllScheduleCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint32_t ExecutionTime;
-    uint32_t ExecutionWindow;
-    uint16_t EntryId;
-    uint16_t EntryGroup;
-    CFE_MSG_Message_t ExecutionMsg;
-} TS_InsertScheduleEntryCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t EntryId;
-} TS_ClearScheduleEntryCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint16_t EntryGroup;
-} TS_ClearScheduleGroupCmd_t;
-
-/*************************************************************************/
-/*
-** ECM system
-*/
-/*************************************************************************/
-
-/*
-** Type definition (generic "no arguments" command)
-*/
-typedef struct
-{
-    CFE_MSG_CommandHeader CmdHeader;
-} ECM_NoArgsCmd_t;
-
-typedef ECM_NoArgsCmd_t ECM_GetHKAvgCmd_t;
-typedef ECM_NoArgsCmd_t ECM_GetSystemStatusCmd_t;
-typedef ECM_NoArgsCmd_t ECM_GetOcfStateCmd_t;
-
-typedef struct {
-    CFE_MSG_CommandHeader CmdHeader;
-    uint8_t txlen;
-    uint8_t rxlen;
-    uint8_t cc;
-    uint8_t data[5];
-} ECM_Read_t;
 
 /*************************************************************************/
 /*
@@ -1884,8 +1093,19 @@ typedef struct {
 
 #define ADCS_GET_CURRENT_UNIX_TIME_INTERNAL_CC  114 // 133
 
+// adcs 추가 101번
+typedef struct
+{	// COMM TLM AMOUNT FLAG
 
-
+	uint8	flag_tlmtype;
+	uint8	flag_estmode;
+	uint8	flag_contmode;
+	
+} __attribute__((packed)) ADCS2_COMM_FLAG_Payload_t;
+typedef struct{ // COMM 01
+	uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+	ADCS2_COMM_FLAG_Payload_t	Payload;
+} ADCS2_Comm01Cmd_t;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                           */
@@ -2410,7 +1630,7 @@ typedef struct
     uint8 TriadVector1 : 4;
     uint8 TriadVector2 : 4;
 
-    uint8 Spare : 4; // Explicit declaration
+    // uint8 Spare : 4; // Explicit declaration
 
 } __attribute__((packed)) ADCS_EstimatorConfigCmd_Payload_t;
 
@@ -5779,15 +4999,17 @@ typedef struct {
 
 
 
+#define CFE_MISSION_MAX_API_LEN 20
+#define CFE_MISSION_MAX_PATH_LEN 64
 
 // ADDED FOR FTP TEST 1210
-// to lab upload
+// ES lab upload
 typedef struct {
     uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE];
     char                     app[20]; 
     char                     filename[64];
 
-} __attribute__((packed)) TO_LoadCmd_t;
+} __attribute__((packed)) ES_LoadCmd_t;
 
 // rename to lab
 typedef struct {
@@ -5830,6 +5052,67 @@ typedef struct CFE_ES_StartAppCmd_Payload
     CFE_ES_TaskPriority_Atom_t Priority;           /**< \brief The new Applications runtime priority. */
 } CFE_ES_StartAppCmd_t;
 
+typedef struct CFE_ES_AppNameCmd_Payload
+{
+    char Application[CFE_MISSION_MAX_API_LEN]; 
+} CFE_ES_AppNameCmd_Payload_t;
+
+typedef struct CFE_ES_StopAppCmd
+{
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+    char Application[CFE_MISSION_MAX_API_LEN];        /**< \brief Command payload */
+} CFE_ES_StopAppCmd_t;
+
+
+
+typedef struct CFE_ES_AppReloadCmd_Payload
+{
+    char Application[CFE_MISSION_MAX_API_LEN];  /**< \brief ASCII text string containing Application Name */
+    char AppFileName[CFE_MISSION_MAX_PATH_LEN]; /**< \brief Full path and filename of Application's
+                                                   executable image */
+} CFE_ES_AppReloadCmd_Payload_t;
+typedef struct CFE_ES_ReloadAppCmd
+{
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+    char Application[CFE_MISSION_MAX_API_LEN];  /**< \brief ASCII text string containing Application Name */
+    char AppFileName[CFE_MISSION_MAX_PATH_LEN];
+} CFE_ES_ReloadAppCmd_t;
+
+typedef struct CFE_ES_QueryOneCmd
+{
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+    char Application[CFE_MISSION_MAX_API_LEN]; 
+} CFE_ES_QueryOneCmd_t;
+typedef struct CFE_ES_FileNameCmd_Payload
+{
+    char FileName[CFE_MISSION_MAX_PATH_LEN]; /**< \brief ASCII text string containing full path and
+                                                 filename of file in which Application data is to be dumped */
+} CFE_ES_FileNameCmd_Payload_t;
+typedef struct CFE_ES_QueryAllCmd
+{
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+    char FileName[CFE_MISSION_MAX_PATH_LEN];    /**< \brief Command payload */
+} CFE_ES_QueryAllCmd_t;
+
+
+#define CFE_ES_CMD_MID 0x1800
+
+#define CFE_ES_NOOP_CC 0
+
+#define CFE_ES_START_APP_CC 4
+
+#define CFE_ES_STOP_APP_CC 5
+
+#define CFE_ES_RELOAD_APP_CC 7
+
+#define CFE_ES_QUERY_ONE_CC 8
+
+#define CFE_ES_QUERY_ALL_CC 9
+
+typedef struct CFE_ES_NoopCmd
+{
+    uint8_t                  CmdHeader[CFE_SB_CMD_HDR_SIZE]; /**< \brief Command header */
+} CFE_ES_NoopCmd_t;
 
 
 
@@ -5880,7 +5163,10 @@ typedef struct {
 
 typedef struct {
     CFE_ES_StartAppCmd_t          cfeesstartappcmd;
-    TO_LoadCmd_t                  toloadcmd;
+    CFE_ES_StopAppCmd_t           esstopapp;
+    CFE_ES_QueryOneCmd_t          esqueryonecmd;
+    CFE_ES_QueryAllCmd_t          esqueryallcmd;
+    ES_LoadCmd_t                  toloadcmd;
     TO_DeleteCmd_t                todeletecmd;
     TO_RenameCmd_t                torenamecmd;
     // EPS
@@ -6025,6 +5311,8 @@ typedef struct {
     /* ADCS sequences (CC 100–105) */
     ADCS_SequenceCmdDetumblingCmd_t        adcsseqdetumblingcmd;          // CC 100
     ADCS_SequenceCmdSunpointingCmd_t       adcsseqsunpointingcmd;         // CC 101
+    ADCS2_Comm01Cmd_t                      adcs101cmd;
+
     ADCS_SequenceCmdVpointingCmd_t         adcsseqvpointingcmd;           // CC 102
     ADCS_SequenceCmdKSCpointingCmd_t       adcsseqkscpointingcmd;         // CC 103
     ADCS_SequenceCmdLGCpointingCmd_t       adcsseqlgcpointingcmd;         // CC 104

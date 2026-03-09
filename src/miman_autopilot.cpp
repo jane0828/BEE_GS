@@ -21,19 +21,30 @@ extern int BeaconCounter;
 extern CmdGenerator_GS * SatCMD[256];
 static bool wdt_notsent;
 
-int FindValuablePath()
+// int FindValuablePath()
+// {
+//     int Valuable = 0;
+//     for(int i = 0 ; i < 64; i++)
+//     {
+//         if(State.Satellites[GetNowTracking()]->MaxElevation(i) > 10.0f)
+//         {
+//             Valuable = i;
+//             break;
+//         }
+//     }
+//     return Valuable;
+// }
+
+int FindValuablePath(int satIndex)
 {
+    if (satIndex < 0 || satIndex >= SAT_MAX_NUM || !State.Satellites[satIndex]) return 0;
     int Valuable = 0;
-    for(int i = 0 ; i < 64; i++)
-    {
-        if(State.Satellites[GetNowTracking()]->MaxElevation(i) > 9.0f)
-        {
-            Valuable = i;
-            break;
-        }
+    for (int i = 0; i < 64; i++) {
+        if (State.Satellites[satIndex]->MaxElevation(i) > 10.0f) { Valuable = i; break; }
     }
     return Valuable;
 }
+
 
 void * AutoPilot(void *)
 {
@@ -64,8 +75,12 @@ void * AutoPilot(void *)
 
 static bool NowOn(int SatIndex, int NextValuablePath)
 {
+    if (SatIndex < 0 || SatIndex >= SAT_MAX_NUM) return false;
+    if (NextValuablePath < 0 || NextValuablePath >= 64) return false;
+    if (!State.Satellites[SatIndex]) return false;
     return (DateTime::Now(false) - State.Satellites[SatIndex]->_nextlos[NextValuablePath]).TotalSeconds() < 0;
 }
+
 
 
 int AutoPilot_task()
@@ -74,24 +89,24 @@ int AutoPilot_task()
     bool PingAvailable = false;
     char NowTrackingNameBuffer[32];
     int NowTracking = GetNowTracking();
-
-    if(NowTracking == -2)
-    {
-        console.AddLog("[ERROR]##[Auto]You Tried Autopilot without Tracking. Please Check Again.");
+    if (NowTracking < 0 || NowTracking >= SAT_MAX_NUM || !State.Satellites[NowTracking]) {
+        console.AddLog("[ERROR]##[Auto]Invalid tracking at start. trk=%d", NowTracking);
         State.Autopilot = false;
         return -2;
     }
-
-    sprintf(NowTrackingNameBuffer, State.Satellites[NowTracking]->Name());
+    snprintf(NowTrackingNameBuffer, sizeof(NowTrackingNameBuffer), "%s",
+            State.Satellites[NowTracking]->Name());
+    int SatIndex = GetNowTracking();
+    if (SatIndex < 0 || SatIndex >= SAT_MAX_NUM || !State.Satellites[SatIndex]) return -2;
 
     while(State.Autopilot)
     {
+
         bool BeaconAvailable = false;
         bool PingAvailable = false;
         bool CalibrationSuccess = false; // Add
         printf("Start AutoPilot.\n");
-        int NextValuablePath = FindValuablePath();
-        int SatIndex = GetNowTracking();
+        int NextValuablePath = FindValuablePath(SatIndex);
         console.AddLog("[Auto]Start Autopilot. Next Valuable AOS : %d/%d %d:%d:%d",
                                                         State.Satellites[SatIndex]->_nextaos[NextValuablePath].AddHours(9).Month(), 
                                                         State.Satellites[SatIndex]->_nextaos[NextValuablePath].AddHours(9).Day(),
@@ -106,7 +121,7 @@ int AutoPilot_task()
                 break;
             usleep(20000); // 20 ms
         }
-        PathGenerator(GetNowTracking());
+        PathGenerator(SatIndex);
 
         if(!State.Autopilot)
         {
@@ -440,9 +455,28 @@ for (int i = 0; i < 2 && State.Autopilot; i++)
     console.AddLog("[Auto]EPS P60 ACU GET TABLE HK Command Sent (%d/2)", i+1);
     sleep(10);
 }
+// for (int i = 0; i < 1 && State.Autopilot; i++)
+// {
+//     uint8_t cmd10[11] = {0x18, 0x65, 0xc0, 0x0, 0x0, 0x4, 0x67, 0x20, 0x1, 0x0, 0x0};
 
+//     packetsign* pkt6 =
+//         (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd10));
+//     pkt6->Identifier = HVD_TEST;
+//     pkt6->PacketType = MIM_PT_TMTC_TEST;
+//     pkt6->Length     = sizeof(cmd10);
+//     memcpy(pkt6->Data, cmd10, sizeof(cmd10));
+
+//     pthread_create(&p_thread[4], NULL,
+//                    task_uplink_onorbit, (void*)pkt6);
+//     pthread_join(p_thread[4], NULL);
+//     free(pkt6);
+
+//     console.AddLog("[Auto]ADCS Commissioning Command Sent");
+//     sleep(10);
+// }
+
+    console.AddLog("[Auto]AutoPilot sequence Ended");
     wdt_notsent = false;
-
 }
 
         if(!State.Autopilot)
@@ -663,9 +697,9 @@ for (int i = 0; i < 2 && State.Autopilot; i++)
 
         //TLE update시 주석 해제 필수
         console.AddLog("[Auto]Update TLE...");
-        for(int i = 0; i < 8192; i++)
+        for(int i = 0; i < SAT_MAX_NUM; i++)
         {
-            State.Satellites[i]->use = false;
+            if (State.Satellites[i]) State.Satellites[i]->use = false;
         }
         if(DownloadTLE(State.tleinfolistup[NowTLE]->remote, State.tleinfolistup[NowTLE]->local))
         {
@@ -713,12 +747,19 @@ for (int i = 0; i < 2 && State.Autopilot; i++)
         
         printf("Search Samename Satellite.\n");
 
-        State.tleallindex = 8192;
+        State.tleallindex = SAT_MAX_NUM;
         if((State.tleallindex = ReadTLELines_Errorhandling(State.tleinfolistup[NowTLE]->local, NowTrackingNameBuffer,false, false)) <= 0)
             console.AddLog("[ERROR]##Invalid type of TLE File. Please check again.");
         State.Display_TLE = true;
        
         sleep(3);
+        if (NowTracking < 0 || NowTracking >= SAT_MAX_NUM || !State.Satellites[NowTracking]) {
+            console.AddLog("[ERROR]##[Auto]NowTracking invalid after TLE reload. idx=%d", NowTracking);
+            return -2;
+        }
+
+
+
         State.Satellites[NowTracking]->use = true;
         if(State.Satellites[NowTracking]->cal == false)
             State.Satellites[NowTracking]->Refresh(State.Satellites[NowTracking]->tle, State.Satellites[NowTracking]->obs, true, true);
@@ -728,27 +769,29 @@ for (int i = 0; i < 2 && State.Autopilot; i++)
         State.ModelRefreshRequired = true;
         printf("Model Refresh.\n");
         sleep(3);
+
         SetNowTracking(NowTracking);
+        SatIndex = GetNowTracking();
+        if (SatIndex < 0 || SatIndex >= SAT_MAX_NUM || !State.Satellites[SatIndex]) return -2;
+        // BEFORE calling PathGenerator()
+        if (!State.Autopilot) {
+            console.AddLog("[OK]##[Auto]Autopilot Stopped by User (before PathGenerator).");
+            return 0;
+        }
 
-// BEFORE calling PathGenerator()
-if (!State.Autopilot) {
-    console.AddLog("[OK]##[Auto]Autopilot Stopped by User (before PathGenerator).");
-    return 0;
-}
+        int trk = GetNowTracking();
+        if (trk < 0 || trk >= SAT_MAX_NUM || State.Satellites[trk] == NULL) {
+            console.AddLog("[ERROR]##[Auto]Invalid tracking index before PathGenerator. trk=%d ptr=%p",
+                        trk, (trk >= 0 && trk < SAT_MAX_NUM) ? State.Satellites[trk] : NULL);
+            return -2;
+        }
 
-int trk = GetNowTracking();
-if (trk < 0 || trk >= 8192 || State.Satellites[trk] == NULL) {
-    console.AddLog("[ERROR]##[Auto]Invalid tracking index before PathGenerator. trk=%d ptr=%p",
-                   trk, (trk >= 0 && trk < 8192) ? State.Satellites[trk] : NULL);
-    return -2;
-}
-
-PathGenerator(trk);
+        PathGenerator(trk);
 
 
 
 
-        PathGenerator(GetNowTracking());
+        // PathGenerator(GetNowTracking());
         State.Display_load = false;
         State.Display_TLE = false;
         printf("Finish Autopilot.\n");
@@ -762,9 +805,9 @@ int TLE_Autoupdate_Test()
     char NowTrackingNameBuffer[32];
     printf("[Auto]Update TLE...\n");
     sprintf(NowTrackingNameBuffer, State.Satellites[NowTracking]->Name());
-    for(int i = 0; i < 8192; i++)
+    for(int i = 0; i < SAT_MAX_NUM; i++)
     {
-        State.Satellites[i]->use = false;
+        if (State.Satellites[i]) State.Satellites[i]->use = false;
     }
     if(DownloadTLE(State.tleinfolistup[NowTLE]->remote, State.tleinfolistup[NowTLE]->local))
     {
@@ -800,6 +843,12 @@ int TLE_Autoupdate_Test()
     State.Display_TLE = true;
     
     sleep(3);
+
+    if (NowTracking < 0 || NowTracking >= SAT_MAX_NUM || !State.Satellites[NowTracking]) {
+    console.AddLog("[ERROR]##[Auto]NowTracking invalid after TLE reload. idx=%d", NowTracking);
+    return -2;
+    }   
+
     State.Satellites[NowTracking]->use = true;
     if(State.Satellites[NowTracking]->cal == false)
         State.Satellites[NowTracking]->Refresh(State.Satellites[NowTracking]->tle, State.Satellites[NowTracking]->obs, true, true);

@@ -3045,7 +3045,7 @@ static void DrawCmdGeneratorBody(bool initial_mode)
     {
         static uint16_t msgid = 0;
         static uint8_t fnccode = 0;
-
+        ImGui::Text("For ADCS NoOp CMD, MsgID = 6245");
         ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
         ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
 
@@ -6940,6 +6940,127 @@ case 66: {
             break;
         }
 
+        case 75: { // ADCS Set Mag0 MMT Calib Config (CC 29)
+            static uint16_t msgid   = ADCS_CMD_ID;
+            static uint8_t  fnccode = ADCS_SET_MAG0_MMT_CALIB_CONFIG_CC;
+
+            static int16_t MMT_Ch1Offset = 0;
+            static int16_t MMT_Ch2Offset = -4;
+            static int16_t MMT_Ch3Offset = 7;
+
+            static int16_t MMT_SensitivityMAT_S11 = 1059;
+            static int16_t MMT_SensitivityMAT_S22 = 1055;
+            static int16_t MMT_SensitivityMAT_S33 = 1003;
+
+            static int16_t MMT_SensitivityMAT_S12 = -2;
+            static int16_t MMT_SensitivityMAT_S13 = -3;
+            static int16_t MMT_SensitivityMAT_S21 = -2;
+
+            static int16_t MMT_SensitivityMAT_S23 = 8;
+            static int16_t MMT_SensitivityMAT_S31 = -3;
+            static int16_t MMT_SensitivityMAT_S32 = 8;
+
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            ADCS_Mag0MMTCalibConfigCmd_Payload_t *pl =
+                &command->adcsmag0mmtcalibconfigcmd.Payload;
+
+            ImGui::Separator();
+            ImGui::Text("ADCS Mag0 MMT Calib Config Payload");
+
+            ImGui::InputScalar("MMT_Ch1Offset", ImGuiDataType_S16, &MMT_Ch1Offset);
+            ImGui::InputScalar("MMT_Ch2Offset", ImGuiDataType_S16, &MMT_Ch2Offset);
+            ImGui::InputScalar("MMT_Ch3Offset", ImGuiDataType_S16, &MMT_Ch3Offset);
+
+            ImGui::InputScalar("MMT_SensitivityMAT_S11", ImGuiDataType_S16, &MMT_SensitivityMAT_S11);
+            ImGui::InputScalar("MMT_SensitivityMAT_S22", ImGuiDataType_S16, &MMT_SensitivityMAT_S22);
+            ImGui::InputScalar("MMT_SensitivityMAT_S33", ImGuiDataType_S16, &MMT_SensitivityMAT_S33);
+
+            ImGui::InputScalar("MMT_SensitivityMAT_S12", ImGuiDataType_S16, &MMT_SensitivityMAT_S12);
+            ImGui::InputScalar("MMT_SensitivityMAT_S13", ImGuiDataType_S16, &MMT_SensitivityMAT_S13);
+            ImGui::InputScalar("MMT_SensitivityMAT_S21", ImGuiDataType_S16, &MMT_SensitivityMAT_S21);
+
+            ImGui::InputScalar("MMT_SensitivityMAT_S23", ImGuiDataType_S16, &MMT_SensitivityMAT_S23);
+            ImGui::InputScalar("MMT_SensitivityMAT_S31", ImGuiDataType_S16, &MMT_SensitivityMAT_S31);
+            ImGui::InputScalar("MMT_SensitivityMAT_S32", ImGuiDataType_S16, &MMT_SensitivityMAT_S32);
+
+            if (ImGui::Button("Generate CMD")) {
+                WriteSystemName(msgid);
+
+                pl->MMT_Ch1Offset = MMT_Ch1Offset;
+                pl->MMT_Ch2Offset = MMT_Ch2Offset;
+                pl->MMT_Ch3Offset = MMT_Ch3Offset;
+
+                pl->MMT_SensitivityMAT_S11 = MMT_SensitivityMAT_S11;
+                pl->MMT_SensitivityMAT_S22 = MMT_SensitivityMAT_S22;
+                pl->MMT_SensitivityMAT_S33 = MMT_SensitivityMAT_S33;
+
+                pl->MMT_SensitivityMAT_S12 = MMT_SensitivityMAT_S12;
+                pl->MMT_SensitivityMAT_S13 = MMT_SensitivityMAT_S13;
+                pl->MMT_SensitivityMAT_S21 = MMT_SensitivityMAT_S21;
+
+                pl->MMT_SensitivityMAT_S23 = MMT_SensitivityMAT_S23;
+                pl->MMT_SensitivityMAT_S31 = MMT_SensitivityMAT_S31;
+                pl->MMT_SensitivityMAT_S32 = MMT_SensitivityMAT_S32;
+
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(ADCS_Mag0MMTCalibConfigCmd_t) - 7)
+                };
+
+                memcpy(command->adcsmag0mmtcalibconfigcmd.CmdHeader,     &mid, 2);
+                memcpy(command->adcsmag0mmtcalibconfigcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->adcsmag0mmtcalibconfigcmd.CmdHeader + 4, len,  2);
+                memcpy(command->adcsmag0mmtcalibconfigcmd.CmdHeader + 6, &fnccode, 1);
+
+                command->adcsmag0mmtcalibconfigcmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(ADCS_Mag0MMTCalibConfigCmd_t);
+                const uint8_t *p = (const uint8_t *)&command->adcsmag0mmtcalibconfigcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+                command->adcsmag0mmtcalibconfigcmd.CmdHeader[7] = crc;
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 + sizeof(ADCS_Mag0MMTCalibConfigCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(ADCS_Mag0MMTCalibConfigCmd_t);
+                memcpy(pkt->Data, &command->adcsmag0mmtcalibconfigcmd,
+                    sizeof(ADCS_Mag0MMTCalibConfigCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void *)pkt);
+            }
+
+            ImGui::Text("Header: %02X %02X %02X %02X %02X %02X %02X %02X",
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[0],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[1],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[2],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[3],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[4],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[5],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[6],
+                        command->adcsmag0mmtcalibconfigcmd.CmdHeader[7]);
+
+            ImGui::Text("Payload (UI values):");
+            ImGui::Text("Offsets: Ch1=%d, Ch2=%d, Ch3=%d",
+                        (int)MMT_Ch1Offset, (int)MMT_Ch2Offset, (int)MMT_Ch3Offset);
+            ImGui::Text("S11=%d S22=%d S33=%d",
+                        (int)MMT_SensitivityMAT_S11, (int)MMT_SensitivityMAT_S22, (int)MMT_SensitivityMAT_S33);
+            ImGui::Text("S12=%d S13=%d S21=%d S23=%d S31=%d S32=%d",
+                        (int)MMT_SensitivityMAT_S12, (int)MMT_SensitivityMAT_S13, (int)MMT_SensitivityMAT_S21,
+                        (int)MMT_SensitivityMAT_S23, (int)MMT_SensitivityMAT_S31, (int)MMT_SensitivityMAT_S32);
+            break;
+        }
+
+
+
+
+
+
         case 76: {  
             static const uint16_t msgid   = ADCS_CMD_ID;
             static const uint8_t  fnccode = ADCS_SET_DEFAULT_MODE_CONFIG_CC;
@@ -7223,15 +7344,25 @@ case 66: {
                 p.NutationEpsilonCorrection = 4.243392E-05;
                 p.NutationPsiCorrection     = 1.607126E-05;
 
+                // // ---- Bit-fields ----
+                // p.UseFSSinEKF = 1;
+                // p.UseCSSinEKF = 0;
+                // p.UseHSSinEKF = 1;
+                // p.UseSTRinEKF = 0;
+
+                // p.TriadVector1 = 1;   // 4-bit
+                // p.TriadVector2 = 0;   // 4-bit
+                // p.Spare        = 0;   // unused padding
+//revise
                 // ---- Bit-fields ----
-                p.UseFSSinEKF = 1;
+                p.UseFSSinEKF = 0;
                 p.UseCSSinEKF = 0;
-                p.UseHSSinEKF = 1;
+                p.UseHSSinEKF = 0;
                 p.UseSTRinEKF = 0;
 
                 p.TriadVector1 = 1;   // 4-bit
                 p.TriadVector2 = 0;   // 4-bit
-                p.Spare        = 0;   // unused padding
+
 
                 // ============================================================
 
@@ -7278,7 +7409,7 @@ case 66: {
             ImGui::Separator();
             ImGui::Text("TriadVector1 : %u", p.TriadVector1);
             ImGui::Text("TriadVector2 : %u", p.TriadVector2);
-            ImGui::Text("Spare        : %u", p.Spare);
+            // ImGui::Text("Spare        : %u", p.Spare);
 
             ImGui::Separator();
 
@@ -7757,60 +7888,56 @@ case 80: {
 
 
 
-        case 88: // adcs get command
+        case 88: // ADCS2_COMM_01_CC
         {
-            static const uint16_t msgid   = ADCS_CMD_ID;
-            static uint8_t fnccode = 0;
+            static uint16_t msgid   = ADCS_CMD_ID;
+            static uint8_t  fnccode = 101;
 
-            ImGui::Text("MsgID   : 0x%04X", msgid);
-            ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
 
-            ImGui::Checkbox("Schedule", &State.Scheduled);
-            if (State.Scheduled)
-            {
-                ImGui::InputScalar("sch_u8ent", ImGuiDataType_U8, &State.entrynum);
-                ImGui::InputScalar("sch_u32ent", ImGuiDataType_U32, &State.u32val);
-            }
+            ImGui::InputScalar("Flag_TLM Type", ImGuiDataType_U8,
+                            &command->adcs101cmd.Payload.flag_tlmtype);
 
-            if (ImGui::Button("Generate CMD"))
-            {
+            ImGui::InputScalar("Flag_EST Mode", ImGuiDataType_U8,
+                            &command->adcs101cmd.Payload.flag_estmode);
 
-                    WriteSystemName(msgid);
-                    pthread_join(p_thread[4], NULL);
+            ImGui::InputScalar("Flag_Cont Mode", ImGuiDataType_U8,
+                            &command->adcs101cmd.Payload.flag_contmode);
 
-                    packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + 8);
-                    TestPacket->Identifier = HVD_TEST;
-                    TestPacket->PacketType = MIM_PT_TMTC_TEST;
-                    TestPacket->Length = 8;
-                    memset(TestPacket->Data, 0, TestPacket->Length);
+            if (ImGui::Button("Generate CMD")) {
+                WriteSystemName(msgid);
 
-                    uint8_t cmd[8] = {0,};
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(ADCS2_Comm01Cmd_t) - 7)
+                };
 
-                    memcpy(cmd, &msgid, sizeof(uint16_t));
-                    memcpy(cmd + 6, &fnccode, sizeof(uint8_t));
-                    cmd[2] = 0xc0;
-                    cmd[3] = 0x00;
-                    cmd[4] = 0x00;
-                    cmd[5] = 0x01;
+                memcpy(command->adcs101cmd.CmdHeader,     &mid, 2);
+                memcpy(command->adcs101cmd.CmdHeader + 2, seq,  2);
+                memcpy(command->adcs101cmd.CmdHeader + 4, len,  2);
+                memcpy(command->adcs101cmd.CmdHeader + 6, &fnccode, 1);
 
-                    uint16_t len = 8;
+                uint16_t total = sizeof(ADCS2_Comm01Cmd_t);
+                const uint8_t *p = (const uint8_t *)&command->adcs101cmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
 
-        cmd[7] = 0x00;
+                memcpy(command->adcs101cmd.CmdHeader + 7, &crc, 1);
 
-                    const uint8_t* byteptr = cmd;
-                    uint8_t checksum = 0xFF;
-                    while (len--)
-                        checksum ^= *(byteptr++);
-                    cmd[7] = checksum;
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 + sizeof(ADCS2_Comm01Cmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(ADCS2_Comm01Cmd_t);
+                memcpy(pkt->Data, &command->adcs101cmd,
+                    sizeof(ADCS2_Comm01Cmd_t));
 
-                    memcpy(TestPacket->Data, cmd, sizeof(cmd));
-                    for (int i = 0; i < TestPacket->Length; i++)
-                        printf("0x%x ", cmd[i]);
-                    printf("\n");
-
-                    pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
-
-                
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
             }
             break;
         }
@@ -10301,146 +10428,6 @@ case 155: { // TO_LAB Add Packet
 
 
 
- //8192, 0, 15
-
-    case 199: { // ADDED FOR FTP TEST 1210, es start app cmd
-        static uint16_t msgid = 0x1800;
-        static uint8_t fnccode = 4;
-        static char app_buf[20] = "TO_LAB_APP";
-        static char entry_buf[20] = "TO_LAB_AppMain";
-        static char filename_buf[64] = "/cf/to_lab23.so";
-
-        static uint32_t StackSize = 8192;
-        static uint8_t  ExceptionAction = 0;
-        static uint16_t Priority = 15;
-
-        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
-        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
-
-
-        ImGui::InputText("application", app_buf, sizeof(app_buf));
-        ImGui::InputText("app entry point", entry_buf, sizeof(entry_buf));
-        ImGui::InputText("app file name", filename_buf, sizeof(filename_buf));
-
-        ImGui::InputScalar("Stack Size u32", ImGuiDataType_U32, &StackSize);
-        ImGui::InputScalar("Exception Action u8",   ImGuiDataType_U8, &ExceptionAction);
-        ImGui::InputScalar("Priority u16",    ImGuiDataType_U16,  &Priority);
-
-
-
-
-
-        if (ImGui::Button("Generate CMD")) {
-            uint16_t msgid_be = htons(msgid);
-
-
-            memset(command->cfeesstartappcmd.Application, 0, sizeof(command->cfeesstartappcmd.Application));
-            strncpy(command->cfeesstartappcmd.Application, app_buf, sizeof(command->cfeesstartappcmd.Application) - 1);
-
-
-            memset(command->cfeesstartappcmd.AppEntryPoint, 0, sizeof(command->cfeesstartappcmd.AppEntryPoint));
-            strncpy(command->cfeesstartappcmd.AppEntryPoint, entry_buf, sizeof(command->cfeesstartappcmd.AppEntryPoint) - 1);
-
-            memset(command->cfeesstartappcmd.AppFileName, 0, sizeof(command->cfeesstartappcmd.AppFileName));
-            strncpy(command->cfeesstartappcmd.AppFileName, filename_buf, sizeof(command->cfeesstartappcmd.AppFileName) - 1);
-
-            uint8_t sequence[2] = {0xC0, 0x00};
-            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(CFE_ES_StartAppCmd_t) - 7)};
-            memcpy(command->cfeesstartappcmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
-            memcpy(command->cfeesstartappcmd.CmdHeader + 2, sequence, sizeof(uint16_t));
-            memcpy(command->cfeesstartappcmd.CmdHeader + 4, length, sizeof(uint16_t));
-            memcpy(command->cfeesstartappcmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
-
-
-            command->cfeesstartappcmd.CmdHeader[7] = 0x00;
-
-            pthread_join(p_thread[4], NULL);
-            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(CFE_ES_StartAppCmd_t));
-            TestPacket->Identifier = HVD_TEST;
-            TestPacket->PacketType = MIM_PT_TMTC_TEST;
-
-            TestPacket->Length = sizeof(CFE_ES_StartAppCmd_t);
-            uint16_t len = sizeof(CFE_ES_StartAppCmd_t);
-
-
-            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->cfeesstartappcmd);
-
-            uint8_t checksum = 0xFF;
-            while (len--) checksum ^= *(byteptr++);
-            memcpy(command->cfeesstartappcmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
-            memcpy(TestPacket->Data, &command->cfeesstartappcmd, sizeof(CFE_ES_StartAppCmd_t));
-            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
-        }
-
-
-        break;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-    case 200: { // ADDED FOR FTP TEST 1210
-        static uint16_t msgid = 0x1800;
-        static uint8_t fnccode = 7;
-        static char app_buf[20] = "TO_LAB_APP";
-        static char path_buf[64] = "/cf/to_lab23.so";
-
-        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
-        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
-        ImGui::InputText("application", app_buf, sizeof(app_buf));
-        ImGui::InputText("app file name", path_buf, sizeof(path_buf));
-
-
-        if (ImGui::Button("Generate CMD")) {
-            uint16_t msgid_be = htons(msgid);
-            memset(command->toloadcmd.app, 0, sizeof(command->toloadcmd.app));
-            strncpy(command->toloadcmd.app, app_buf, sizeof(command->toloadcmd.app) - 1);
-
-            memset(command->toloadcmd.filename, 0, sizeof(command->toloadcmd.filename));
-            strncpy(command->toloadcmd.filename, path_buf, sizeof(command->toloadcmd.filename) - 1);
-
-            uint8_t sequence[2] = {0xC0, 0x00};
-            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(TO_LoadCmd_t) - 7)};
-            memcpy(command->toloadcmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
-            memcpy(command->toloadcmd.CmdHeader + 2, sequence, sizeof(uint16_t));
-            memcpy(command->toloadcmd.CmdHeader + 4, length, sizeof(uint16_t));
-            memcpy(command->toloadcmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
-
-
-            command->toloadcmd.CmdHeader[7] = 0x00;
-
-            pthread_join(p_thread[4], NULL);
-            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(TO_LoadCmd_t));
-            TestPacket->Identifier = HVD_TEST;
-            TestPacket->PacketType = MIM_PT_TMTC_TEST;
-
-            TestPacket->Length = sizeof(TO_LoadCmd_t);
-            uint16_t len = sizeof(TO_LoadCmd_t);
-
-
-            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->toloadcmd);
-
-            uint8_t checksum = 0xFF;
-            while (len--) checksum ^= *(byteptr++);
-            memcpy(command->toloadcmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
-            memcpy(TestPacket->Data, &command->toloadcmd, sizeof(TO_LoadCmd_t));
-            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
-        }
-
-
-        break;
-    }
-
-
-
 
 
 
@@ -11513,6 +11500,335 @@ case 213: { // FTP_filenameCmd
             }
             break;
         }
+
+    case 216: { // es noop
+
+        static uint16_t msgid   = 0x1875;
+        static uint8_t  fnccode = EPS_P60_GET_DOCK_INFO_CC;
+
+        ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+        if (ImGui::Button("Generate CMD")) {
+            WriteSystemName(msgid);
+            uint16_t mid = htons(msgid);
+            uint8_t  seq[2] = {0xC0, 0x00};
+            uint8_t  len[2] = {
+                0x00,
+                (uint8_t)(sizeof(EPS_P60_GetDockInfoCmd_t) - 7)
+            };
+
+            memcpy(command->epsp60getdockinfocmd.CmdHeader,     &mid, 2);
+            memcpy(command->epsp60getdockinfocmd.CmdHeader + 2, seq,  2);
+            memcpy(command->epsp60getdockinfocmd.CmdHeader + 4, len,  2);
+            memcpy(command->epsp60getdockinfocmd.CmdHeader + 6, &fnccode, 1);
+
+            uint16_t total = sizeof(EPS_P60_GetDockInfoCmd_t);
+            const uint8_t *p =
+                (const uint8_t *)&command->epsp60getdockinfocmd;
+            uint8_t crc = 0xFF;
+            while (total--) crc ^= *(p++);
+
+            memcpy(command->epsp60getdockinfocmd.CmdHeader + 7, &crc, 1);
+
+            packetsign *pkt =
+                (packetsign *)malloc(2 + 2 + 4 +
+                                     sizeof(EPS_P60_GetDockInfoCmd_t));
+            pkt->Identifier = HVD_TEST;
+            pkt->PacketType = MIM_PT_TMTC_TEST;
+            pkt->Length     = sizeof(EPS_P60_GetDockInfoCmd_t);
+            memcpy(pkt->Data, &command->epsp60getdockinfocmd,
+                   sizeof(EPS_P60_GetDockInfoCmd_t));
+
+            pthread_join(p_thread[4], NULL);
+            pthread_create(&p_thread[4], NULL,
+                           task_uplink_onorbit, (void *)pkt);
+        }
+        break;
+    }
+
+
+ //8192, 0, 15
+
+    case 217: { // es start app cmd
+        static uint16_t msgid = CFE_ES_CMD_MID;
+        static uint8_t fnccode = 4;
+        static char app_buf[20] = "ADCS";
+        static char entry_buf[20] = "ADCS2App_Main";
+        static char filename_buf[64] = "/cf/adcs3.so";
+
+        static uint32_t StackSize = 8192;
+        static uint8_t  ExceptionAction = 0;
+        static uint16_t Priority = 15;
+
+        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+
+
+        ImGui::InputText("application", app_buf, sizeof(app_buf));
+        ImGui::InputText("app entry point", entry_buf, sizeof(entry_buf));
+        ImGui::InputText("app file name", filename_buf, sizeof(filename_buf));
+
+        ImGui::InputScalar("Stack Size u32", ImGuiDataType_U32, &StackSize);
+        ImGui::InputScalar("Exception Action u8",   ImGuiDataType_U8, &ExceptionAction);
+        ImGui::InputScalar("Priority u16",    ImGuiDataType_U16,  &Priority);
+
+
+
+
+
+        if (ImGui::Button("Generate CMD")) {
+            uint16_t msgid_be = htons(msgid);
+
+
+            memset(command->cfeesstartappcmd.Application, 0, sizeof(command->cfeesstartappcmd.Application));
+            strncpy(command->cfeesstartappcmd.Application, app_buf, sizeof(command->cfeesstartappcmd.Application) - 1);
+
+
+            memset(command->cfeesstartappcmd.AppEntryPoint, 0, sizeof(command->cfeesstartappcmd.AppEntryPoint));
+            strncpy(command->cfeesstartappcmd.AppEntryPoint, entry_buf, sizeof(command->cfeesstartappcmd.AppEntryPoint) - 1);
+
+            memset(command->cfeesstartappcmd.AppFileName, 0, sizeof(command->cfeesstartappcmd.AppFileName));
+            strncpy(command->cfeesstartappcmd.AppFileName, filename_buf, sizeof(command->cfeesstartappcmd.AppFileName) - 1);
+
+            uint8_t sequence[2] = {0xC0, 0x00};
+            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(CFE_ES_StartAppCmd_t) - 7)};
+            memcpy(command->cfeesstartappcmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
+            memcpy(command->cfeesstartappcmd.CmdHeader + 2, sequence, sizeof(uint16_t));
+            memcpy(command->cfeesstartappcmd.CmdHeader + 4, length, sizeof(uint16_t));
+            memcpy(command->cfeesstartappcmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
+
+
+            command->cfeesstartappcmd.CmdHeader[7] = 0x00;
+
+            pthread_join(p_thread[4], NULL);
+            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(CFE_ES_StartAppCmd_t));
+            TestPacket->Identifier = HVD_TEST;
+            TestPacket->PacketType = MIM_PT_TMTC_TEST;
+
+            TestPacket->Length = sizeof(CFE_ES_StartAppCmd_t);
+            uint16_t len = sizeof(CFE_ES_StartAppCmd_t);
+
+
+            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->cfeesstartappcmd);
+
+            uint8_t checksum = 0xFF;
+            while (len--) checksum ^= *(byteptr++);
+            memcpy(command->cfeesstartappcmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
+            memcpy(TestPacket->Data, &command->cfeesstartappcmd, sizeof(CFE_ES_StartAppCmd_t));
+            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
+        }
+
+
+        break;
+    }
+
+
+
+
+
+
+    case 218: { // ES stop app
+        static uint16_t msgid = CFE_ES_CMD_MID;
+        static uint8_t fnccode = CFE_ES_STOP_APP_CC;
+        static char app_buf[20] = "ADCS";
+
+        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+        ImGui::InputText("application", app_buf, sizeof(app_buf));
+
+
+        if (ImGui::Button("Generate CMD")) {
+            uint16_t msgid_be = htons(msgid);
+            memset(command->esstopapp.Application, 0, sizeof(command->esstopapp.Application));
+            strncpy(command->esstopapp.Application, app_buf, sizeof(command->esstopapp.Application) - 1);
+
+            uint8_t sequence[2] = {0xC0, 0x00};
+            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(CFE_ES_StopAppCmd_t) - 7)};
+            memcpy(command->esstopapp.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
+            memcpy(command->esstopapp.CmdHeader + 2, sequence, sizeof(uint16_t));
+            memcpy(command->esstopapp.CmdHeader + 4, length, sizeof(uint16_t));
+            memcpy(command->esstopapp.CmdHeader + 6, &fnccode, sizeof(uint8_t));
+
+
+            command->esstopapp.CmdHeader[7] = 0x00;
+
+            pthread_join(p_thread[4], NULL);
+            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(CFE_ES_StopAppCmd_t));
+            TestPacket->Identifier = HVD_TEST;
+            TestPacket->PacketType = MIM_PT_TMTC_TEST;
+
+            TestPacket->Length = sizeof(CFE_ES_StopAppCmd_t);
+            uint16_t len = sizeof(CFE_ES_StopAppCmd_t);
+
+
+            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->esstopapp);
+
+            uint8_t checksum = 0xFF;
+            while (len--) checksum ^= *(byteptr++);
+            memcpy(command->esstopapp.CmdHeader + 7, &checksum, sizeof(uint8_t));
+            memcpy(TestPacket->Data, &command->esstopapp, sizeof(CFE_ES_StopAppCmd_t));
+            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
+        }
+
+
+        break;
+    }
+
+
+
+
+
+
+
+
+    case 219: { // ADDED FOR FTP TEST 1210 - ES reload app
+        static uint16_t msgid = CFE_ES_CMD_MID;
+        static uint8_t fnccode = CFE_ES_RELOAD_APP_CC;
+        static char app_buf[20] = "TO_LAB_APP";
+        static char path_buf[64] = "/cf/to_lab23.so";
+
+        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+        ImGui::InputText("application", app_buf, sizeof(app_buf));
+        ImGui::InputText("app file name", path_buf, sizeof(path_buf));
+
+
+        if (ImGui::Button("Generate CMD")) {
+            uint16_t msgid_be = htons(msgid);
+            memset(command->toloadcmd.app, 0, sizeof(command->toloadcmd.app));
+            strncpy(command->toloadcmd.app, app_buf, sizeof(command->toloadcmd.app) - 1);
+
+            memset(command->toloadcmd.filename, 0, sizeof(command->toloadcmd.filename));
+            strncpy(command->toloadcmd.filename, path_buf, sizeof(command->toloadcmd.filename) - 1);
+
+            uint8_t sequence[2] = {0xC0, 0x00};
+            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(ES_LoadCmd_t) - 7)};
+            memcpy(command->toloadcmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
+            memcpy(command->toloadcmd.CmdHeader + 2, sequence, sizeof(uint16_t));
+            memcpy(command->toloadcmd.CmdHeader + 4, length, sizeof(uint16_t));
+            memcpy(command->toloadcmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
+
+
+            command->toloadcmd.CmdHeader[7] = 0x00;
+
+            pthread_join(p_thread[4], NULL);
+            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(ES_LoadCmd_t));
+            TestPacket->Identifier = HVD_TEST;
+            TestPacket->PacketType = MIM_PT_TMTC_TEST;
+
+            TestPacket->Length = sizeof(ES_LoadCmd_t);
+            uint16_t len = sizeof(ES_LoadCmd_t);
+
+
+            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->toloadcmd);
+
+            uint8_t checksum = 0xFF;
+            while (len--) checksum ^= *(byteptr++);
+            memcpy(command->toloadcmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
+            memcpy(TestPacket->Data, &command->toloadcmd, sizeof(ES_LoadCmd_t));
+            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
+        }
+
+
+        break;
+    }
+
+    case 220: { // ES QueryOneCmd
+        static uint16_t msgid = CFE_ES_CMD_MID;
+        static uint8_t fnccode = CFE_ES_QUERY_ONE_CC;
+        static char app_buf[20] = "TO_LAB_APP";
+
+        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+        ImGui::InputText("application", app_buf, sizeof(app_buf));
+
+
+        if (ImGui::Button("Generate CMD")) {
+            uint16_t msgid_be = htons(msgid);
+            memset(command->esqueryonecmd.Application, 0, sizeof(command->esqueryonecmd.Application));
+            strncpy(command->esqueryonecmd.Application, app_buf, sizeof(command->esqueryonecmd.Application) - 1);
+
+
+            uint8_t sequence[2] = {0xC0, 0x00};
+            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(CFE_ES_StopAppCmd_t) - 7)};
+            memcpy(command->esqueryonecmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
+            memcpy(command->esqueryonecmd.CmdHeader + 2, sequence, sizeof(uint16_t));
+            memcpy(command->esqueryonecmd.CmdHeader + 4, length, sizeof(uint16_t));
+            memcpy(command->esqueryonecmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
+
+
+            command->esqueryonecmd.CmdHeader[7] = 0x00;
+
+            pthread_join(p_thread[4], NULL);
+            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(CFE_ES_StopAppCmd_t));
+            TestPacket->Identifier = HVD_TEST;
+            TestPacket->PacketType = MIM_PT_TMTC_TEST;
+
+            TestPacket->Length = sizeof(CFE_ES_StopAppCmd_t);
+            uint16_t len = sizeof(CFE_ES_StopAppCmd_t);
+
+
+            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->esqueryonecmd);
+
+            uint8_t checksum = 0xFF;
+            while (len--) checksum ^= *(byteptr++);
+            memcpy(command->esqueryonecmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
+            memcpy(TestPacket->Data, &command->esqueryonecmd, sizeof(CFE_ES_StopAppCmd_t));
+            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
+        }
+
+
+        break;
+    }
+
+    case 221: { // ES QueryAllCmd
+        static uint16_t msgid = CFE_ES_CMD_MID;
+        static uint8_t fnccode = CFE_ES_QUERY_ALL_CC;
+        static char app_buf[64] = "TO_LAB_APP";
+
+        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+        ImGui::InputText("application", app_buf, sizeof(app_buf));
+
+
+        if (ImGui::Button("Generate CMD")) {
+            uint16_t msgid_be = htons(msgid);
+            memset(command->esqueryallcmd.FileName, 0, sizeof(command->esqueryallcmd.FileName));
+            strncpy(command->esqueryallcmd.FileName, app_buf, sizeof(command->esqueryallcmd.FileName) - 1);
+
+
+            uint8_t sequence[2] = {0xC0, 0x00};
+            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(CFE_ES_StopAppCmd_t) - 7)};
+            memcpy(command->esqueryallcmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
+            memcpy(command->esqueryallcmd.CmdHeader + 2, sequence, sizeof(uint16_t));
+            memcpy(command->esqueryallcmd.CmdHeader + 4, length, sizeof(uint16_t));
+            memcpy(command->esqueryallcmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
+
+
+            command->esqueryallcmd.CmdHeader[7] = 0x00;
+
+            pthread_join(p_thread[4], NULL);
+            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(CFE_ES_StopAppCmd_t));
+            TestPacket->Identifier = HVD_TEST;
+            TestPacket->PacketType = MIM_PT_TMTC_TEST;
+
+            TestPacket->Length = sizeof(CFE_ES_StopAppCmd_t);
+            uint16_t len = sizeof(CFE_ES_StopAppCmd_t);
+
+
+            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->esqueryallcmd);
+
+            uint8_t checksum = 0xFF;
+            while (len--) checksum ^= *(byteptr++);
+            memcpy(command->esqueryallcmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
+            memcpy(TestPacket->Data, &command->esqueryallcmd, sizeof(CFE_ES_StopAppCmd_t));
+            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
+        }
+
+
+        break;
+    }
 
     }
 }
@@ -13264,7 +13580,7 @@ void Initialize_CMDLabels()
     snprintf(Templabels[86],  64, "ADCS Set Unsolicited TLM Msg Setup");
     snprintf(Templabels[87],  64, "ADCS Set Unsolicited Event Msg Setup");
     // Telemetry GET commands
-    snprintf(Templabels[88],  64, "ADCS Get Command");
+    snprintf(Templabels[88],  64, "ADCS CC 101");
 
 
 
@@ -13339,9 +13655,7 @@ void Initialize_CMDLabels()
 
 
 
-    snprintf(Templabels[199], 64, "ES Start App");
-
-    snprintf(Templabels[200], 64, "TO Reload");  
+ 
     snprintf(Templabels[201], 64, "TO Delete");  
     snprintf(Templabels[202], 64, "TO Rename");  
 
@@ -13370,6 +13684,14 @@ void Initialize_CMDLabels()
 
     snprintf(Templabels[214], 64, "COSMIC UEL Pi ON");
     snprintf(Templabels[215], 64, "COSMIC UEL Pi OFF");
+
+    snprintf(Templabels[216], 64, "ES NoOp");
+    snprintf(Templabels[217], 64, "ES Start App");
+    snprintf(Templabels[218], 64, "ES Stop App");
+    snprintf(Templabels[219], 64, "ES Reload App");
+    snprintf(Templabels[220], 64, "ES Query One"); 
+    snprintf(Templabels[221], 64, "ES Query All");
+
 
 }
 
