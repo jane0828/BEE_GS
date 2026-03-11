@@ -18,7 +18,7 @@ import gs_dist
 import util
 from waflib.Build import BuildContext
 
-APPNAME = 'mimancsp'
+APPNAME = 'ilovemozart'
 VERSION = '2.1.1'
 
 
@@ -37,10 +37,10 @@ def configure(ctx):
 
     # Options for libgscsp/libcsp
     ctx.options.enable_rdp = True
-    ctx.options.enable_qos = True
+    ctx.options.enable_qos = False
     ctx.options.enable_crc32 = True
     ctx.options.enable_hmac = True
-    ctx.options.enable_xtea = False
+    ctx.options.enable_xtea = True
     ctx.options.enable_promisc = False
     ctx.options.enable_if_kiss = True
     ctx.options.enable_if_can = False

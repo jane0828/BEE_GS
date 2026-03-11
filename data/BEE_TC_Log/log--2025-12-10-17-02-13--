@@ -1,0 +1,96 @@
+[17:02:15]  Connect to Switch Box.............Success.
+[17:02:15]  Connect to Rotator................Success.
+[17:02:15]  Connect to GS100..................Success.
+[17:02:15]  TM Port 13 bind success.
+[17:02:15]  BCN Port 31 bind success.
+[17:02:15]  RPT Port 25 bind success.
+[17:03:14]  Received FTP file Spec.
+[17:03:14]  Received FTP File Spec. Filesize : 14707, CRC : 2792735735.
+[17:03:17]  Transfer Status: 0 of 82 (0.0%)
+
+[17:03:17]  Progress : 0/82
+[17:03:18]  Progress : 1/82
+[17:03:18]  Progress : 2/82
+[17:03:19]  Progress : 3/82
+[17:03:20]  Progress : 4/82
+[17:03:21]  Progress : 5/82
+[17:03:21]  Progress : 6/82
+[17:03:35]  Progress : 7/82
+[17:03:36]  Progress : 8/82
+[17:03:37]  Progress : 9/82
+[17:03:37]  Progress : 10/82
+[17:03:38]  Progress : 11/82
+[17:03:39]  Progress : 12/82
+[17:03:53]  Progress : 13/82
+[17:03:54]  Progress : 14/82
+[17:03:54]  Progress : 15/82
+[17:03:55]  Progress : 16/82
+[17:03:56]  Progress : 17/82
+[17:03:56]  Progress : 18/82
+[17:04:10]  Progress : 19/82
+[17:04:11]  Progress : 20/82
+[17:04:12]  Progress : 21/82
+[17:04:12]  Progress : 22/82
+[17:04:13]  Progress : 23/82
+[17:04:14]  Progress : 24/82
+[17:04:28]  Progress : 25/82
+[17:04:29]  Progress : 26/82
+[17:04:29]  Progress : 27/82
+[17:04:30]  Progress : 28/82
+[17:04:31]  Progress : 29/82
+[17:04:31]  Progress : 30/82
+[17:04:45]  Progress : 31/82
+[17:04:46]  Progress : 32/82
+[17:04:47]  Progress : 33/82
+[17:04:48]  Progress : 34/82
+[17:04:48]  Progress : 35/82
+[17:04:49]  Progress : 36/82
+[17:05:03]  Progress : 37/82
+[17:05:04]  Progress : 38/82
+[17:05:04]  Progress : 39/82
+[17:05:05]  Progress : 40/82
+[17:05:06]  Progress : 41/82
+[17:05:06]  Progress : 42/82
+[17:05:20]  Progress : 43/82
+[17:05:21]  Progress : 44/82
+[17:05:22]  Progress : 45/82
+[17:05:23]  Progress : 46/82
+[17:05:23]  Progress : 47/82
+[17:05:24]  Progress : 48/82
+[17:05:38]  Progress : 49/82
+[17:05:39]  Progress : 50/82
+[17:05:40]  Progress : 51/82
+[17:05:40]  Progress : 52/82
+[17:05:41]  Progress : 53/82
+[17:05:42]  Progress : 54/82
+[17:05:56]  Progress : 55/82
+[17:05:56]  Progress : 56/82
+[17:05:57]  Progress : 57/82
+[17:05:58]  Progress : 58/82
+[17:05:58]  Progress : 59/82
+[17:05:59]  Progress : 60/82
+[17:06:00]  Progress : 61/82
+[17:06:00]  Progress : 62/82
+[17:06:01]  Progress : 63/82
+[17:06:17]  Progress : 64/82
+[17:06:17]  Progress : 65/82
+[17:06:18]  Progress : 66/82
+[17:06:19]  Progress : 67/82
+[17:06:20]  Progress : 68/82
+[17:06:20]  Progress : 69/82
+[17:06:36]  Progress : 70/82
+[17:06:37]  Progress : 71/82
+[17:06:37]  Progress : 72/82
+[17:06:38]  Progress : 73/82
+[17:06:39]  Progress : 74/82
+[17:06:39]  Progress : 75/82
+[17:06:53]  Progress : 76/82
+[17:06:54]  Progress : 77/82
+[17:06:55]  Progress : 78/82
+[17:06:55]  Progress : 79/82
+[17:06:56]  Progress : 80/82
+[17:06:57]  Progress : 81/82
+[17:07:12]  FTP Transaction Completed.
+[17:07:12]  Calculate FTP CRC OK. Remote : 2792735735, Local : 2792735735.
+[17:07:12]  FTP task DONE.
+[17:07:12]  End FTP upload. Retcode : 0

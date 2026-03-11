@@ -7,7 +7,6 @@
 #include "miman_orbital.h"
 #include "miman_radial.h"
 #include "miman_ftp.h"
-
 #include <netinet/in.h>
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -17,6 +16,9 @@ extern bool raw_data;
 
 //int signallen = 8;
 Beacon* beacon = (Beacon *)malloc(MIM_LEN_BEACON);
+Report* report = (Report *)malloc(BEE_LEN_REPORT);
+GETFILEINFO* getfileinfo = (GETFILEINFO *)malloc(BEE_LEN_GETFILEINFO);
+CFE_EVS_LongEventTlm_Payload_t *cFS_Event = (CFE_EVS_LongEventTlm_Payload_t *)calloc(1, sizeof(CFE_EVS_LongEventTlm_Payload_t));
 int NowFTP = 0;
 
 char HKbuf[202];
@@ -37,8 +39,10 @@ extern Setup * setup;
 pthread_t LinkTrhead;
 
 int BeaconCounter;
+int ReportCounter;
 int PingCounter;
 uint32_t remote_total_rx_bytes = 0;
+uint16_t remote_boot_count = 0;
 
 void * TRxController(void *)
 {
@@ -91,9 +95,19 @@ uint32_t get_rx_bytes()
     return remote_total_rx_bytes;
 }
 
+uint16_t get_boot_count()
+{
+    return remote_boot_count;
+}
+
 uint32_t * get_rx_bytes_address()
 {
     return &remote_total_rx_bytes;
+}
+
+uint16_t * get_boot_count_address()
+{
+    return &remote_boot_count;
 }
 
 CmdGenerator_GS::CmdGenerator_GS(void) {
@@ -233,6 +247,9 @@ csp_socket_t * DL_sock_initialize()
     if(!csp_bind(sock, 31)) {
         console.AddLog("[OK]##BCN Port 31 bind success.");
     }
+    if(!csp_bind(sock, 25)) {
+        console.AddLog("[OK]##RPT Port 25 bind success.");
+    }
     // while(true) {
     //     if (csp_bind(sock, 23) == 0) { // Add for HVD_TMTC_TEST
     //     console.AddLog("[OK]Bind Success.");
@@ -253,104 +270,316 @@ csp_socket_t * DL_sock_initialize()
 //         sprintf(DebugMsg + i, "%")
 //     }
 // }
+static void DecodeReport(uint16_t CCMessage_ID,
+                         uint16_t CCCount,
+                         uint16_t CCLength,
+                         const uint8_t CCTime_code[6],
+                         uint16_t msg_id,
+                         uint8_t cc,
+                         uint8_t ret_type,
+                         int32_t ret_code,
+                         uint16_t ret_val_size,
+                         const std::vector<uint8_t> &payload)
+{
+    memset(&g_report_view, 0, sizeof(g_report_view));
 
-int BeaconSaver(Beacon * bec)
-{   
-    BeaconCounter += 1;
-    char beaconline[64];
-    char beaconname[64];
-    char binarybuf[1024];
+    g_report_view.valid        = true;
+    g_report_view.CCMessage_ID = CCMessage_ID;
+    g_report_view.CCCount      = CCCount;
+    g_report_view.CCLength     = CCLength;
+
+    memcpy(g_report_view.CCTime_code, CCTime_code, 6);
+
+    g_report_view.msg_id       = msg_id;
+    g_report_view.cc           = cc;
+    g_report_view.ret_type     = ret_type;
+    g_report_view.ret_code     = ret_code;
+    g_report_view.ret_val_size = ret_val_size;
+
+    const uint8_t *p = payload.data();
+
+    switch (CCMessage_ID)
+    {
+    case 0x0825:  
+        switch (msg_id)
+        {
+        case ADCS_CMD_ID:     
+            switch (cc)
+            {
+            case ADCS_GET_TLM_LOG_INCLMASK_CC:  
+                g_report_view.kind = REPORT_KIND_ADCS_LOG_MASK;
+
+                if (ret_val_size >= sizeof(ADCS_TlmLogInclMaskTlm_Payload_t))
+                {
+                    memcpy(&g_report_view.u.adcs_logmask,
+                           p,
+                           sizeof(ADCS_TlmLogInclMaskTlm_Payload_t));
+                }
+                else
+                {
+                    memset(&g_report_view.u.adcs_logmask, 0,
+                           sizeof(ADCS_TlmLogInclMaskTlm_Payload_t));
+                    memcpy(&g_report_view.u.adcs_logmask, p, ret_val_size);
+                }
+                break;
+
+            case ADCS_SET_UNSOLICIT_TLM_MSG_SETUP_CC:
+            {
+                g_report_view.kind = REPORT_KIND_ADCS_UNSOLICIT_TLM_SETUP_TLM;
+                size_t copy_sz = ret_val_size;
+                if (copy_sz > sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t))
+                    copy_sz = sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t);
+                memset(&g_report_view.u.adcs_unsolicited_tlm_tlm, 0,
+                       sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t));
+                memcpy(&g_report_view.u.adcs_unsolicited_tlm_tlm, p, copy_sz);
+            }
+
+
+
+            default:
+                g_report_view.kind = REPORT_KIND_SC_GENERIC;
+                memcpy(g_report_view.u.generic.bytes, p, ret_val_size);
+                break;
+            }
+            break;
+
+        default:
+            g_report_view.kind = REPORT_KIND_SC_GENERIC;
+            memcpy(g_report_view.u.generic.bytes, p, ret_val_size);
+            break;
+        }
+        break;
+
+    default:
+        g_report_view.kind = REPORT_KIND_SC_GENERIC;
+        memcpy(g_report_view.u.generic.bytes, p, ret_val_size);
+        break;
+    }
+}
+
+
+
+int BeaconSaver(Beacon* bec)
+{
+    if (!bec) return -1;
+
+    BeaconCounter++;
+
+    char filename[128];
     time_t tmtime = time(0);
-    struct tm * local = localtime(&tmtime);
-    sprintf(beaconname, "./data/beacon/Beacon--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
-    // sprintf(binarybuf, )
-    FILE * beacon_fp;
-    beacon_fp = fopen(beaconname, "wb");
-    for(int i = 0 ; i < 5; i++)
-        beaconline[i] = bec->Callsign[i];
-    beaconline[6] = 0;
-    // fprintf(beaconline); 
-    // Changed by JHKim 25.01.29 06:12 (LA,US)
-    //FM
-    fprintf(beacon_fp, "Call Sign : %s\n", beaconline);
-    fprintf(beacon_fp, "Current Mode : %"PRIu8"\n", bec ->CurrentMode);
-    fprintf(beacon_fp, "Current SubMode: %"PRIu8"\n", bec ->CurrentSubmode);
-    fprintf(beacon_fp, "Previous Mode : %"PRIu8"\n", bec ->PrevioudMode);
-    fprintf(beacon_fp, "Previous SubMode : %"PRIu8"\n", bec ->PreviousSubmode);
-    fprintf(beacon_fp, "Current Mode Flag : %"PRIu8"\n", bec ->CurrentModeFlag);
-    fprintf(beacon_fp, "Previous Mode Flag : %"PRIu8"\n", bec ->PreviousModeFlag);
-    fprintf(beacon_fp, "Application Run Status : %"PRIu32"\n", bec ->ApplicationRunStatus);
-    fprintf(beacon_fp, "Satellite Time : %"PRIu32"\n", bec ->SatelliteTime);
-    //UHF ANT
-    fprintf(beacon_fp, "UHF Antenna Deployment State : %"PRIu16"\n", bec ->DeployState_UANT);
-    //UTRX
-    fprintf(beacon_fp, "Rx Frequency : %"PRId32"\n", bec ->rxfreq);
-    fprintf(beacon_fp, "Tx Frequency : %"PRId32"\n", bec ->txfreq);
-    fprintf(beacon_fp, "Last RSSI : %"PRId16"\n", bec ->LastRssi);
-    fprintf(beacon_fp, "Total Rx bytes : %"PRIu32"\n", bec ->TotRxBytes);
-    fprintf(beacon_fp, "Status Configuration : %"PRIu8"\n", bec ->StatusConfiguration);
-    //PCDU P60 Dock
-    fprintf(beacon_fp, "PCDU Dock Output Enable Status : %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx\n", bec->out_en_dock[0], bec ->out_en_dock[1], bec ->out_en_dock[2], bec ->out_en_dock[3], bec ->out_en_dock[4], bec ->out_en_dock[5], bec ->out_en_dock[6]);
-    fprintf(beacon_fp, "PCDU Dock Temperature : %02hhx %02hhx\n", bec ->temp_dock[0], bec ->temp_dock[1]);
-    fprintf(beacon_fp, "PCDU Boot Cause : %"PRIu32"\n", bec ->bootcause);
-    fprintf(beacon_fp, "PCDU Boot Count : %"PRIu32"\n", bec ->bootcnt);
-    fprintf(beacon_fp, "PCDU Uptime : %"PRIu32"\n", bec ->uptime);
-    fprintf(beacon_fp, "PCDU Reset Cause : %"PRIu16"\n", bec ->resetcause);
-    fprintf(beacon_fp, "Battery Mode : %"PRIu8"\n", bec ->batt_mode);
-    fprintf(beacon_fp, "Heater Enabled Status : %"PRIu8"\n", bec ->heater_on);
-    fprintf(beacon_fp, "Latchup Protection Count :  %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx\n", bec ->latchup_dock[0], bec ->latchup_dock[1], bec ->latchup_dock[2], bec ->latchup_dock[3], bec ->latchup_dock[4], bec ->latchup_dock[5], bec ->latchup_dock[6]);
-    fprintf(beacon_fp, "PCDU Dock VBAT Voltage : %"PRIu16"\n", bec ->vbat_v);
-    fprintf(beacon_fp, "Battery Voltage : %"PRId16"\n", bec ->batt_v);
-    fprintf(beacon_fp, "Battery Temperature :  %02hhx %02hhx\n", bec ->batt_temp[0], bec ->batt_temp[1]);
-    fprintf(beacon_fp, "PCDU Device Status : %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx\n", bec ->device_status[0], bec ->device_status[1], bec ->device_status[2], bec ->device_status[3], bec ->device_status[4], bec ->device_status[5], bec ->device_status[6], bec ->device_status[7]);
-    fprintf(beacon_fp, "Ground WDT Reboot Count : %"PRIu32"\n", bec ->wdt_cnt_gnd);
-    fprintf(beacon_fp, "Ground WDT Remaining Seconds : %"PRIu32"\n", bec ->wdt_gnd_left);
-    fprintf(beacon_fp, "Battery Charge Current : %"PRId16"\n", bec ->batt_chrg);
-    fprintf(beacon_fp, "Battery Discharge Current : %"PRId16"\n", bec ->batt_dischrg);
-    //PCDU PDU-200
-    fprintf(beacon_fp, "PDU VBAT Voltage: %"PRId16"\n", bec ->vbat);
-    fprintf(beacon_fp, "PDU Output Enable Status : %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx\n", bec ->out_en_pdu[0], bec ->out_en_pdu[1], bec ->out_en_pdu[2], bec ->out_en_pdu[3], bec ->out_en_pdu[4], bec ->out_en_pdu[5]);
-    fprintf(beacon_fp, "PDU Latchup Protection Count : %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx\n", bec ->latchup_pdu[0], bec ->latchup_pdu[1], bec ->latchup_pdu[2], bec ->latchup_pdu[3], bec ->latchup_pdu[4], bec ->latchup_pdu[5]);
-    fprintf(beacon_fp, "PDU Output Converter Voltage : %02hhx %02hhx %02hhx %02hhx %02hhx %02hhx\n", bec ->out_voltage[0], bec ->out_voltage[1], bec ->out_voltage[2], bec ->out_voltage[3], bec ->out_voltage[4], bec ->out_voltage[5]);
-    //PCDU ACU-200
-    fprintf(beacon_fp, "ACU Charging Current : %02hhx %02hhx %02hhx %02hhx\n", bec ->c_in[0], bec ->c_in[1], bec ->c_in[2], bec ->c_in[3]);
-    fprintf(beacon_fp, "ACU Charging Voltage : %02hhx %02hhx %02hhx %02hhx\n", bec ->v_in[0], bec ->v_in[1], bec ->v_in[2], bec ->v_in[3]);
-    //ADCS
-    fprintf(beacon_fp, "RWL0 Power State : %"PRIu8"\n", bec ->RWL0_PowerState);
-    fprintf(beacon_fp, "RWL1 Power State : %"PRIu8"\n", bec ->RWL1_PowerState);
-    fprintf(beacon_fp, "RWL2 Power State : %"PRIu8"\n", bec ->RWL2_PowerState);
-    fprintf(beacon_fp, "MAG0 Power State : %"PRIu8"\n", bec ->MAG0_PowerState);
-    fprintf(beacon_fp, "FSS0 Power State : %"PRIu8"\n", bec ->FSS0_PowerState);
-    fprintf(beacon_fp, "HSS0 Power State : %"PRIu8"\n", bec ->HSS0_PowerState);
-    fprintf(beacon_fp, "ADCS Control Mode : %"PRIu8"\n", bec ->Control_Mode);
-    fprintf(beacon_fp, "Magnetic Control Timeout : %"PRIu16"\n", bec ->Mag_Control_Timeout);
-    fprintf(beacon_fp, "GYRO Calibrated Rate X : %.2f\n", bec ->GYRO_Calib_rate_X);
-    fprintf(beacon_fp, "GYRO Calibrated Rate Y : %.2f\n", bec ->GYRO_Calib_rate_Y);
-    fprintf(beacon_fp, "GYRO Calibrated Rate Z : %.2f\n", bec ->GYRO_Calib_rate_Z);
-    //STX
-    fprintf(beacon_fp, "STx Status : %"PRIu8"\n", bec ->Status);
-    fprintf(beacon_fp, "STx Temperature : %"PRId16"\n", bec ->Board_Temperature);
-    fprintf(beacon_fp, "STx Current : %"PRId16"\n", bec ->Battery_Current);
-    fprintf(beacon_fp, "STx Voltage : %"PRId16"\n", bec ->Battery_Voltage);
-    //PAYC
-    fprintf(beacon_fp, "PAYC Temperature : %"PRIu16"\n", bec ->temp_PAYC);
-    fprintf(beacon_fp, "PAYC Current : %"PRIu16"\n", bec ->icore);
-    //PAYR
-    fprintf(beacon_fp, "PAYR Deployment Status : %"PRIu8"\n", bec ->DeployStatus_PAYR);
-    //PAYS
-    fprintf(beacon_fp, "PAYS State : %"PRIu8"\n", bec ->PAYS_State);
-    fprintf(beacon_fp, "PAYS Temperature Sign : %"PRIu8"\n", bec ->PAYS_Sign);
-    fprintf(beacon_fp, "PAYS Temperature : %"PRIu8"\n", bec ->PAYS_Temp);   
+    struct tm* local = localtime(&tmtime);
 
-    fprintf(beacon_fp, "\n\n\n\nBinary : \n");
-    // fprintf(beacon_fp, );
-    // for(int i = 0; i < sizeof(Beacon) ; i++)
-    //     fprintf(beacon_fp, "%x\t", ((char *)bec)[i]);
-    for (size_t i = 0; i < sizeof(*bec); i++)  
-        fprintf(beacon_fp, "%02x\t", ((unsigned char *)bec)[i]);  
-    fprintf(beacon_fp, "\n");
-    fflush(beacon_fp);
-    fclose(beacon_fp);
+    sprintf(filename,
+            "../data/beacon/Beacon--%04d-%02d-%02d-%02d-%02d-%02d--.txt",
+            local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
+            local->tm_hour, local->tm_min, local->tm_sec);
+
+    FILE* fp = fopen(filename, "w");
+    if (!fp) return -2;
+
+    fprintf(fp, "================= BEACON SAVE =================\n");
+
+    // ---------------------------------------------------
+    //  CCSDS HEADER
+    // ---------------------------------------------------
+    fprintf(fp, "\n[CCSDS HEADER]\n");
+    fprintf(fp, "MID        : %02X %02X\n", bec->CCSDS_MID[0], bec->CCSDS_MID[1]);
+    fprintf(fp, "SEQ        : %02X %02X\n", bec->CCSDS_Seq[0], bec->CCSDS_Seq[1]);
+    fprintf(fp, "LEN        : %02X %02X\n", bec->CCSDS_Len[0], bec->CCSDS_Len[1]);
+    fprintf(fp, "TimeCode   : %02X %02X %02X %02X %02X %02X\n",
+            bec->CCSDS_TimeCode[0], bec->CCSDS_TimeCode[1], bec->CCSDS_TimeCode[2],
+            bec->CCSDS_TimeCode[3], bec->CCSDS_TimeCode[4], bec->CCSDS_TimeCode[5]);
+
+    // // ---------------------------------------------------
+    // //  RPT (FSW) - Should be deprecated
+    // // ---------------------------------------------------
+    // fprintf(fp, "\n[FSW - RPT]\n");
+    // fprintf(fp, "BootCount     : %" PRIu16 "\n", bec->RPT_BootCount);
+    // fprintf(fp, "SC Time Sec   : %" PRIu32 "\n", bec->RPT_ScTimeSec);
+    // fprintf(fp, "SC Time Sub   : %" PRIu32 "\n", bec->RPT_ScTimeSubsec);
+    // fprintf(fp, "Sequence      : %" PRIu32 "\n", bec->RPT_Sequence);
+    // fprintf(fp, "Reset Cause   : %" PRIu8  "\n", bec->RPT_ResetCause);
+    /********************************************************************/
+    /*               BEE RPT Revision (Kweon Hyeokjin)                  */
+    /********************************************************************/
+    fprintf(fp, "\n[FSW - RPT]\n");
+    fprintf(fp, "Cmd Counter   : %" PRIu8 "\n", bec->RPT_CmdCounter);
+    fprintf(fp, "Err Counter   : %" PRIu8 "\n", bec->RPT_ErrCounter);
+    fprintf(fp, "Report Q Cnt  : %" PRIu8 "\n", bec->RPT_ReportCnt);
+    fprintf(fp, "Critical Q Cnt: %" PRIu8 "\n", bec->RPT_CriticalCnt);
+    fprintf(fp, "Boot Count    : %" PRIu16 "\n", bec->RPT_BootCount);
+    fprintf(fp, "SC Time Sec   : %" PRIu32 "\n", bec->RPT_ScTimeSec);
+    fprintf(fp, "SC Time Sub   : %" PRIu32 "\n", bec->RPT_ScTimeSubsec);
+    fprintf(fp, "Sequence(LSB) : %" PRIu8  "\n", bec->RPT_Sequence_LSB);
+    /*--------------End of BEE RPT Revision (Kweon Hyeokjin)--------------*/
+
+    // ---------------------------------------------------
+    // STX (S-band)
+    // ---------------------------------------------------
+    fprintf(fp, "\n[COMS - STX]\n");
+    fprintf(fp, "Symbol Rate        : %" PRIu8 "\n", bec->STX_symbol_rate);
+    fprintf(fp, "Tx Power           : %" PRIu8 "\n", bec->STX_transmit_power);
+    fprintf(fp, "MODCOD             : %" PRIu8 "\n", bec->STX_modcod);
+    fprintf(fp, "Roll-off           : %" PRIu8 "\n", bec->STX_roll_off);
+    fprintf(fp, "Pilot Signal       : %" PRIu8 "\n", bec->STX_pilot_signal);
+    fprintf(fp, "FEC Frame Size     : %" PRIu8 "\n", bec->STX_fec_frame_size);
+    fprintf(fp, "Pre-Tx Delay       : %" PRIu16 "\n", bec->STX_pretransmission_delay);
+    fprintf(fp, "Center Frequency   : %f\n", bec->STX_center_frequency);
+    fprintf(fp, "Mod Interface Type : %" PRIu8 "\n", bec->STX_modulator_interface_type);
+    fprintf(fp, "LVDS IO Type       : %" PRIu8 "\n", bec->STX_lvds_io_type);
+    fprintf(fp, "System State       : %" PRIu8 "\n", bec->STX_SystemState);
+    fprintf(fp, "Status Flag        : %" PRIu8 "\n", bec->STX_StatusFlag);
+    // fprintf(fp, "CPU Temp           : %f\n", bec->STX_CpuTemp);
+
+    // ---------------------------------------------------
+    // UANT (UHF Antenna)
+    // ---------------------------------------------------
+    fprintf(fp, "\n[COMS - UANT]\n");
+    fprintf(fp, "UANT1 (0/1/BK) : %" PRIu8 " %" PRIu8 " (BK:%" PRIu8 ")\n",
+            bec->UANT1_Chan0, bec->UANT1_Chan1, bec->UANT1_BackupActive);
+    fprintf(fp, "UANT2 (0/1/BK) : %" PRIu8 " %" PRIu8 " (BK:%" PRIu8 ")\n",
+            bec->UANT2_Chan0, bec->UANT2_Chan1, bec->UANT2_BackupActive);
+
+    // ---------------------------------------------------
+    // UTRX
+    // ---------------------------------------------------
+    fprintf(fp, "\n[COMS - UTRX]\n");
+    fprintf(fp, "UTRX ActiveConf : %" PRIu8 "\n", bec->UTRX_ActiveConf);
+    fprintf(fp, "UTRX BootCount  : %" PRIu16 "\n", bec->UTRX_BootCount);
+    fprintf(fp, "UTRX BootCause  : %" PRIu32 "\n", bec->UTRX_BootCause);
+    fprintf(fp, "UTRX Temp       : %" PRId16 "\n", bec->UTRX_BoardTemp);
+
+    // ---------------------------------------------------
+    // P60 Dock
+    // ---------------------------------------------------
+    fprintf(fp, "\n[PCDU - P60 DOCK]\n");
+    fprintf(fp, "Cout[0..8]    : ");
+    for (int i = 0; i < 9; i++) fprintf(fp, "%d ", bec->P60D_Cout[i]);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "Vout[0..8]    : ");
+    for (int i = 0; i < 9; i++) fprintf(fp, "%u ", bec->P60D_Vout[i]);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "OutEn         : 0x%04X\n", bec->P60D_OutEn);
+    fprintf(fp, "BootCause     : %" PRIu32 "\n", bec->P60D_BootCause);
+    fprintf(fp, "BootCount     : %" PRIu32 "\n", bec->P60D_BootCount);
+    fprintf(fp, "BattMode      : %" PRIu8  "\n", bec->P60D_BattMode);
+    fprintf(fp, "HeaterOn      : %" PRIu8  "\n", bec->P60D_HeaterOn);
+    fprintf(fp, "VBAT          : %" PRIu16 "\n", bec->P60D_VbatV);
+    fprintf(fp, "VCC Current   : %" PRIi16 "\n", bec->P60D_VccC);
+    fprintf(fp, "BattV         : %" PRIu16 "\n", bec->P60D_BattV);
+    fprintf(fp, "BattTemp      : %d %d\n", bec->P60D_BattTemp[0], bec->P60D_BattTemp[1]);
+    fprintf(fp, "WDT CAN Left  : %" PRIu32 "\n", bec->P60D_WdtCanLeft);
+    fprintf(fp, "Batt Chg Curr : %" PRId16 "\n", bec->P60D_BattChrg);
+    fprintf(fp, "Batt Dis Curr : %" PRId16 "\n", bec->P60D_BattDischrg);
+
+    // ---------------------------------------------------
+    // P60 PDU
+    // ---------------------------------------------------
+    fprintf(fp, "\n[PCDU - P60 PDU]\n");
+    fprintf(fp, "Cout : ");
+    for (int i = 0; i < 9; i++) fprintf(fp, "%d ", bec->P60P_Cout[i]);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "Vout : ");
+    for (int i = 0; i < 9; i++) fprintf(fp, "%u ", bec->P60P_Vout[i]);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "Vcc     : %d\n", bec->P60P_Vcc);
+    fprintf(fp, "ConvEn  : %" PRIu8 "\n", bec->P60P_ConvEn);
+    fprintf(fp, "OutEn   : 0x%04X\n", bec->P60P_OutEn);
+
+    // ---------------------------------------------------
+    // P60 ACU
+    // ---------------------------------------------------
+    fprintf(fp, "\n[PCDU - P60 ACU]\n");
+    fprintf(fp, "Cin : ");
+    for (int i = 0; i < 6; i++) fprintf(fp, "%d ", bec->P60A_Cin[i]);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "Vin : ");
+    for (int i = 0; i < 6; i++) fprintf(fp, "%u ", bec->P60A_Vin[i]);
+    fprintf(fp, "\n");
+
+    // ---------------------------------------------------
+    // ADCS
+    // ---------------------------------------------------
+    fprintf(fp, "\n[ADCS]\n");
+    fprintf(fp, "PowerState       : 0x%02X\n", bec->ADCS_PowerState);
+    fprintf(fp, "ControlMode      : %" PRIu8 "\n", bec->ADCS_ControlMode);
+    fprintf(fp, "GYR0 Calib X     : %f\n", bec->ADCS_GYR0CalibratedRateXComponent);
+    fprintf(fp, "GYR0 Calib Y     : %f\n", bec->ADCS_GYR0CalibratedRateYComponent);
+    fprintf(fp, "GYR0 Calib Z     : %f\n", bec->ADCS_GYR0CalibratedRateZComponent);
+
+    // ---------------------------------------------------
+    // BINARY DUMP
+    // ---------------------------------------------------
+    fprintf(fp, "\n[BINARY DATA]\n");
+    for (size_t i = 0; i < sizeof(*bec); i++)
+        fprintf(fp, "%02X ", ((unsigned char*)bec)[i]);
+    fprintf(fp, "\n");
+
+    fclose(fp);
+    return 0;
+}
+int ReportSaver(Report* rpt)
+{
+    if (!rpt) return -1;
+
+    ReportCounter++;
+
+    char filename[128];
+    time_t tmtime = time(0);
+    struct tm* local = localtime(&tmtime);
+
+    sprintf(filename,
+            "../data/report_parsed/Report--%04d-%02d-%02d-%02d-%02d-%02d--.txt",
+            local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
+            local->tm_hour, local->tm_min, local->tm_sec);
+
+    FILE* fp = fopen(filename, "w");
+    if (!fp) return -2;
+
+    fprintf(fp, "================= REPORT SAVE =================\n");
+
+    fprintf(fp, "\n[CCSDS HEADER]\n");
+    fprintf(fp, "MsgId      : 0x%04X\n", (unsigned int)rpt->CCSDS_MsgId);
+    fprintf(fp, "Seq        : 0x%04X\n", (unsigned int)rpt->CCSDS_Seq);
+    fprintf(fp, "Len        : 0x%04X\n", (unsigned int)rpt->CCSDS_Len);
+    fprintf(fp, "TimeCode   : %02X %02X %02X %02X %02X %02X\n",
+            rpt->CCSDS_TimeCode[0], rpt->CCSDS_TimeCode[1],
+            rpt->CCSDS_TimeCode[2], rpt->CCSDS_TimeCode[3],
+            rpt->CCSDS_TimeCode[4], rpt->CCSDS_TimeCode[5]);
+    fprintf(fp, "Padding    : 0x%08X\n", (unsigned int)rpt->CCSDS_Padding);
+
+    fprintf(fp, "\n[REPORT BODY]\n");
+    fprintf(fp, "Reflected MID  : 0x%04X\n", (unsigned int)rpt->ReflectedMID);
+    fprintf(fp, "Reflected CC   : 0x%02X\n", (unsigned int)rpt->ReflectedCC);
+    fprintf(fp, "RetType        : 0x%02X\n", (unsigned int)rpt->RetType);
+    fprintf(fp, "RetCode        : %" PRId32 "\n", (int32_t)rpt->RetCode);
+    fprintf(fp, "RetValSize     : %" PRIu16 "\n", (uint16_t)rpt->RetValSize);
+
+    fprintf(fp, "\n[RETURN VALUE]\n");
+    uint16_t dump_size = rpt->RetValSize;
+    if (dump_size > sizeof(rpt->RetVal))
+        dump_size = sizeof(rpt->RetVal);
+
+    for (uint16_t i = 0; i < dump_size; i++) {
+        fprintf(fp, "%02X ", rpt->RetVal[i]);
+        if ((i + 1) % 16 == 0)
+            fprintf(fp, "\n");
+    }
+    if (dump_size % 16 != 0)
+        fprintf(fp, "\n");
+
+    fprintf(fp, "\n[BINARY DATA]\n");
+    for (size_t i = 0; i < sizeof(*rpt); i++)
+        fprintf(fp, "%02X ", ((unsigned char*)rpt)[i]);
+    fprintf(fp, "\n");
+
+    fclose(fp);
+    return 0;
 }
 void * task_downlink_onorbit(void * socketinfo) 
 {
@@ -360,7 +589,7 @@ void * task_downlink_onorbit(void * socketinfo)
 	// csp_bind(sock, 12);
     // csp_bind(sock, 31);
 	// csp_listen(sock, 10);
-    csp_packet_t * packet = (csp_packet_t *)csp_buffer_get(MIM_LEN_PACKET);
+    csp_packet_t * packet = NULL;
     packetsign * confirm = (packetsign *)malloc(MIM_LEN_PACKET);
     csp_conn_t * conn;
 
@@ -373,6 +602,8 @@ void * task_downlink_onorbit(void * socketinfo)
     int index;
     int count;
     std::ofstream fout;
+
+    std::map <uint16_t, std::map<uint16_t, std::map<uint8_t, std::vector<uint8_t>>>> rpt_map;
     /////////////////////////////////////////////////////////////////////////
 
 
@@ -392,12 +623,206 @@ void * task_downlink_onorbit(void * socketinfo)
         //console.AddLog("Someone Comming...");
 		while ((packet = csp_read(conn, setup->default_timeout)) != NULL) {
 			switch(csp_conn_dport(conn)) {
+                //For RPT : Port 25
+                case 25 : {
+                    std::vector <uint8_t> rpt_data;
+                    size_t packet_length = packet->length;
+                    rpt_data.resize(packet_length);
+                    memcpy(rpt_data.data(), packet->data, packet_length);
+
+                    if (packet_length < 26){
+                        printf("invalid packet length : %d \n", (int)packet_length);
+                        break;
+                    }
+                    printf("25 port repotty\n");
+                    size_t ccsds_length = 16;
+
+                    uint16_t CCMessage_ID = (rpt_data[0] << 8) | rpt_data[1];
+                    uint8_t CCFlag = rpt_data[2] >> 6;
+                    uint16_t CCCount = ((rpt_data[2] & 0x3F) << 8) | rpt_data[3];
+                    uint16_t CCLength = rpt_data[4] << 8 | rpt_data[5];
+                    std::vector <uint8_t> CCTime_code(rpt_data.begin()+6, rpt_data.begin()+12);
+
+                    uint16_t msg_id = (rpt_data[17] <<8) | rpt_data[16];
+                    uint8_t cc = rpt_data[18];
+                    uint8_t ret_type = rpt_data[19];
+                    int32_t ret_code = (rpt_data[23] << 24) | (rpt_data[22] << 16) | (rpt_data[21] << 8) | rpt_data[20];
+                    uint16_t ret_val_size = (rpt_data[25] << 8) | rpt_data[24];
+
+                    rpt_map[CCMessage_ID][msg_id][cc].insert(rpt_map[CCMessage_ID][msg_id][cc].end(), rpt_data.begin()+26, rpt_data.end());
+
+                    if ((CCFlag == 0x01) || (CCFlag == 0x03)){
+                        g_last_report.valid = true;
+                        g_last_report.CCMessage_ID = CCMessage_ID;
+                        g_last_report.CCCount = CCCount;
+                        g_last_report.CCLength = CCLength;
+
+                        for (int i=0;i<6;i++)
+                            g_last_report.CCTime_code[i] = CCTime_code[i];
+
+                        g_last_report.msg_id = msg_id;
+                        g_last_report.cc = cc;
+                        g_last_report.ret_type = ret_type;
+                        g_last_report.ret_code = ret_code;
+                        g_last_report.ret_val_size = ret_val_size;
+
+                        g_last_report.payload = rpt_map[CCMessage_ID][msg_id][cc];
+                    
+
+                        printf("--------------------report-------------------");
+                        printf("CCMessage_ID : 0x%04x \n", CCMessage_ID);
+                        printf("CCCount : 0x%04x \n", CCCount);
+                        printf("CCLength : 0x%04x \n", CCLength);
+                        printf("CCTime_code : 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x \n", CCTime_code[0], CCTime_code[1], CCTime_code[2], CCTime_code[3], CCTime_code[4], CCTime_code[5]);
+                        printf("msg_id : 0x%04x \n", msg_id);
+                        printf("cc : 0x%02x \n", cc);
+                        printf("ret_type : 0x%02x \n", ret_type);
+                        printf("ret code : 0x%08X\n", ret_code);
+                        printf("ret_val_size : 0x%04x \n", ret_val_size);
+                        
+                        for (size_t i = 0; i < rpt_map[CCMessage_ID][msg_id][cc].size(); i++){
+                            printf("0x%02x ", rpt_map[CCMessage_ID][msg_id][cc][i]);
+                        }
+                        printf("\n");
+                        rpt_map[CCMessage_ID][msg_id][cc].clear();
+
+                        switch (CCMessage_ID){
+                            case 0x0825 :
+                                break;
+                            
+                            default :
+                                break;
+                        }
+                    }
+
+                    printf("Binary (%d B) : \n", (int)packet_length);
+
+                    for (size_t i = 0; i < packet_length; i++){
+                        printf("%02x ", rpt_data[i]);
+                        if ((i+1) %10 == 0){
+                            printf("\n");
+                        }
+                    }
+
+                    break;
+
+
+
+
+
+
+                    // test
+                    if (packet->length == BEE_LEN_REPORT) {
+                        char rptpktfilename[128];
+                        time_t tmtime = time(0);
+                        struct tm *local = localtime(&tmtime);
+
+                        sprintf(rptpktfilename,
+                                "../data/report/rpt_fromp13--%04d-%02d-%02d-%02d-%02d-%02d--",
+                                local->tm_year + 1900,
+                                local->tm_mon + 1,
+                                local->tm_mday,
+                                local->tm_hour,
+                                local->tm_min,
+                                local->tm_sec);
+
+                        console.AddLog("Received Report from port : %d.", csp_conn_dport(conn));
+
+                        FILE *rpt_fp = fopen(rptpktfilename, "wb");
+                        printf("Report Length: %u", packet->length);
+
+                        for (int i = 0; i < packet->length; i++) {
+                            if (!(i % 10) && i != 0) {
+                                printf("\n");
+                                if (rpt_fp)
+                                    fprintf(rpt_fp, "\n");
+                            }
+                            printf("0x%x ", packet->data[i]);
+                            if (rpt_fp)
+                                fprintf(rpt_fp, "%02hhx\t", packet->data[i]);
+                        }
+
+                        memset(report, 0, sizeof(*report));
+                        memcpy(report, packet->data, BEE_LEN_REPORT);
+                        ReportSaver(report);
+
+
+                    std::vector <uint8_t> rpt_data;
+                    size_t packet_length = packet->length;
+                    rpt_data.resize(packet_length);
+                    memcpy(rpt_data.data(), packet->data, packet_length);
+
+                        if (packet_length < 26){
+                            printf("invalid packet length : %d \n", (int)packet_length);
+                            break;
+                        }
+
+                    size_t ccsds_length = 16;
+
+                    uint16_t CCMessage_ID = (rpt_data[0] << 8) | rpt_data[1];
+                    uint8_t CCFlag = rpt_data[2] >> 6;
+                    uint16_t CCCount = ((rpt_data[2] & 0x3F) << 8) | rpt_data[3];
+                    uint16_t CCLength = rpt_data[4] << 8 | rpt_data[5];
+                    std::vector <uint8_t> CCTime_code(rpt_data.begin()+6, rpt_data.begin()+12);
+
+                    uint16_t msg_id = (rpt_data[16] <<8) | rpt_data[17];
+                    uint8_t cc = rpt_data[18];
+                    uint8_t ret_type = rpt_data[19];
+                    int32_t ret_code = (rpt_data[20] << 24) | (rpt_data[21] << 16) | (rpt_data[22] << 8) | rpt_data[23];
+                    uint16_t ret_val_size = (rpt_data[24] << 8) | rpt_data[25];
+
+                    rpt_map[CCMessage_ID][msg_id][cc].insert(rpt_map[CCMessage_ID][msg_id][cc].end(), rpt_data.begin()+26, rpt_data.end());
+
+                        if ((CCFlag == 0x01) || (CCFlag == 0x03))
+                        {
+                            std::vector<uint8_t> full_payload = rpt_map[CCMessage_ID][msg_id][cc];
+
+                            DecodeReport(CCMessage_ID,
+                                        CCCount,
+                                        CCLength,
+                                        CCTime_code.data(),
+                                        msg_id,
+                                        cc,
+                                        ret_type,
+                                        ret_code,
+                                        ret_val_size,
+                                        full_payload);
+
+                            rpt_map[CCMessage_ID][msg_id][cc].clear();
+                        }
+
+
+                            if (rpt_fp != NULL)
+                                fclose(rpt_fp);
+                    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                }
+
                 // For TMTC Test: Port 23
                 case 23: {
                     char tmtcfilename[128];
                     time_t tmtime = time(0);
                     struct tm * local = localtime(&tmtime);
-                    sprintf(tmtcfilename, "./data/tmtc/tmtc_test--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
+                    sprintf(tmtcfilename, "../data/tmtc/tmtc_test--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
                     
                     uint16_t PacketLength = packet->length;
                     memcpy(confirm, packet->data, PacketLength);
@@ -424,195 +849,236 @@ void * task_downlink_onorbit(void * socketinfo)
                     break;
                     
                 }
-                case 12: {
-                    console.AddLog("Signal Comming from Port 12.");
-                    if (packet != NULL)
-                        csp_buffer_free(packet);
-                    if (conn != NULL)
-                        csp_close(conn);
-                    break;
-                }
-                //Case 13 : TM Packet Downlink
+
+
                 case 13: {
 
+                    // BEE Beacon을 받았어
+                    if (packet->length == MIM_LEN_BEACON) {
+                        char bcnpktfilename[128];
+                        time_t tmtime = time(0);
+                        struct tm *local = localtime(&tmtime);
 
-                    char tmtcfilename[128];
-                    time_t tmtime = time(0);
-                    struct tm * local = localtime(&tmtime);
-                    sprintf(tmtcfilename, "./data/tmtc/tmtc_test--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
-                    
-                    uint16_t PacketLength = packet->length;
-                    uint8_t data[96] = {0,};
-                    memcpy(data, packet->data, PacketLength);
-                    console.AddLog("TMTC Test Downlink requested.");
+                        sprintf(bcnpktfilename,
+                                "../data/bcnpkt/bcnpktp13--%04d-%02d-%02d-%02d-%02d-%02d--",
+                                local->tm_year + 1900,
+                                local->tm_mon + 1,
+                                local->tm_mday,
+                                local->tm_hour,
+                                local->tm_min,
+                                local->tm_sec);
 
+                        console.AddLog("Received Beacon from port : %d.", csp_conn_dport(conn));
 
+                        FILE *bcn_fp = fopen(bcnpktfilename, "wb");
+                        printf("\nBeacon Length: %u", packet->length);
 
-                    // FILE * TMTC_fp;
-                    // TMTC_fp = fopen(tmtcfilename,"wb");
-                    // for (int i=0; i<PacketLength; i++) {
-                    //     fprintf(TMTC_fp, "Data %d: %u\n",i,packet->data[i]);
-                    // }
-                    // if (packet != NULL)
-                    // {
-                    //     csp_buffer_free(packet);
-                    //     packet = NULL;
-                    // }
-                    // if (conn != NULL)
-                    // {
-                    //     csp_close(conn);
-                    //     conn = NULL;
-                    // }
-                    // if(TMTC_fp != NULL)
-                    // {
-                    //     fclose(TMTC_fp);
-                    // }
-                    printf("Packet length: %u\n", PacketLength);
-
-                    /////////////////////////////////////////////////////////////////////////
-                    
-                    if (image_packet_received == false && data[0] == 0x08 && data[1] == 0x78){
-                        // 
-                        count = 0;
-
-                        image_packet_received = true;
-                        
-                        printf("image packet received start \n");
-
-                    }
-
-                    if (image_packet_received && data[0] == 0x08 && data[1] == 0x78){
-                        // 
-
-                        index = ((int)((data[2] & 0x3F)<<8) | (int)data[3]);    //extract index of packet
-                        
-                        //received_index.push_back(index);
-                        
-                        printf("\nindex: %d\n", index);
-                        
-                        memcpy(&image_packet_data[128 * index], &data[16], PacketLength-16);
-
-
-                        if ((data[2] >> 6) == 0x02 || count >= 3072 || (data[2] >> 6) == 0x03){    //need better trigger that say end of transmit specially in resend case 
-                            //extract error packet index
-                            printf("image packet received finish \n");
-
-
-                            fout.open(filename, std::ios::out | std::ios::binary);
-                            if (fout.is_open()){
-                                printf("file open success \n");
-                                
-                                fout.write(reinterpret_cast<char*>(image_packet_data.data()), image_packet_data.size() * sizeof(uint8_t));    //save data to reuse it
-
-                                printf("write %d bytes \n", image_packet_data.size());
-                                fout.close();
-                            }
-
-                            image_packet_received = false;    //reset progress
-                        }
-                    }
-
-                    if (image_packet_received){
-                        count += 1;
-                    }
-                    
-
-
-
-                    /////////////////////////////////////////////////////////////////////////////////////
-
-                    // for(uint8_t i=0; i < packet->length; i++) {
-                    //     printf("0x%02X\t", data[i]);
-                    //     if (i%10 == 9) printf("\n");
-                    // }
-                    // break;
-                    
-
-
-
-
-
-                    printf("DL Length: %u\n",packet->length);
-                    if(log_ptr == NULL) {
-                        printf("Invalid file pointer.\n");
-                        continue;
-                    }
-                    fprintf(log_ptr, "|| Downlink || Packet Length: %u\n",packet->length);
-                    // Parsing & write header
-                    HYVRID_TelemetryHeader_t hdr = {0,};
-                    if(packet->length == 24 || packet->length <52) { // Reply to CMD (Set command) -> Only header
-                        fprintf(log_ptr, "Reply to CMD_MID.\n");
-                        memcpy(&hdr, packet->data, sizeof(HYVRID_TelemetryHeader_t));
-                    }
-                    else { // Reply to OIF (Get command)
-                        fprintf(log_ptr, "Reply to OIF_MID.\n");
-                        memcpy(&hdr, packet->data + OIF_TLM_HDR_OFFSET, sizeof(HYVRID_TelemetryHeader_t));
-                    }
-                    fprintf(log_ptr, "[ CCSDS Header ]\n");
-                    fprintf(log_ptr, "Stream ID: %x\n", htons(hdr.Tlmhdr.pri.stream));
-                    fprintf(log_ptr, "Sequence: %x\n", htons(hdr.Tlmhdr.pri.sequence));
-                    fprintf(log_ptr, "Length: %x\n", htons(hdr.Tlmhdr.pri.length));
-                    fprintf(log_ptr, "Time Stamp: %x\t%x\t%x\t%x\t%x\t%x\n\n",
-                            hdr.Tlmhdr.sec.Time[0],hdr.Tlmhdr.sec.Time[1],hdr.Tlmhdr.sec.Time[2],
-                            hdr.Tlmhdr.sec.Time[3],hdr.Tlmhdr.sec.Time[4],hdr.Tlmhdr.sec.Time[5]);
-
-                    fprintf(log_ptr, "[ HYVRID Execution Report ]\n");
-                    fprintf(log_ptr, "RetCodeType: %x\n", hdr.Report.RetCodeType);
-                    fprintf(log_ptr, "RetCode: %x\n", hdr.Report.RetCode);
-                    fprintf(log_ptr, "MsgId: %x\t", hdr.Report.MsgId);
-                    WriteSystemName(hdr.Report.MsgId);
-                    fprintf(log_ptr, "CC: %x\n", hdr.Report.CommandCode);
-                    fprintf(log_ptr, "DataSize (Exclude header): %x\n", hdr.Report.DataSize);
-                    fprintf(log_ptr, "Used State: %x\n\n", hdr.Report.UsedState);
-                    fprintf(log_ptr, "Output Data.\n");
-                    
-                    const int offset = OIF_TLM_HDR_OFFSET + sizeof(HYVRID_TelemetryHeader_t);
-                    for(int i = offset; i< packet->length; i++) {
-                        if(!((i-offset) % 10) && (i - offset) != 0) {
-                            printf("\n");
-                            fprintf(log_ptr, "\n");
-                        }
-                        printf("0x%x ",packet->data[i]);
-                        fprintf(log_ptr, "%02hhx\t",packet->data[i]);
-                    }
-                    fprintf(log_ptr, "\n");
-                        
-                    if(raw_data) {
-                        fprintf(log_ptr, "[ Downlink Raw Data ]\n");
-                        for(int i = 0; i< packet->length; i++) {
-                            if(!(i % 10) && i != 0) {
+                        for (int i = 0; i < packet->length; i++) {
+                            if (!(i % 10) && i != 0) {
                                 printf("\n");
-                                fprintf(log_ptr, "\n");
+                                if (bcn_fp)
+                                    fprintf(bcn_fp, "\n");
                             }
-                        printf("0x%x ",packet->data[i]);
-                        fprintf(log_ptr, "%02hhx\t",packet->data[i]);
+                            printf("0x%x ", packet->data[i]);
+                            if (bcn_fp)
+                                fprintf(bcn_fp, "%02hhx\t", packet->data[i]);
                         }
-                    } fprintf(log_ptr, "\n");
-                    /* Clean up */
+
+                        memset(beacon, 0, sizeof(*beacon));
+                        memcpy(beacon, packet->data, MIM_LEN_BEACON);
+                        BeaconSaver(beacon);
+
+                        if (bcn_fp != NULL)
+                            fclose(bcn_fp);
+                    }
+
+                    // BEE RPT를 받았어
+                    else if (packet->length == BEE_LEN_REPORT) {
+                        char rptpktfilename[128];
+                        time_t tmtime = time(0);
+                        struct tm *local = localtime(&tmtime);
+
+                        sprintf(rptpktfilename,
+                                "../data/report/rpt_fromp13--%04d-%02d-%02d-%02d-%02d-%02d--",
+                                local->tm_year + 1900,
+                                local->tm_mon + 1,
+                                local->tm_mday,
+                                local->tm_hour,
+                                local->tm_min,
+                                local->tm_sec);
+
+                        console.AddLog("Received Report from port : %d.", csp_conn_dport(conn));
+
+                        FILE *rpt_fp = fopen(rptpktfilename, "wb");
+                        printf("Report Length: %u", packet->length);
+
+                        for (int i = 0; i < packet->length; i++) {
+                            if (!(i % 10) && i != 0) {
+                                printf("\n");
+                                if (rpt_fp)
+                                    fprintf(rpt_fp, "\n");
+                            }
+                            printf("0x%x ", packet->data[i]);
+                            if (rpt_fp)
+                                fprintf(rpt_fp, "%02hhx\t", packet->data[i]);
+                        }
+
+                        memset(report, 0, sizeof(*report));
+                        memcpy(report, packet->data, BEE_LEN_REPORT);
+                        ReportSaver(report);
+
+
+                    std::vector <uint8_t> rpt_data;
+                    size_t packet_length = packet->length;
+                    rpt_data.resize(packet_length);
+                    memcpy(rpt_data.data(), packet->data, packet_length);
+
+                        if (packet_length < 26){
+                            printf("invalid packet length : %d \n", (int)packet_length);
+                            break;
+                        }
+
+                    size_t ccsds_length = 16;
+
+                    uint16_t CCMessage_ID = (rpt_data[0] << 8) | rpt_data[1];
+                    uint8_t CCFlag = rpt_data[2] >> 6;
+                    uint16_t CCCount = ((rpt_data[2] & 0x3F) << 8) | rpt_data[3];
+                    uint16_t CCLength = rpt_data[4] << 8 | rpt_data[5];
+                    std::vector <uint8_t> CCTime_code(rpt_data.begin()+6, rpt_data.begin()+12);
+
+                    uint16_t msg_id = (rpt_data[16] <<8) | rpt_data[17];
+                    uint8_t cc = rpt_data[18];
+                    uint8_t ret_type = rpt_data[19];
+                    int32_t ret_code = (rpt_data[20] << 24) | (rpt_data[21] << 16) | (rpt_data[22] << 8) | rpt_data[23];
+                    uint16_t ret_val_size = (rpt_data[24] << 8) | rpt_data[25];
+
+                    rpt_map[CCMessage_ID][msg_id][cc].insert(rpt_map[CCMessage_ID][msg_id][cc].end(), rpt_data.begin()+26, rpt_data.end());
+
+                        if ((CCFlag == 0x01) || (CCFlag == 0x03))
+                        {
+                            std::vector<uint8_t> full_payload = rpt_map[CCMessage_ID][msg_id][cc];
+
+                            DecodeReport(CCMessage_ID,
+                                        CCCount,
+                                        CCLength,
+                                        CCTime_code.data(),
+                                        msg_id,
+                                        cc,
+                                        ret_type,
+                                        ret_code,
+                                        ret_val_size,
+                                        full_payload);
+
+                            rpt_map[CCMessage_ID][msg_id][cc].clear();
+                        }
+
+
+                            if (rpt_fp != NULL)
+                                fclose(rpt_fp);
+                    }
+
+
+                    // GETFILEINFO를 받았어
+                    else if (packet->length == BEE_LEN_GETFILEINFO) {
+                        char getfileinfofilename[128];
+                        time_t tmtime = time(0);
+                        struct tm *local = localtime(&tmtime);
+
+                        sprintf(getfileinfofilename,
+                                "../data/response/GETFILEINFO--%04d-%02d-%02d-%02d-%02d-%02d--",
+                                local->tm_year + 1900,
+                                local->tm_mon + 1,
+                                local->tm_mday,
+                                local->tm_hour,
+                                local->tm_min,
+                                local->tm_sec);
+
+                        console.AddLog("Received GETFILEINFO Response from port : %d.", csp_conn_dport(conn));
+
+                        FILE *GETFILEINFO_fp = fopen(getfileinfofilename, "wb");
+                        printf("Received GETFILEINFO response Length: %u", packet->length);
+
+                        for (int i = 0; i < packet->length; i++) {
+                            if (!(i % 10) && i != 0) {
+                                printf("\n");
+                                if (GETFILEINFO_fp)
+                                    fprintf(GETFILEINFO_fp, "\n");
+                            }
+                            printf("0x%x ", packet->data[i]);
+                            if (GETFILEINFO_fp)
+                                fprintf(GETFILEINFO_fp, "%02hhx\t", packet->data[i]);
+                        }
+
+                        memset(getfileinfo, 0, sizeof(*getfileinfo));
+                        memcpy(getfileinfo, packet->data, BEE_LEN_GETFILEINFO);
+                    
+
+                        if (GETFILEINFO_fp != NULL)
+                            fclose(GETFILEINFO_fp);
+                    }
+
+
+
+                    // 길이 field는 안맞지만 뭐가 들어오긴 했음.
+                    else {
+                        console.AddLog("Received Something but brocken.");
+
+                        char unknownfilename[128];
+                        time_t tmtime = time(0);
+                        struct tm *local = localtime(&tmtime);
+
+                        sprintf(unknownfilename,
+                                "../data/unknown/unknown_fromport13--%04d-%02d-%02d-%02d-%02d-%02d--",
+                                local->tm_year + 1900,
+                                local->tm_mon + 1,
+                                local->tm_mday,
+                                local->tm_hour,
+                                local->tm_min,
+                                local->tm_sec);
+
+                        FILE *unk_fp = fopen(unknownfilename, "wb");
+
+                        printf("Unknown Packet Length: %u\n", packet->length);
+                        printf("===== UNKNOWN PACKET DUMP =====\n");
+
+                        for (int i = 0; i < packet->length; i++) {
+
+                            // 터미널 출력
+                            if (!(i % 10) && i != 0)
+                                printf("\n");
+                            printf("0x%02X ", packet->data[i]);
+
+                            // 파일 출력
+                            if (unk_fp) {
+                                if (!(i % 10) && i != 0)
+                                    fprintf(unk_fp, "\n");
+                                fprintf(unk_fp, "%02hhx\t", packet->data[i]);
+                            }
+                        }
+
+                        printf("\n===============================\n");
+
+                        if (unk_fp)
+                            fclose(unk_fp);
+                    }
+
+
                     if (packet != NULL)
-                    {
                         csp_buffer_free(packet);
-                        packet = NULL;
-                    }
                     if (conn != NULL)
-                    {
                         csp_close(conn);
-                        conn = NULL;
-                    }
-                    // if(log_ptr != NULL)
-                    // {
-                    //     fclose(DL_fp);
-                    // }
-                    printf("Report DL done.\n");
+
                     break;
                 }
-                
-                //Case 31 : Beacon
-				case 31: {
+
+
+                //Case 13 : TM Packet Downlink -> 13번으로 비콘 들어온다고 함. 일단 혹시 모르니까 31번도 비콘 받을 수 있게 설정
+                case 31: {
+
                     char bcnpktfilename[128];
                     time_t tmtime = time(0);
                     struct tm * local = localtime(&tmtime);
-                    sprintf(bcnpktfilename, "../data/bcnpkt/bcnpkt--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
+                    sprintf(bcnpktfilename, "../data/bcnpkt/bcnpktp31--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
                     console.AddLog("Received Beacon from port : %d.", csp_conn_dport(conn));
                     FILE * bcn_fp;
                     bcn_fp = fopen(bcnpktfilename, "wb");
@@ -628,7 +1094,7 @@ void * task_downlink_onorbit(void * socketinfo)
                     memset(beacon, 0, sizeof(Beacon));
                     if(packet->length == MIM_LEN_BEACON)
                     {
-                        // console.AddLog("Received Beacon from port : %d.", csp_conn_dport(conn));
+                        console.AddLog("Received Beacon from port : %d.", csp_conn_dport(conn));
                         if(State.Debugmode)
                         {
                             // printf("Beacon Binary : \n");
@@ -657,7 +1123,211 @@ void * task_downlink_onorbit(void * socketinfo)
                         fclose(bcn_fp);
                     }
                     break;
+
+                    // /////////////////////////////////////////////////////////////////////////
+                    
+                    // if (image_packet_received == false && data[0] == 0x08 && data[1] == 0x78){
+                    //     // 
+                    //     count = 0;
+
+                    //     image_packet_received = true;
+                        
+                    //     printf("image packet received start \n");
+
+                    // }
+
+                    // if (image_packet_received && data[0] == 0x08 && data[1] == 0x78){
+                    //     // 
+
+                    //     index = ((int)((data[2] & 0x3F)<<8) | (int)data[3]);    //extract index of packet
+                        
+                    //     //received_index.push_back(index);
+                        
+                    //     printf("\nindex: %d\n", index);
+                        
+                    //     memcpy(&image_packet_data[128 * index], &data[16], PacketLength-16);
+
+
+                    //     if ((data[2] >> 6) == 0x02 || count >= 3072 || (data[2] >> 6) == 0x03){    //need better trigger that say end of transmit specially in resend case 
+                    //         //extract error packet index
+                    //         printf("image packet received finish \n");
+
+
+                    //         fout.open(filename, std::ios::out | std::ios::binary);
+                    //         if (fout.is_open()){
+                    //             printf("file open success \n");
+                                
+                    //             fout.write(reinterpret_cast<char*>(image_packet_data.data()), image_packet_data.size() * sizeof(uint8_t));    //save data to reuse it
+
+                    //             printf("write %d bytes \n", image_packet_data.size());
+                    //             fout.close();
+                    //         }
+
+                    //         image_packet_received = false;    //reset progress
+                    //     }
+                    // }
+
+                    // if (image_packet_received){
+                    //     count += 1;
+                    // }
+                    
+
+
+
+                    // /////////////////////////////////////////////////////////////////////////////////////
+
+                    // // for(uint8_t i=0; i < packet->length; i++) {
+                    // //     printf("0x%02X\t", data[i]);
+                    // //     if (i%10 == 9) printf("\n");
+                    // // }
+                    // // break;
+                    
+
+
+
+
+
+                    // printf("DL Length: %u\n",packet->length);
+                    // if(log_ptr == NULL) {
+                    //     printf("Invalid file pointer.\n");
+                    //     continue;
+                    // }
+                    // fprintf(log_ptr, "|| Downlink || Packet Length: %u\n",packet->length);
+                    // // Parsing & write header
+                    // HYVRID_TelemetryHeader_t hdr = {0,};
+                    // if(packet->length == 24 || packet->length <52) { // Reply to CMD (Set command) -> Only header
+                    //     fprintf(log_ptr, "Reply to CMD_MID.\n");
+                    //     memcpy(&hdr, packet->data, sizeof(HYVRID_TelemetryHeader_t));
+                    // }
+                    // else { // Reply to OIF (Get command)
+                    //     fprintf(log_ptr, "Reply to OIF_MID.\n");
+                    //     memcpy(&hdr, packet->data + OIF_TLM_HDR_OFFSET, sizeof(HYVRID_TelemetryHeader_t));
+                    // }
+                    // fprintf(log_ptr, "[ CCSDS Header ]\n");
+                    // fprintf(log_ptr, "Stream ID: %x\n", htons(hdr.Tlmhdr.pri.stream));
+                    // fprintf(log_ptr, "Sequence: %x\n", htons(hdr.Tlmhdr.pri.sequence));
+                    // fprintf(log_ptr, "Length: %x\n", htons(hdr.Tlmhdr.pri.length));
+                    // fprintf(log_ptr, "Time Stamp: %x\t%x\t%x\t%x\t%x\t%x\n\n",
+                    //         hdr.Tlmhdr.sec.Time[0],hdr.Tlmhdr.sec.Time[1],hdr.Tlmhdr.sec.Time[2],
+                    //         hdr.Tlmhdr.sec.Time[3],hdr.Tlmhdr.sec.Time[4],hdr.Tlmhdr.sec.Time[5]);
+
+                    // fprintf(log_ptr, "[ HYVRID Execution Report ]\n");
+                    // fprintf(log_ptr, "RetCodeType: %x\n", hdr.Report.RetCodeType);
+                    // fprintf(log_ptr, "RetCode: %x\n", hdr.Report.RetCode);
+                    // fprintf(log_ptr, "MsgId: %x\t", hdr.Report.MsgId);
+                    // WriteSystemName(hdr.Report.MsgId);
+                    // fprintf(log_ptr, "CC: %x\n", hdr.Report.CommandCode);
+                    // fprintf(log_ptr, "DataSize (Exclude header): %x\n", hdr.Report.DataSize);
+                    // fprintf(log_ptr, "Used State: %x\n\n", hdr.Report.UsedState);
+                    // fprintf(log_ptr, "Output Data.\n");
+                    
+                    // const int offset = OIF_TLM_HDR_OFFSET + sizeof(HYVRID_TelemetryHeader_t);
+                    // for(int i = offset; i< packet->length; i++) {
+                    //     if(!((i-offset) % 10) && (i - offset) != 0) {
+                    //         printf("\n");
+                    //         fprintf(log_ptr, "\n");
+                    //     }
+                    //     printf("0x%x ",packet->data[i]);
+                    //     fprintf(log_ptr, "%02hhx\t",packet->data[i]);
+                    // }
+                    // fprintf(log_ptr, "\n");
+                        
+                    // if(raw_data) {
+                    //     fprintf(log_ptr, "[ Downlink Raw Data ]\n");
+                    //     for(int i = 0; i< packet->length; i++) {
+                    //         if(!(i % 10) && i != 0) {
+                    //             printf("\n");
+                    //             fprintf(log_ptr, "\n");
+                    //         }
+                    //     printf("0x%x ",packet->data[i]);
+                    //     fprintf(log_ptr, "%02hhx\t",packet->data[i]);
+                    //     }
+                    // } fprintf(log_ptr, "\n");
+                    // /* Clean up */
+                    // if (packet != NULL)
+                    // {
+                    //     csp_buffer_free(packet);
+                    //     packet = NULL;
+                    // }
+                    // if (conn != NULL)
+                    // {
+                    //     csp_close(conn);
+                    //     conn = NULL;
+                    // }
+                    // // if(log_ptr != NULL)
+                    // // {
+                    // //     fclose(DL_fp);
+                    // // }
+                    // printf("Report DL done.\n");
+                    break;
+                }
+                
+                //Case 31 : Beacon  -- port 바뀐 것 같음. 일단 13번으로 비콘 세팅, 만약 아니면 다시 바꿔야함
+				case 12: {
+                    char bcnpktfilename[128];
+                    time_t tmtime = time(0);
+                    struct tm * local = localtime(&tmtime);
+                    sprintf(bcnpktfilename, "../data/bcnpkt/bcnpktp13--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
+                    console.AddLog("Received Beacon from port : %d.", csp_conn_dport(conn));
+                    FILE * bcn_fp;
+                    bcn_fp = fopen(bcnpktfilename, "wb");
+                    printf("Beacon Length: %u",packet->length);
+                    for(int i=0; i< packet->length; i++) {
+                        if(!(i%10) && i!=0) {
+                            printf("\n");
+                            fprintf(bcn_fp, "\n");
+                        }
+                        printf("0x%x ",packet->data[i]);
+                        fprintf(bcn_fp, "%02hhx\t",packet->data[i]);
+                    }
+                    memset(beacon, 0, sizeof(Beacon));
+                    if(packet->length == MIM_LEN_BEACON)
+                    {
+                        console.AddLog("Received Beacon from port : %d.", csp_conn_dport(conn));
+                        if(State.Debugmode)
+                        {
+                            // printf("Beacon Binary : \n");
+                            // for(int i = 0 ; i < packet->length; i++)
+                            // {
+                            //     printf("%x\t", packet->data[i]);
+                            // }
+                            // printf("\n");
+                        }
+                        memcpy(beacon, packet->data, MIM_LEN_BEACON);		
+                        //BeaconSaver(beacon);
+                    }
+                    else
+                    {
+                        console.AddLog("Received Beacon but brocken.");
+                    }
+					
+
+                    /* Clean up */
+                    if (packet != NULL)
+                        csp_buffer_free(packet);
+                    if (conn != NULL)
+                        csp_close(conn);
+                    if(bcn_fp != NULL)
+                    {
+                        fclose(bcn_fp);
+                    }
+                    break;
+                   
 				}
+                case 27: /* EVS port */
+                    console.AddLog("FSW Event received throuth port 27.");
+                    if (packet->length == sizeof(CFE_MSG_TelemetryHeader) + sizeof(CFE_EVS_LongEventTlm_Payload_t)) {
+                        memcpy(cFS_Event, (packet->data) + sizeof(CFE_MSG_TelemetryHeader), sizeof(CFE_EVS_LongEventTlm_Payload_t));
+                    }
+                    /* Clean up */
+                    if (packet != NULL)
+                        csp_buffer_free(packet);
+                    if (conn != NULL)
+                        csp_close(conn);
+                    break;
+                    
+
+
 				default: {
                     if (csp_conn_dport(conn) == 1)
                         console.AddLog("Ping Received through port 1.");
@@ -665,6 +1335,34 @@ void * task_downlink_onorbit(void * socketinfo)
                     {
                         console.AddLog("Packet Received on unknown port %d", csp_conn_dport(conn));
                         console.AddLog("Packet length is %d", packet->length);
+                        char unknownfilename[128];
+                        time_t tmtime = time(0);
+                        struct tm * local = localtime(&tmtime);
+                        sprintf(unknownfilename, "../data/unknown/unknown--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
+                        
+                        uint16_t PacketLength = packet->length;
+                        memcpy(confirm, packet->data, PacketLength);
+                        console.AddLog("TMTC Test Downlink requested.");
+                        FILE * TMTC_fp;
+                        TMTC_fp = fopen(unknownfilename,"wb");
+                        for (int i=0; i<PacketLength; i++) {
+                            fprintf(TMTC_fp, "Data %d: %u\n",i,packet->data[i]);
+                        }
+                        if (packet != NULL)
+                        {
+                            csp_buffer_free(packet);
+                            packet = NULL;
+                        }
+                        if (conn != NULL)
+                        {
+                            csp_close(conn);
+                            conn = NULL;
+                        }
+                        if(TMTC_fp != NULL)
+                        {
+                            fclose(TMTC_fp);
+                        }
+                        break;
                     }
 					csp_service_handler(conn, packet);
                     /* Clean up */
@@ -895,7 +1593,7 @@ void * task_uplink_onorbit(void * sign_)
                         if(i < confirm->filenum)
                         {
                             console.AddLog("[DEBUG]##Make Lists : %d\tFileName: %u", i, confirm->file[i]);
-                            memcpy(&State.ftplistup[i], filelisthandler(confirm, filetype, filestatus, i), sizeof(ftpinfo));
+                            // memcpy(&State.ftplistup[i], filelisthandler(confirm, filetype, filestatus, i), sizeof(ftpinfo));
                         }
                         else
                             continue;

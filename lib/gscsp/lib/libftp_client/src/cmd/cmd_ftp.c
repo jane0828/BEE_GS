@@ -10,6 +10,7 @@
 #include <gs/util/log.h>
 #include <gs/util/string.h>
 #include <gs/util/clock.h>
+#include <gs/util/time.h>
 #include <gs/csp/port.h>
 #include <gs/util/zip/zip.h>
 
@@ -20,7 +21,7 @@ static gs_ftp_settings_t ftp_settings;
 
 typedef struct {
     uint32_t last_chunk;
-    double bps;
+    float bps;
     timestamp_t last;
     timestamp_t last_speed;
     gs_command_context_t *ctx;
@@ -31,45 +32,22 @@ typedef struct {
     gs_command_context_t *ctx;
 } ftp_user_info_t;
 
-static double timespec_diff(timestamp_t * start, timestamp_t * end)
+static float timespec_diff(timestamp_t * start, timestamp_t * end)
 {
     struct timespec temp;
-    if (((double) end->tv_nsec - (double) start->tv_nsec) < 0) {
+    if (((float) end->tv_nsec - (float) start->tv_nsec) < 0) {
         temp.tv_sec = end->tv_sec-start->tv_sec - 1;
         temp.tv_nsec = 1000000000 + end->tv_nsec - start->tv_nsec;
     } else {
         temp.tv_sec = end->tv_sec - start->tv_sec;
         temp.tv_nsec = end->tv_nsec - start->tv_nsec;
     }
-    return (double)(temp.tv_sec + (double)temp.tv_nsec/1000000000);
-}
-
-static char *sec_to_time(int total)
-{
-    static char buf[20];
-
-    int hour = total / 3600;
-    total -= hour * 3600;
-
-    uint8_t min = (uint8_t)(total / 60);
-    total -= min * 60;
-
-    uint8_t sec = (uint8_t) total;
-    if (hour) {
-        snprintf(buf, sizeof(buf), "%dh %dm %ds", hour, min, sec);
-    } else if (min) {
-        snprintf(buf, sizeof(buf), "%dm %ds", min, sec);
-    } else if (sec) {
-        snprintf(buf, sizeof(buf), "%ds", sec);
-    } else {
-        strcpy(buf, "");
-    }
-    return buf;
+    return (float)(temp.tv_sec + (float)temp.tv_nsec/1000000000);
 }
 
 static void progress_bar(uint32_t current_chunk, uint32_t total_chunks, uint32_t chunk_size, ftp_user_info_t * info)
 {
-    double sec, speed_sec, alpha = 0.25;
+    float sec, speed_sec, alpha = 0.25;
     char buf[200] = "";
     int idx = 0;
     uint32_t eta_sec=0;
@@ -86,16 +64,17 @@ static void progress_bar(uint32_t current_chunk, uint32_t total_chunks, uint32_t
     /* Update progress bar every second and for last chunk */
     if (sec > 1.0 || current_chunk == total_chunks - 1) {
 
-        double p = ((double)current_chunk / (double)(total_chunks-1));
-        int k, l = (int)(PROGRESS_WIDTH * p);
+        const float percent = gs_ftp_percent_completed(current_chunk+1, total_chunks);
+        const int l = (int)(PROGRESS_WIDTH * (percent / 100.0));
 
         /* Clear line */
         idx += snprintf(&buf[idx], sizeof(buf) - idx, "\033[1K\r");
 
-        idx += snprintf(&buf[idx], sizeof(buf) - idx, "%5.1f%% [", p * 100.0);
+        idx += snprintf(&buf[idx], sizeof(buf) - idx, "%5.1f%% [", percent);
+        int k;
         for (k = 0; k < l; k++)
             idx += snprintf(&buf[idx], sizeof(buf) - idx, "#");
-        for (k = 0; k < PROGRESS_WIDTH - l; k++)
+        for (; k < PROGRESS_WIDTH; k++)
             idx += snprintf(&buf[idx], sizeof(buf) - idx, " ");
         idx += snprintf(&buf[idx], sizeof(buf) - idx, "] ");
 
@@ -105,7 +84,7 @@ static void progress_bar(uint32_t current_chunk, uint32_t total_chunks, uint32_t
         /* Update speed and ETA */
         if (speed_sec >= 1.0) {
             /* Exponentially smoothed bytes per second */
-            double this_bps = (((current_chunk + 1 - info->progress.last_chunk) * chunk_size) / speed_sec);
+            float this_bps = (((current_chunk + 1 - info->progress.last_chunk) * chunk_size) / speed_sec);
             info->progress.bps = info->progress.bps > 0 ? this_bps * alpha + info->progress.bps * (1 - alpha) : this_bps;
 
             /* Remaining time */
@@ -119,8 +98,10 @@ static void progress_bar(uint32_t current_chunk, uint32_t total_chunks, uint32_t
         /* Show speed and ETA if not last chunk */
         if (info->progress.last_chunk > 0 && current_chunk != total_chunks - 1) {
             /* Show speed */
-            idx += snprintf(&buf[idx], sizeof(buf) - idx, "%4.1f kB/s ", info->progress.bps / 1024);
-            idx += snprintf(&buf[idx], sizeof(buf) - idx, "eta %s ", sec_to_time(eta_sec));
+            char tbuf[30];
+            gs_time_to_string(eta_sec, tbuf, sizeof(tbuf));
+            idx += snprintf(&buf[idx], sizeof(buf) - idx,
+                            "%4.1f kB/s eta %s", (info->progress.bps / 1024), tbuf);
         }
         /* Insert newline after last chunk */
         if(current_chunk == total_chunks - 1) {
@@ -137,47 +118,35 @@ static void progress_bar(uint32_t current_chunk, uint32_t total_chunks, uint32_t
 
 static void ftp_info_print_callback(const gs_ftp_info_t * info)
 {
-    // ftp_user_info_t *user = info->user_data;
+    ftp_user_info_t *user = info->user_data;
 
-    // switch (info->type) {
-    //     case GS_FTP_INFO_COMPLETED:
-    //         {
-    //             uint32_t complete = info->u.completed.completed_chunks;
-    //             uint32_t total    = info->u.completed.total_chunks;
-    //             double percent;
-    //             fprintf(user->ctx->out, "Transfer Status: ");
-    //             if ((complete == 0) && (total == 0)) {
-    //                 percent = 100;
-    //             } else {
-    //                 percent =  (double) complete * 100 / (double) total;
-    //             }
-    //             fprintf(user->ctx->out, "%" PRIu32 " of %" PRIu32 " (%.2f%%)\r\n",
-    //                     complete, total, percent);
-    //         }
-    //         break;
-    //     case GS_FTP_INFO_FILE:
-    //         {
-    //             uint32_t size     = info->u.file.size;
-    //             uint32_t checksum = info->u.file.crc;
-    //             fprintf(user->ctx->out, "File size is %" PRIu32 "\r\n", size);
-    //             fprintf(user->ctx->out, "Checksum: 0x%" PRIx32 "\r\n", checksum);
-    //         }
-    //         break;
-    //     case GS_FTP_INFO_CRC:
-    //         {
-    //             uint32_t remote = info->u.crc.remote;
-    //             uint32_t local  = info->u.crc.local;
-    //             fprintf(user->ctx->out, "CRC Remote: 0x%" PRIx32 ", Local: 0x%" PRIx32 "\r\n", remote, local);
-    //             if (local != remote) {
-    //                 fprintf(user->ctx->out, "CRC mismatch\r\n");
-    //             }
-    //         }
-    //         break;
-    //     case GS_FTP_INFO_PROGRESS:
-    //         progress_bar(info->u.progress.current_chunk, info->u.progress.total_chunks, info->u.progress.chunk_size,
-    //                      info->user_data);
-    //         break;
-    // }
+    switch (info->type) {
+        case GS_FTP_INFO_COMPLETED:
+            {
+                const uint32_t complete = info->u.completed.completed_chunks;
+                const uint32_t total    = info->u.completed.total_chunks;
+                fprintf(user->ctx->out, "Transfer Status: %" PRIu32 " of %" PRIu32 " (%.1f%%)\r\n",
+                        complete, total, gs_ftp_percent_completed(complete, total));
+            }
+            break;
+        case GS_FTP_INFO_FILE:
+            {
+                fprintf(user->ctx->out, "File size: %" PRIu32 ", checksum: 0x%" PRIx32 "\r\n",
+                        info->u.file.size, info->u.file.crc);
+            }
+            break;
+        case GS_FTP_INFO_CRC:
+            {
+                fprintf(user->ctx->out, "Checksum %s remote: 0x%" PRIx32 ", local: 0x%" PRIx32 "\r\n",
+                        (info->u.crc.remote == info->u.crc.local) ? "OK" : "ERROR",
+                        info->u.crc.remote, info->u.crc.local);
+            }
+            break;
+        case GS_FTP_INFO_PROGRESS:
+            progress_bar(info->u.progress.current_chunk, info->u.progress.total_chunks, info->u.progress.chunk_size,
+                         info->user_data);
+            break;
+    }
 }
 
 static int cmd_ftp_set_server(gs_command_context_t *ctx)
@@ -205,7 +174,7 @@ static int cmd_ftp_set_server(gs_command_context_t *ctx)
     }
 
     fprintf(ctx->out, "server %u (port %u), chunk size %" PRIu32 " bytes",
-            ftp_settings.host, gs_ftp_get_csp_port_force(&ftp_settings), gs_ftp_get_chunk_size_force(&ftp_settings));
+            ftp_settings.host, gs_ftp_get_csp_port(&ftp_settings), gs_ftp_get_chunk_size(&ftp_settings));
     if (ftp_settings.mode != GS_FTP_MODE_STANDARD) {
         fprintf(ctx->out, ", mode %s", gs_ftp_mode_to_string(ftp_settings.mode));
     }
@@ -217,7 +186,7 @@ static int cmd_ftp_set_server(gs_command_context_t *ctx)
 /* Some versions of newlib do not have basename
  * (looking at you, Atmel)
  */
-static char *ftp_basename(char *path)
+static const char *ftp_basename(const char *path)
 {
     char *base = strrchr(path, '/');
     return base ? base+1 : path;
@@ -229,17 +198,16 @@ static int cmd_ftp_download(gs_command_context_t *ctx)
         return GS_ERROR_ARG;
     }
 
-    char * remote_path = ctx->argv[1];
+    const char * remote_path = ctx->argv[1];
 
     if (strlen(remote_path) >= GS_FTP_PATH_LENGTH) {
         return GS_ERROR_ARG;
     }
 
-    char * local_path;
+    const char * local_path;
     if (ctx->argc == 3) {
         local_path = ctx->argv[2];
-    }
-    else {
+    } else {
         local_path = ftp_basename(remote_path);
     }
     ftp_user_info_t info_data = {.ctx = ctx};
@@ -252,8 +220,8 @@ static int cmd_ftp_upload(gs_command_context_t *ctx)
     if (ctx->argc != 3) {
         return GS_ERROR_ARG;
     }
-    char * remote_path = ctx->argv[2];
-    char * local_path = ctx->argv[1];
+    const char * remote_path = ctx->argv[2];
+    const char * local_path = ctx->argv[1];
 
     if (strlen(remote_path) >= GS_FTP_PATH_LENGTH || strlen(remote_path) < 3) {
         return GS_ERROR_ARG;
@@ -318,7 +286,7 @@ static int cmd_ftp_upload_mem(gs_command_context_t *ctx)
 
     ftp_user_info_t info_data = {.ctx = ctx};
     sprintf(remote_url, "mem://%"PRIu32, memaddr);
-    gs_error_t status = gs_ftp_upload_force(&ftp_settings, local_url, remote_url, ftp_info_print_callback, &info_data, 3);
+    gs_error_t status = gs_ftp_upload(&ftp_settings, local_url, remote_url, ftp_info_print_callback, &info_data);
     return status;
 }
 
@@ -334,12 +302,12 @@ static int cmd_ftp_zip(gs_command_context_t *ctx)
     } else {
         action = GS_FTP_UNZIP;
     }
-    char * src_path = ctx->argv[1];
+    const char * src_path = ctx->argv[1];
     if (strlen(src_path) >= GS_FTP_PATH_LENGTH || strlen(src_path) < 3) {
         return GS_ERROR_ARG;
     }
 
-    char * dest_path = ctx->argv[2];
+    const char * dest_path = ctx->argv[2];
     if (strlen(dest_path) >= GS_FTP_PATH_LENGTH || strlen(dest_path) < 3) {
         return GS_ERROR_ARG;
     }
@@ -426,7 +394,6 @@ static int cmd_ftp_remove(gs_command_context_t *ctx)
 
 static int cmd_ftp_mkfs(gs_command_context_t *ctx)
 {
-    char *path;
     bool force = false;
 
     if (ctx->argc < 2)
@@ -444,7 +411,7 @@ static int cmd_ftp_mkfs(gs_command_context_t *ctx)
         }
     }
 
-    path = ctx->argv[1];
+    const char *path = ctx->argv[1];
 
     gs_error_t status = gs_ftp_mkfs(&ftp_settings, path, force);
     return status;
@@ -452,8 +419,6 @@ static int cmd_ftp_mkfs(gs_command_context_t *ctx)
 
 static int cmd_ftp_mkdir(gs_command_context_t *ctx)
 {
-    char *path;
-
     // default mode to 775
     uint32_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH; 
 
@@ -461,7 +426,7 @@ static int cmd_ftp_mkdir(gs_command_context_t *ctx)
         return GS_ERROR_ARG;
     }
 
-    path = ctx->argv[1];
+    const char *path = ctx->argv[1];
 
     gs_error_t status = gs_ftp_mkdir(&ftp_settings, path, mode);
     return status;
@@ -469,13 +434,11 @@ static int cmd_ftp_mkdir(gs_command_context_t *ctx)
 
 static int cmd_ftp_rmdir(gs_command_context_t *ctx)
 {
-    char *path;
-
     if (ctx->argc != 2) {
         return GS_ERROR_ARG;
     }
 
-    path = ctx->argv[1];
+    const char *path = ctx->argv[1];
 
     gs_error_t status = gs_ftp_rmdir(&ftp_settings, path);
     return status;
@@ -486,12 +449,12 @@ static int cmd_ftp_move(gs_command_context_t *ctx)
     if (ctx->argc != 3) {
         return GS_ERROR_ARG;
     }
-    char * from_path = ctx->argv[1];
+    const char * from_path = ctx->argv[1];
     if (strlen(from_path) >= GS_FTP_PATH_LENGTH || strlen(from_path) < 3) {
         return GS_ERROR_ARG;
     }
 
-    char * to_path = ctx->argv[2];
+    const char * to_path = ctx->argv[2];
     if (strlen(to_path) >= GS_FTP_PATH_LENGTH || strlen(to_path) < 3) {
         return GS_ERROR_ARG;
     }
@@ -506,12 +469,12 @@ static int cmd_ftp_copy(gs_command_context_t *ctx)
         return GS_ERROR_ARG;
     }
 
-    char * from_path = ctx->argv[1];
+    const char * from_path = ctx->argv[1];
     if (strlen(from_path) >= GS_FTP_PATH_LENGTH || strlen(from_path) < 3) {
         return GS_ERROR_ARG;
     }
 
-    char * to_path = ctx->argv[2];
+    const char * to_path = ctx->argv[2];
     if (strlen(to_path) >= GS_FTP_PATH_LENGTH || strlen(to_path) < 3) {
         return GS_ERROR_ARG;
     }
@@ -529,7 +492,7 @@ static int cmd_ftp_timeout(gs_command_context_t *ctx)
         }
         ftp_settings.timeout = timeout;
     }
-    fprintf(ctx->out, "timeout is %"PRIu32" msec\r\n", gs_ftp_get_timeout_force(&ftp_settings));
+    fprintf(ctx->out, "timeout is %"PRIu32" msec\r\n", gs_ftp_get_timeout(&ftp_settings));
     return GS_OK;
 }
 
@@ -655,7 +618,7 @@ static const gs_command_t GS_COMMAND_SUB ftp_subcommands[] = {
 static const gs_command_t GS_COMMAND_ROOT ftp_commands[] = {
     {
         .name = "ftp",
-        .help = "client: File Transfer Protocol",
+        .help = "File Transfer Protocol client",
         .chain = GS_COMMAND_INIT_CHAIN(ftp_subcommands),
     }
 };

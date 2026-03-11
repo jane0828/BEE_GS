@@ -1,0 +1,54 @@
+[22:52:35]  Connect to Switch Box.............Success.
+[22:52:35]  Connect to Rotator................Success.
+[22:52:35]  Connect to GS100..................Success.
+[22:52:35]  TM Port 13 bind success.
+[22:52:35]  BCN Port 31 bind success.
+[22:52:35]  RPT Port 25 bind success.
+Unknown MsgID
+[22:52:46]   Start Uplink Task.
+[22:52:46]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:52:46]  [OK]CMD Packet Header: 0x18 0x30 0xc0 0x0 0x0 0x1 0x0 0x16
+|| Uplink || Length: 8
+18	30	c0	00	00	01	00	16	
+
+[22:52:47]  Communication Time : 338
+Unknown MsgID
+[22:53:07]   Start Uplink Task.
+[22:53:07]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:53:07]  [OK]CMD Packet Header: 0x18 0x30 0xc0 0x0 0x0 0x1 0x0 0x16
+|| Uplink || Length: 8
+18	30	c0	00	00	01	00	16	
+
+[22:53:08]  Communication Time : 337
+Unknown MsgID
+[22:53:27]   Start Uplink Task.
+[22:53:27]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:53:27]  [OK]CMD Packet Header: 0x18 0x30 0xc0 0x0 0x0 0x1 0x0 0x16
+|| Uplink || Length: 8
+18	30	c0	00	00	01	00	16	
+
+[22:53:27]  Communication Time : 337
+Unknown MsgID
+[22:53:59]   Start Uplink Task.
+[22:53:59]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:53:59]  [OK]CMD Packet Header: 0x18 0x30 0xc0 0x0 0x0 0x1 0x0 0x16
+|| Uplink || Length: 8
+18	30	c0	00	00	01	00	16	
+
+[22:53:59]  Communication Time : 337
+Unknown MsgID
+[22:54:24]   Start Uplink Task.
+[22:54:24]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:54:24]  [OK]CMD Packet Header: 0x18 0x30 0xc0 0x0 0x0 0x1 0x0 0x16
+|| Uplink || Length: 8
+18	30	c0	00	00	01	00	16	
+
+[22:54:24]  Communication Time : 338
+Unknown MsgID
+[22:54:37]   Start Uplink Task.
+[22:54:37]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:54:37]  [OK]CMD Packet Header: 0x18 0x30 0xc0 0x0 0x0 0x1 0x0 0x16
+|| Uplink || Length: 8
+18	30	c0	00	00	01	00	16	
+
+[22:54:37]  Communication Time : 337

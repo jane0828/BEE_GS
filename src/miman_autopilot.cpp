@@ -385,7 +385,8 @@ int AutoPilot_task()
                 break;
             }
             if(State.ftp_version == 1)
-                pthread_create(&p_thread[8], NULL, ftp_downlink_force, &State.ftplistup[NowFTP]);
+                console.AddLog("[ERROR]##ftp V1 is deprecated. Use V2.");
+                // pthread_create(&p_thread[8], NULL, ftp_downlink_force, &State.ftplistup[NowFTP]);
             else
                 pthread_create(&p_thread[8], NULL, ftp_downlink_onorbit, &State.ftplistup[NowFTP]);
             
@@ -411,7 +412,8 @@ int AutoPilot_task()
                 break;
             }
             if(State.ftp_version == 1)
-                pthread_create(&p_thread[8], NULL, ftp_uplink_force, &State.ftplistup[NowFTP]);
+                console.AddLog("[ERROR]##ftp V1 is deprecated. Use V2.");
+                // pthread_create(&p_thread[8], NULL, ftp_uplink_force, &State.ftplistup[NowFTP]);
             else
                 pthread_create(&p_thread[8], NULL, ftp_uplink_onorbit, &State.ftplistup[NowFTP]);
             

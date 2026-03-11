@@ -46,6 +46,7 @@ void * csp_baud_calibration(void*);
 void * csp_freq_calibration(void*);
 void * csp_ping_console(void * param);
 void * csp_ping_rdp_crc32(void *);
+void* csp_ping_everynode_console(void *arg);
 void csp_debug_callback(char * filename);
 
 #ifdef __cplusplus

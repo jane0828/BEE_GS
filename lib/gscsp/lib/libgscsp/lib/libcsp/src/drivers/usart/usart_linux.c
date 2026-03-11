@@ -228,6 +228,7 @@ void usart_putstr(char * buf, int len) {
 void usart_putc(char c) {
 	if (write(fd, &c, 1) != 1)
 		return;
+	// printf("%02X ", (unsigned char)c);
 }
 
 char usart_getc(void) {

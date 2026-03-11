@@ -56,6 +56,41 @@ static const char * const packet_missing = "-";
 static const char * const packet_ok = "+";
 
 char flistbuffer[16384];
+
+
+static void ftp_info_print_callback(const gs_ftp_info_t * info)
+{
+
+    switch (info->type) {
+        case GS_FTP_INFO_COMPLETED:
+            {
+                const uint32_t complete = info->u.completed.completed_chunks;
+                const uint32_t total    = info->u.completed.total_chunks;
+                printftp("Transfer Status: %" PRIu32 " of %" PRIu32 " (%.1f%%)\r\n",
+                        complete, total, gs_ftp_percent_completed(complete, total));
+            }
+            break;
+        case GS_FTP_INFO_FILE:
+            {
+                console.AddLog("[OK]##Received FTP file Spec.");
+                printftp("Received FTP File Spec. Filesize : %u, CRC : %u.", info->u.file.size, info->u.file.crc);
+            }
+            break;
+        case GS_FTP_INFO_CRC:
+            {
+                printftp("FTP Transaction Completed.");
+                console.AddLog("Calculate FTP CRC %s. Remote : %u, Local : %u.", (info->u.crc.remote == info->u.crc.local) ? "OK" : "ERROR", info->u.crc.remote, info->u.crc.local);
+            }
+            break;
+        case GS_FTP_INFO_PROGRESS:
+            printftp("Progress : %u/%u", info->u.progress.current_chunk, info->u.progress.total_chunks);
+            // progress_bar(info->u.progress.current_chunk, info->u.progress.total_chunks, info->u.progress.chunk_size,
+            //              info->user_data);
+            break;
+    }
+}
+
+
 int ftp_list_callback(uint16_t entries, const gs_ftp_list_entry_t * listent, void * data)
 {
     char pathbuf[256];
@@ -77,7 +112,7 @@ int ftp_list_callback(uint16_t entries, const gs_ftp_list_entry_t * listent, voi
 
 void * ftp_downlink_onorbit(void * param){
 #define CSP_USE_RDP
-    ftp_avail();
+    // ftp_avail();
     bool dlstate = State.downlink_mode;
     //This funcion must be on p_thread[4]
     if((dlstate))
@@ -88,7 +123,7 @@ void * ftp_downlink_onorbit(void * param){
         continue;
     
     //host : OBC adress
-    //Port : 15
+    //Port : 9
     ftpinfo * FTP = (ftpinfo *) param;
     // gs_ftp_info_callback_t = ftp_callback;
     printftp("Start FTP Downlink.");
@@ -97,10 +132,10 @@ void * ftp_downlink_onorbit(void * param){
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
-    ftp_config.timeout = 5000; //default timeout value
+    ftp_config.timeout = 30000; //default timeout value
     ftp_config.chunk_size = State.chunk_sz; //default chunk size value
     State.ftp_mode = true;
-    int status = (int)gs_ftp_download(&ftp_config, FTP->local_path, FTP->remote_path, ftp_callback, NULL);
+    int status = (int)gs_ftp_download(&ftp_config, FTP->local_path, FTP->remote_path, ftp_info_print_callback, NULL);
     if (status != 0) {
 		console.AddLog("[ERROR]##Fail to complete ftp_download. Retcode : %d", status);\
 	}
@@ -108,7 +143,7 @@ void * ftp_downlink_onorbit(void * param){
     {
         console.AddLog("[OK]##End FTP download. Retcode : %d", status);\
     }
-    ftp_abort();
+    // ftp_abort();
     State.ftp_mode = false;
     if(dlstate)
     {
@@ -120,7 +155,7 @@ void * ftp_downlink_onorbit(void * param){
 
 void * ftp_uplink_onorbit(void * param){
 #define CSP_USE_RDP
-    ftp_avail();
+    // ftp_avail();
     bool dlstate = State.downlink_mode;
     //This funcion must be on p_thread[4]
     if((dlstate))
@@ -137,11 +172,11 @@ void * ftp_uplink_onorbit(void * param){
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
-    ftp_config.timeout = 5000; //default timeout value
+    ftp_config.timeout = 30000; //default timeout value
     ftp_config.chunk_size = State.chunk_sz; //default chunk size value
     State.ftp_mode = true;
     int status = 0;
-    status = (int)gs_ftp_upload(&ftp_config, FTP->local_path, FTP->remote_path, ftp_callback, NULL);
+    status = (int)gs_ftp_upload(&ftp_config, FTP->local_path, FTP->remote_path, ftp_info_print_callback, NULL);
     printftp("FTP task DONE.");
     
     if (status != 0) {
@@ -151,7 +186,7 @@ void * ftp_uplink_onorbit(void * param){
     {
         console.AddLog("[OK]##End FTP upload. Retcode : %d", status);
     }
-    ftp_abort();
+    // ftp_abort();
     State.ftp_mode = false;
     if(dlstate)
     {

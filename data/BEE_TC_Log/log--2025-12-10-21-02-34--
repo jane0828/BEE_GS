@@ -1,0 +1,176 @@
+[21:02:37]  Connect to Switch Box.............Success.
+[21:02:37]  Connect to Rotator................Success.
+[21:02:37]  Connect to GS100..................Success.
+[21:02:37]  TM Port 13 bind success.
+[21:02:37]  BCN Port 31 bind success.
+[21:02:37]  RPT Port 25 bind success.
+[21:02:39]  Ping Success at node 5, 460ms
+[21:03:02]  Received FTP file Spec.
+[21:03:02]  Received FTP File Spec. Filesize : 31664, CRC : 1485448737.
+[21:03:05]  Transfer Status: 68 of 176 (38.6%)
+
+[21:03:05]  Progress : 68/176
+[21:03:06]  Progress : 69/176
+[21:03:06]  Progress : 70/176
+[21:03:07]  Progress : 71/176
+[21:03:08]  Progress : 72/176
+[21:03:08]  Progress : 73/176
+[21:03:09]  Progress : 74/176
+[21:03:11]  Progress : 75/176
+[21:03:11]  Progress : 76/176
+[21:03:12]  Progress : 77/176
+[21:03:13]  Progress : 78/176
+[21:03:27]  Progress : 79/176
+[21:03:28]  Progress : 80/176
+[21:03:29]  Progress : 81/176
+[21:03:30]  Progress : 82/176
+[21:03:30]  Progress : 83/176
+[21:03:31]  Progress : 84/176
+[21:03:45]  Progress : 85/176
+[21:03:46]  Progress : 86/176
+[21:03:47]  Progress : 87/176
+[21:03:47]  Progress : 88/176
+[21:03:48]  Progress : 89/176
+[21:03:49]  Progress : 90/176
+[21:04:02]  Progress : 91/176
+[21:04:03]  Progress : 92/176
+[21:04:04]  Progress : 93/176
+[21:04:05]  Progress : 94/176
+[21:04:05]  Progress : 95/176
+[21:04:06]  Progress : 96/176
+[21:04:20]  Progress : 97/176
+[21:04:20]  Progress : 98/176
+[21:04:21]  Progress : 99/176
+[21:04:22]  Progress : 100/176
+[21:04:22]  Progress : 101/176
+[21:04:23]  Progress : 102/176
+[21:04:24]  Progress : 103/176
+[21:04:41]  Progress : 104/176
+[21:04:42]  Progress : 105/176
+[21:04:43]  Progress : 106/176
+[21:04:43]  Progress : 107/176
+[21:04:44]  Progress : 108/176
+[21:04:45]  Progress : 109/176
+[21:05:00]  Progress : 110/176
+[21:05:01]  Progress : 111/176
+[21:05:02]  Progress : 112/176
+[21:05:02]  Progress : 113/176
+[21:05:03]  Progress : 114/176
+[21:05:04]  Progress : 115/176
+[21:05:18]  Progress : 116/176
+[21:05:18]  Progress : 117/176
+[21:05:19]  Progress : 118/176
+[21:05:20]  Progress : 119/176
+[21:05:21]  Progress : 120/176
+[21:05:21]  Progress : 121/176
+[21:05:35]  Progress : 122/176
+[21:05:36]  Progress : 123/176
+[21:05:36]  Progress : 124/176
+[21:05:37]  Progress : 125/176
+[21:05:38]  Progress : 126/176
+[21:05:38]  Progress : 127/176
+[21:05:52]  Progress : 128/176
+[21:05:53]  Progress : 129/176
+[21:05:53]  Progress : 130/176
+[21:05:54]  Progress : 131/176
+[21:05:55]  Progress : 132/176
+[21:05:56]  Progress : 133/176
+[21:06:09]  Progress : 134/176
+[21:06:10]  Progress : 135/176
+[21:06:11]  Progress : 136/176
+[21:06:11]  Progress : 137/176
+[21:06:12]  Progress : 138/176
+[21:06:13]  Progress : 139/176
+[21:06:26]  Progress : 140/176
+[21:06:27]  Progress : 141/176
+[21:06:28]  Progress : 142/176
+[21:06:28]  Progress : 143/176
+[21:06:29]  Progress : 144/176
+[21:06:30]  Progress : 145/176
+[21:06:43]  Progress : 146/176
+[21:06:44]  Progress : 147/176
+[21:06:45]  Progress : 148/176
+[21:06:45]  Progress : 149/176
+[21:06:46]  Progress : 150/176
+[21:06:47]  Progress : 151/176
+[21:07:00]  Progress : 152/176
+[21:07:01]  Progress : 153/176
+[21:07:02]  Progress : 154/176
+[21:07:03]  Progress : 155/176
+[21:07:03]  Progress : 156/176
+[21:07:04]  Progress : 157/176
+[21:07:19]  Progress : 158/176
+[21:07:20]  Progress : 159/176
+[21:07:20]  Progress : 160/176
+[21:07:21]  Progress : 161/176
+[21:07:22]  Progress : 162/176
+[21:07:23]  Progress : 163/176
+[21:07:37]  Progress : 164/176
+[21:07:37]  Progress : 165/176
+[21:07:38]  Progress : 166/176
+[21:07:39]  Progress : 167/176
+[21:07:39]  Progress : 168/176
+[21:07:40]  Progress : 169/176
+[21:07:54]  Progress : 170/176
+[21:07:55]  Progress : 171/176
+[21:07:56]  Progress : 172/176
+[21:07:56]  Progress : 173/176
+[21:07:57]  Progress : 174/176
+[21:07:58]  Progress : 175/176
+[21:08:12]  FTP Transaction Completed.
+[21:08:12]  Calculate FTP CRC OK. Remote : 1485448737, Local : 1485448737.
+[21:08:13]  FTP task DONE.
+[21:08:13]  End FTP upload. Retcode : 0
+[21:10:44]   Start Uplink Task.
+[21:10:44]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:10:44]  [OK]CMD Packet Header: 0x18 0x15 0xc0 0x0 0x0 0x45 0xa 0x61
+|| Uplink || Length: 76
+18	15	c0	00	00	45	0a	61	2f	63	
+66	2f	74	6f	5f	6c	61	62	32	33	
+2e	73	6f	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	01	00	00	00	
+
+[21:10:45]  Communication Time : 452
+[21:12:24]   Start Uplink Task.
+[21:12:24]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:12:24]  [OK]CMD Packet Header: 0x18 0x15 0xc0 0x0 0x0 0x45 0xa 0x61
+|| Uplink || Length: 76
+18	15	c0	00	00	45	0a	61	2f	63	
+66	2f	74	6f	5f	6c	61	62	32	33	
+2e	73	6f	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	01	00	00	00	
+
+[21:12:25]  Communication Time : 451
+Unknown MsgID
+[21:13:13]   Start Uplink Task.
+[21:13:13]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:13:13]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x11 0x6 0x3d
+|| Uplink || Length: 24
+18	23	c0	00	00	11	06	3d	31	39	
+32	2e	31	36	38	2e	31	36	2e	31	
+33	00	00	00	
+
+[21:13:13]  Communication Time : 364
+[21:13:22]   Start Uplink Task.
+[21:13:22]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:13:22]  [OK]CMD Packet Header: 0x18 0x15 0xc0 0x0 0x0 0x45 0xa 0x61
+|| Uplink || Length: 76
+18	15	c0	00	00	45	0a	61	2f	63	
+66	2f	74	6f	5f	6c	61	62	32	33	
+2e	73	6f	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	01	00	00	00	
+
+[21:13:22]  Communication Time : 452
+[21:13:22]  Received GETFILEINFO Response from port : 13.

@@ -1,0 +1,14 @@
+[21:38:11]  Connect to Switch Box.............Success.
+[21:38:11]  Connect to Rotator................Success.
+[21:38:11]  Connect to GS100..................Success.
+[21:38:11]  TM Port 13 bind success.
+[21:38:11]  BCN Port 31 bind success.
+[21:38:11]  RPT Port 25 bind success.
+Unknown MsgID
+[21:38:20]   Start Uplink Task.
+[21:38:20]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:38:20]  [OK]CMD Packet Header: 0x18 0x65 0xc0 0x0 0x0 0x1 0x0 0x43
+|| Uplink || Length: 8
+18	65	c0	00	00	01	00	43	
+
+[21:38:20]  Communication Time : 338
