@@ -477,7 +477,7 @@ struct StateCheckUnit{
     bool DoBaudCalibration = false;
     bool DoFreqCalibration = false;
 
-    uint32_t chunk_sz = 180;
+    uint32_t chunk_sz = 200;
     int ftp_version = 2;
     int ftp_task = FTP_UPLOAD_REQUEST;
     char FTPWindowBuffer[64];

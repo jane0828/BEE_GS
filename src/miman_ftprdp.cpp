@@ -365,11 +365,12 @@ extern Setup * setup;
 void miman_begin_ftp_rdp_profile(uint32_t ftp_timeout_ms);
 void miman_end_ftp_rdp_profile(void);
 
-static unsigned int ftp_chunk_size = 180;
+static unsigned int ftp_chunk_size = 200;
 static unsigned int ftp_backend = 3; // Use file backend as standard
 static const char * const packet_missing = "-";
 static const char * const packet_ok = "+";
-static const unsigned int ftp_chunk_size_limit = 128;
+static const unsigned int ftp_chunk_size_limit = 200;
+static const unsigned int ftp_transfer_timeout_ms = 120000;
 static const time_t ftp_failure_cooldown_sec = 30;
 
 static pthread_mutex_t ftp_launch_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -529,7 +530,7 @@ void * ftp_downlink_onorbit(void * param){
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
     // ftp_config.timeout = 30000; //default timeout value
-    ftp_config.timeout = 3000000; //default timeout value
+    ftp_config.timeout = ftp_transfer_timeout_ms;
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
     console.AddLog("[FTP]##Download config: host=%u port=%u ftp_timeout=%u ms chunk=%u",
                    ftp_config.host, ftp_config.port, ftp_config.timeout, ftp_config.chunk_size);
@@ -576,7 +577,7 @@ void * ftp_uplink_onorbit(void * param){
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
     // ftp_config.timeout = 30000; //default timeout value
-    ftp_config.timeout = 3000000; //default timeout value
+    ftp_config.timeout = ftp_transfer_timeout_ms;
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
     int status = 0;
     console.AddLog("[FTP]##Upload config: host=%u port=%u ftp_timeout=%u ms chunk=%u",

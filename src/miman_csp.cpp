@@ -57,7 +57,7 @@ static const unsigned int k_rdp_default_delayed_acks = 1;
 static const unsigned int k_rdp_default_ack_timeout_ms = 8000;
 static const unsigned int k_rdp_default_ack_delay_count = 3;
 
-static const unsigned int k_rdp_ftp_conn_timeout_cap_ms = 180000;
+static const unsigned int k_rdp_ftp_conn_timeout_ms = 120000;
 static const unsigned int k_rdp_ftp_packet_timeout_ms = 30000;
 
 static pthread_mutex_t g_rdp_profile_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -105,12 +105,12 @@ void miman_begin_ftp_rdp_profile(uint32_t ftp_timeout_ms)
                     &g_saved_rdp_ack_timeout_ms,
                     &g_saved_rdp_ack_delay_count);
 
-    unsigned int ftp_conn_timeout_ms = g_saved_rdp_conn_timeout_ms;
-    if (ftp_timeout_ms > ftp_conn_timeout_ms) {
-        ftp_conn_timeout_ms = ftp_timeout_ms;
+    unsigned int ftp_conn_timeout_ms = ftp_timeout_ms;
+    if (ftp_conn_timeout_ms < k_rdp_ftp_conn_timeout_ms) {
+        ftp_conn_timeout_ms = k_rdp_ftp_conn_timeout_ms;
     }
-    if (ftp_conn_timeout_ms > k_rdp_ftp_conn_timeout_cap_ms) {
-        ftp_conn_timeout_ms = k_rdp_ftp_conn_timeout_cap_ms;
+    if (ftp_conn_timeout_ms < g_saved_rdp_conn_timeout_ms) {
+        ftp_conn_timeout_ms = g_saved_rdp_conn_timeout_ms;
     }
 
     unsigned int ftp_packet_timeout_ms = g_saved_rdp_packet_timeout_ms;

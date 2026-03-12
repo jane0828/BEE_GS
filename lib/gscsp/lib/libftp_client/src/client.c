@@ -439,7 +439,7 @@ gs_error_t gs_ftp_download(const gs_ftp_settings_t * settings, const char * loca
     if (status) {
         log_error("FTP download failed during status/data stage, status=%d", status);
         ftp_done(&state, 0);
-        return GS_ERROR_UNKNOWN;
+        return status;
     }
 
     log_info("FTP download stage: crc verification");
