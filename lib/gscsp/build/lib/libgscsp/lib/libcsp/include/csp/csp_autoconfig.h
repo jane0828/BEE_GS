@@ -3,7 +3,7 @@
 #ifndef W_INCLUDE_CSP_CSP_AUTOCONFIG_H_WAF
 #define W_INCLUDE_CSP_CSP_AUTOCONFIG_H_WAF
 
-#define GIT_REV "unknown"
+#define GIT_REV "bd6223ae"
 /* #undef CSP_FREERTOS */
 #define CSP_POSIX 1
 /* #undef CSP_WINDOWS */
@@ -12,9 +12,9 @@
 #define CSP_USE_RDP 1
 #define CSP_USE_CRC32 1
 #define CSP_USE_HMAC 1
-/* #undef CSP_USE_XTEA */
+#define CSP_USE_XTEA 1
 /* #undef CSP_USE_PROMISC */
-#define CSP_USE_QOS 1
+/* #undef CSP_USE_QOS */
 #define CSP_USE_DEDUP 1
 /* #undef CSP_USE_INIT_SHUTDOWN */
 /* #undef CSP_USE_CAN */

@@ -1,0 +1,80 @@
+[21:41:14]  Connect to Switch Box.............Success.
+[21:41:14]  Connect to Rotator................Success.
+[21:41:14]  Connect to GS100..................Success.
+[21:41:14]  TM Port 13 bind success.
+[21:41:14]  BCN Port 31 bind success.
+[21:41:14]  RPT Port 25 bind success.
+Unknown MsgID
+[21:41:26]   Start Uplink Task.
+[21:41:26]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:41:26]  [OK]CMD Packet Header: 0x18 0x65 0xc0 0x0 0x0 0x69 0x1f 0x9d
+|| Uplink || Length: 112
+18	65	c0	00	00	69	1f	9d	03	01	
+06	02	03	05	0b	0c	0d	0e	28	23	
+00	00	50	46	05	00	00	00	00	01	
+03	02	04	06	5a	00	b4	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	a6	ff	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	
+
+[21:41:26]  Communication Time : 513
+[21:41:55]   Start Uplink Task.
+[21:41:55]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:41:55]  [OK]CMD Packet Header: 0x18 0x0 0xc0 0x0 0x0 0x55 0x7 0x7d
+|| Uplink || Length: 92
+18	00	c0	00	00	55	07	7d	54	4f	
+5f	4c	41	42	5f	41	50	50	00	00	
+00	00	00	00	00	00	00	00	2f	63	
+66	2f	74	6f	5f	6c	61	62	32	33	
+2e	73	6f	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	
+
+[21:41:56]  Communication Time : 479
+Unknown MsgID
+[21:42:13]   Start Uplink Task.
+[21:42:13]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:42:13]  [OK]CMD Packet Header: 0x18 0x65 0xc0 0x0 0x0 0x2b 0x1b 0xc1
+|| Uplink || Length: 50
+18	65	c0	00	00	2b	1b	c1	df	aa	
+66	3e	59	a7	72	3e	1b	45	0b	3e	
+47	7b	ff	b8	16	c4	8b	39	29	e3	
+9b	3a	00	00	00	00	f0	d8	00	00	
+00	00	10	27	00	00	00	00	f0	d8	
+
+[21:42:13]  Communication Time : 408
+Unknown MsgID
+[21:44:29]   Start Uplink Task.
+[21:44:29]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:44:29]  [OK]CMD Packet Header: 0x18 0x65 0xc0 0x0 0x0 0x63 0x1c 0x0
+|| Uplink || Length: 106
+18	65	c0	00	00	63	1c	00	00	cd	
+cc	cc	3d	cd	cc	4c	be	0a	d7	a3	
+3c	cd	cc	4c	3d	00	00	80	3f	00	
+00	00	3f	cd	cc	cc	3e	00	00	80	
+3f	00	00	80	3f	00	00	80	3f	cd	
+cc	4c	3e	0a	d7	a3	3b	a6	9b	44	
+3d	0a	d7	a3	3c	a6	9b	c4	3d	0a	
+d7	a3	3d	a6	9b	44	3e	17	b7	d1	
+39	00	00	80	bf	6f	12	83	bb	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	02	
+
+[21:44:30]  Communication Time : 502
+Unknown MsgID
+[21:44:45]   Start Uplink Task.
+[21:44:45]  Send Packet of Ptype : 10. Check Terminal Log.
+[21:44:45]  [OK]CMD Packet Header: 0x18 0x65 0xc0 0x0 0x0 0x5 0x1e 0x54
+|| Uplink || Length: 12
+18	65	c0	00	00	05	1e	54	01	00	
+01	0d	
+
+[21:44:45]  Communication Time : 344

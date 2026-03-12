@@ -1,0 +1,61 @@
+[22:38:53]  Connect to Switch Box.............Success.
+[22:38:53]  Connect to Rotator................Success.
+[22:38:53]  Connect to GS100..................Success.
+[22:38:53]  TM Port 13 bind success.
+[22:38:53]  BCN Port 31 bind success.
+[22:38:53]  RPT Port 25 bind success.
+[22:42:24]   Start Uplink Task.
+[22:42:24]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:42:24]  [OK]CMD Packet Header: 0x18 0x0 0xc0 0x0 0x0 0x71 0x4 0x64
+|| Uplink || Length: 120
+18	00	c0	00	00	71	04	64	54	4f	
+5f	4c	41	42	5f	41	50	50	00	00	
+00	00	00	00	00	00	00	00	54	4f	
+5f	4c	41	42	5f	41	70	70	4d	61	
+69	6e	00	00	00	00	00	00	2f	63	
+66	2f	74	6f	5f	6c	61	62	32	33	
+2e	73	6f	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+00	00	00	00	00	00	00	00	00	00	
+
+[22:42:24]  Communication Time : 526
+Unknown MsgID
+[22:42:39]   Start Uplink Task.
+[22:42:39]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:42:39]  [OK]CMD Packet Header: 0x18 0x65 0xc0 0x0 0x0 0x1 0x0 0x43
+|| Uplink || Length: 8
+18	65	c0	00	00	01	00	43	
+
+[22:42:39]  Communication Time : 336
+Unknown MsgID
+[22:43:59]   Start Uplink Task.
+[22:43:59]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:43:59]  [OK]CMD Packet Header: 0x18 0x20 0xc0 0x0 0x0 0x5 0x7 0x6
+|| Uplink || Length: 12
+18	20	c0	00	00	05	07	06	03	00	
+00	00	
+
+[22:43:59]  Communication Time : 344
+Unknown MsgID
+[22:44:33]   Start Uplink Task.
+[22:44:33]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:44:33]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x8 0x2 0x18
+|| Uplink || Length: 15
+18	23	c0	00	00	08	02	18	1a	08	
+00	00	00	00	04	
+
+[22:44:33]  Communication Time : 349
+[22:44:36]  Received Beacon from port : 31.
+[22:44:36]  Received Beacon from port : 31.
+Unknown MsgID
+[22:44:38]   Start Uplink Task.
+[22:44:38]  Send Packet of Ptype : 10. Check Terminal Log.
+[22:44:38]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x8 0x2 0x18
+|| Uplink || Length: 15
+18	23	c0	00	00	08	02	18	1a	08	
+00	00	00	00	04	
+
+[22:44:38]  Communication Time : 349

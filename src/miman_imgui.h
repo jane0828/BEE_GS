@@ -42,18 +42,22 @@
 #define DISPLAY_CONTROL_W       (DISPLAY_COL3 - DISPLAY_COL1)
 #define DISPLAY_CONTROL_H       (DISPLAY_ROW2 - DISPLAY_ROW1)
 #define DISPLAY_COMMAND_W       (DISPLAY_WINDWIDTH - DISPLAY_COL2)
-#define DISPLAY_COMMAND_H       (DISPLAY_WINDHEIGHT - DISPLAY_ROW3)
+#define DISPLAY_COMMAND_H       (DISPLAY_WINDHEIGHT - 800)
 
 #define MIMAN_FRAMERATE         60
 void ImGui_ClearColorBuf(GLFWwindow * window, ImVec4 clear_color);
 void ImGui_MainMenu();
 void ImGui_ModelWindow(float fontscale);
 void ImGui_TrackWindow(float fontscale);
+void ImGui_AutoPilotWindow(float fontscale);
 void ImGui_FrequencyWindow(float fontscale);
 void ImGui_RotatorWindow(float fontscale);
 void ImGui_BeaconWindow(float fontscale);
 void ImGui_ControlWindow(float fontscale);
 void ImGui_CommandWindow(float fontscale);
+
+void ImGui_AutoPilotWindow(float fontscale);
+
 
 void ImGuiCustomStyle(ImGuiStyle* style);
 bool popup_setup(Setup * setup);

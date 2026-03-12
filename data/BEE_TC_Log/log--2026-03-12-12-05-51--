@@ -1,0 +1,23 @@
+[12:05:53]  Connect to Switch Box.............Success.
+[12:05:53]  Connect to Rotator................Success.
+[12:05:53]  Connect to GS100..................Success.
+[12:05:53]  TM Port 13 bind success.
+[12:05:53]  BCN Port 31 bind success.
+[12:05:53]  RPT Port 25 bind success.
+[12:05:53]  Event Port 27 bind success.
+[12:05:53]  COSMIC Beacon Port 23 bind success.
+[12:05:53]  COSMIC Report Port 24 bind success.
+[12:05:54]  Rotator Read Failed.
+[12:05:59]  Ping Success at node 5, 460ms
+[12:06:02]  Received FTP file Spec.
+[12:06:02]  Received FTP File Spec. Filesize : 129704, CRC : 2655291442.
+[12:06:06]  Transfer Status: 57 of 1014 (5.6%)
+
+[12:06:06]  Progress : 57/1014
+[12:06:06]  Progress : 58/1014
+[12:06:07]  Progress : 59/1014
+[12:06:07]  Progress : 60/1014
+[12:06:08]  Progress : 61/1014
+[12:06:09]  Progress : 62/1014
+[12:06:09]  Progress : 63/1014
+[12:06:25]  Rotator Read Failed.

@@ -22,7 +22,7 @@ extern "C" {
 #define GS_FTP_STATUS_CHUNKS     10
 
 /** Maximum chunk size */
-#define GS_FTP_CHUNK_SIZE       256
+#define GS_FTP_MAX_CHUNK_SIZE   256
 
 /**
    FTP request type.
@@ -170,7 +170,7 @@ typedef struct {
 /** Data chunk */
 typedef struct {
     uint32_t chunk;
-    uint8_t bytes[GS_FTP_CHUNK_SIZE];
+    uint8_t bytes[GS_FTP_MAX_CHUNK_SIZE];
 } __attribute__ ((__packed__)) ftp_data_t;
 
 typedef struct {

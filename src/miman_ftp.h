@@ -3,11 +3,11 @@
 #define _MIMAN_FTP_H_
 
 int ftp_list_callback(uint16_t entries, const gs_ftp_list_entry_t * listent, void * data);
-void ftp_callback(const gs_ftp_info_t * info);
+// void ftp_callback(const gs_ftp_info_t * info);
 void * ftp_uplink_onorbit(void * param);
-void * ftp_uplink_force(void * param);
+// void * ftp_uplink_force(void * param);
 void * ftp_downlink_onorbit(void * param);
-void * ftp_downlink_force(void * param);
+// void * ftp_downlink_force(void * param);
 void * ftp_list_onorbit(void * );
 void * ftp_move_onorbit(void * );
 void * ftp_remove_onorbit(void * );

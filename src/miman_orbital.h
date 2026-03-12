@@ -68,9 +68,11 @@ void RotatorSetTo(int azimuth, int elevation);
 void * RotatorEnter(void *);
 void * RotatorReadInfo(void *);
 void * Doppler(void *);
-void SetNowTracking(int index);
+// void SetNowTracking(int index);
 int GetNowTracking();
 void * Sattracker(void * Nowengage);
 void FSWTleConverter(Tle& TleInfo, FSWTle * fswtle);
+void SetNowTracking_impl(int index, const char* file, int line);
+#define SetNowTracking(i) SetNowTracking_impl((i), __FILE__, __LINE__)
 
 #endif

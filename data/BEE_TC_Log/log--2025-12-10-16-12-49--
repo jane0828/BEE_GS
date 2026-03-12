@@ -1,0 +1,19 @@
+[16:12:52]  Connect to Switch Box.............Success.
+[16:12:52]  Connect to Rotator................Success.
+[16:12:52]  Connect to GS100..................Success.
+[16:12:52]  TM Port 13 bind success.
+[16:12:52]  BCN Port 31 bind success.
+[16:12:52]  RPT Port 25 bind success.
+[16:13:09]  Start FTP Downlink.
+[16:13:11]  Received FTP file Spec.
+[16:13:11]  Received FTP File Spec. Filesize : 45704, CRC : 3446119361.
+[16:13:11]  Transfer Status: 16 of 254 (6.3%)
+
+[16:13:12]  Progress : 16/254
+[16:13:13]  Progress : 17/254
+[16:13:13]  Progress : 18/254
+[16:13:14]  Progress : 19/254
+[16:13:14]  Progress : 20/254
+[16:13:14]  Progress : 21/254
+[16:13:15]  Progress : 22/254
+[16:13:15]  Progress : 23/254

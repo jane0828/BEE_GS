@@ -237,7 +237,8 @@ void * ftp_downlink_force(void * param){
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPFCD_PORT;
-    ftp_config.timeout = 5000; //default timeout value
+    ftp_config.timeout = 30000; //default timeout value
+    //   ftp_config.timeout = 5000; //기존 timeout value
     ftp_config.chunk_size = State.chunk_sz; //default chunk size value
     State.ftp_mode = true;
     int status = (int)gs_ftp_download_force(&ftp_config, FTP->local_path, FTP->remote_path, ftp_callback, NULL, State.iteration);

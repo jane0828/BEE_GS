@@ -528,7 +528,7 @@ TLEinfo * SetTLEinfo(const char * label)
 {
     TLEinfo* res = (TLEinfo *)malloc(sizeof(TLEinfo));
     sprintf(res->remote, "https://celestrak.org/NORAD/elements/gp.php?GROUP=%s&FORMAT=tle", label);
-    sprintf(res->local, "./bin/tle/%s.dat", label);
+    sprintf(res->local, "../bin/tle/%s.dat", label);
     sprintf(res->label, label);
     return res;
 }
@@ -897,7 +897,7 @@ void * RotatorReadInfo(void *)
             else if (byte < 1)
             {
                 console.AddLog("[ERROR]##Rotator Read Failed.");
-                sleep(1);
+                sleep(30);
                 break;
             }
         }
@@ -985,10 +985,30 @@ void * Doppler(void *) {
     
 };
 
-void SetNowTracking(int index)
+// void SetNowTracking(int index)
+// {
+
+//     if (index < -1 || index >= SAT_MAX_NUM || (index >= 0 && State.Satellites[index] == NULL)) {
+//     console.AddLog("[ERROR]##[Track]SetNowTracking rejected. index=%d ptr=%p",
+//                     index, (index >= 0 && index < SAT_MAX_NUM) ? State.Satellites[index] : NULL);
+//     NowSat = -1;
+//     return;
+//     }
+//     NowSat = index;
+// }
+void SetNowTracking_impl(int index, const char* file, int line)
 {
+    if (index < -1 || index >= SAT_MAX_NUM || (index >= 0 && State.Satellites[index] == NULL)) {
+        console.AddLog("[ERROR]##[Track]SetNowTracking rejected. index=%d ptr=%p caller=%s:%d",
+                       index, (index >= 0 && index < SAT_MAX_NUM) ? State.Satellites[index] : NULL,
+                       file, line);
+        NowSat = -1;
+        return;
+    }
     NowSat = index;
 }
+
+#define SetNowTracking(i) SetNowTracking_impl((i), __FILE__, __LINE__)
 
 int GetNowTracking()
 {

@@ -26,13 +26,10 @@ typedef int (*gs_ftp_list_callback_t)(uint16_t entries, const gs_ftp_list_entry_
    Indicates the type of info provided in gs_ftp_info_callback.
 */
 typedef enum {
-    GS_FTP_INFO_UL_FILE  = 0,   /**< File size and checksum */
-    GS_FTP_INFO_DL_FILE,
-    GS_FTP_INFO_CRC,         /**< CRC of remote and local file */
-    GS_FTP_INFO_UL_COMPLETED,   /**< Completed and total chunks */
-    GS_FTP_INFO_DL_COMPLETED,
-    GS_FTP_INFO_UL_PROGRESS,    /**< Current chunk, total_chunks and chunk_size */
-    GS_FTP_INFO_DL_PROGRESS,
+    GS_FTP_INFO_FILE  = 0,   /**< File size and checksum */
+    GS_FTP_INFO_CRC,         /**< Checksum of remote and local file */
+    GS_FTP_INFO_COMPLETED,   /**< Completed and total chunks */
+    GS_FTP_INFO_PROGRESS,    /**< Current chunk, total_chunks and chunk_size */
 } gs_ftp_info_type_t;
 
  /**
@@ -43,12 +40,12 @@ typedef struct {
     void               *user_data;  /**< User data provided when registering the callback */
     union {
         struct {
-            uint32_t remote;        /**< CRC of remote file */
-            uint32_t local;         /**< CRC of local file */
+            uint32_t remote;        /**< Checksum of remote file */
+            uint32_t local;         /**< Checksum of local file */
         }crc;
         struct{
             uint32_t size;          /**< size of file */
-            uint32_t crc;           /**< CRC of file */
+            uint32_t crc;           /**< Checksum of file */
         }file;
         struct {
             uint32_t completed_chunks;     /**< Completed chunks */
@@ -62,20 +59,15 @@ typedef struct {
     }u;                             /**< Payload data */
 } gs_ftp_info_t;
 
-int ftp_abort();
-int ftp_avail();
+
 /**
    Info callback.
 
-   Get Info during ftp upload / download process
+   Get Info during ftp upload / download process.
 
-   @param[in] type Type of info, can be one of FTP_INFO_FILE, FTP_INFO_CRC adn FTP_INFO_STATUS, FTP_INFO_PROGRESS
-   @param[in] arg1 First info argument
-   @param[in] arg2 Second info argument
-   @param[in] arg3 Third info argument
-   @param[in] user_data User data provided when registering the callback
+   @param[in] info status information.
 */
-typedef void (*gs_ftp_info_callback_t)(const gs_ftp_info_t * type);
+typedef void (*gs_ftp_info_callback_t)(const gs_ftp_info_t * info);
 
 
 /**
@@ -111,19 +103,19 @@ typedef struct {
     /**
        CSP port on host.
        Use 0 (zero) for default port.
-       @see gs_ftp_get_csp_port_force()
+       @see gs_ftp_get_csp_port()
     */
     uint8_t port;
     /**
        Timeout in ms
        Use 0 (zero) for default timeout.
-       @see gs_ftp_get_timeout_force()
+       @see gs_ftp_get_timeout()
     */
     uint32_t timeout;
     /**
        Chunk size in bytes
        Use 0 (zero) for default chunk size.
-       @see gs_ftp_get_chunk_size_force()
+       @see gs_ftp_get_chunk_size()
     */
     uint32_t chunk_size;
 } gs_ftp_settings_t;
@@ -156,8 +148,6 @@ gs_error_t gs_ftp_default_settings(gs_ftp_settings_t * settings);
 */
 gs_error_t gs_ftp_upload(const gs_ftp_settings_t * settings, const char * local_url, const char * remote_url,
                          gs_ftp_info_callback_t info_callback, void * info_data);
-gs_error_t gs_ftp_upload_force(const gs_ftp_settings_t * settings, const char * local_url, const char * remote_url,
-                         gs_ftp_info_callback_t info_callback, void * info_data, int iteration);
 
 /**
    Download from remote server.
@@ -177,8 +167,6 @@ gs_error_t gs_ftp_upload_force(const gs_ftp_settings_t * settings, const char * 
 */
 gs_error_t gs_ftp_download(const gs_ftp_settings_t * settings, const char * local_url,  const char * remote_url,
                            gs_ftp_info_callback_t info_callback, void * info_data);
-gs_error_t gs_ftp_download_force(const gs_ftp_settings_t * settings, const char * local_url,  const char * remote_url,
-                           gs_ftp_info_callback_t info_callback, void * info_data, int iteration);
 
 /**
    Move file on server.
@@ -313,7 +301,6 @@ const char * gs_ftp_mode_to_string(gs_ftp_mode_t mode);
    @return CSP port.
 */
 uint8_t gs_ftp_get_csp_port(const gs_ftp_settings_t * settings);
-uint8_t gs_ftp_get_csp_port_force(const gs_ftp_settings_t * settings);
 
 /**
    Returns timeout from settings or default if none specified.
@@ -322,7 +309,6 @@ uint8_t gs_ftp_get_csp_port_force(const gs_ftp_settings_t * settings);
    @return timeout (mS)
 */
 uint32_t gs_ftp_get_timeout(const gs_ftp_settings_t * settings);
-uint32_t gs_ftp_get_timeout_force(const gs_ftp_settings_t * settings);
     
 /**
    Returns chunk size from settings or default if none specified.
@@ -331,21 +317,15 @@ uint32_t gs_ftp_get_timeout_force(const gs_ftp_settings_t * settings);
    @return chunk size
 */
 uint32_t gs_ftp_get_chunk_size(const gs_ftp_settings_t * settings);
-uint32_t gs_ftp_get_chunk_size_force(const gs_ftp_settings_t * settings);
 
-static gs_error_t ftp_status_request();
-static gs_error_t ftp_status_reply();
-static gs_error_t ftp_data(int count);
-static gs_error_t ftp_crc();
+/**
+   Return completed in percent.
 
-//Custom
-gs_error_t gs_ftp_upload_force_request(const gs_ftp_settings_t * settings, const char * local_url, const char * remote_url,
-                         gs_ftp_info_callback_t info_callback, void * info_data);
-void ftp_done_force(unsigned int remove_map);
-void ftp_done(unsigned int remove_map);
-gs_error_t gs_conn_create_force(const gs_ftp_settings_t * settings);
-
-void ftp_close_force();
+   @param[in] completed completed chunks so far.
+   @param[in] total total chunks.
+   @return percent completed.
+*/
+float gs_ftp_percent_completed(uint32_t completed, uint32_t total);
     
 #ifdef __cplusplus
 }

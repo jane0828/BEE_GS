@@ -1,0 +1,112 @@
+[11:22:48]  Connect to Switch Box.............Success.
+[11:22:48]  Connect to Rotator................Success.
+[11:22:48]  Connect to GS100..................Success.
+[11:22:48]  TM Port 13 bind success.
+[11:22:48]  BCN Port 31 bind success.
+[11:22:48]  RPT Port 25 bind success.
+[11:22:48]  Event Port 27 bind success.
+[11:22:48]  COSMIC Beacon Port 23 bind success.
+[11:22:48]  COSMIC Report Port 24 bind success.
+[11:30:09]  Ping Failed.
+[11:30:16]  Ping Failed.
+[11:32:48]  Ping Failed.
+[11:32:58]  Ping Success at node 5, 468ms
+Unknown MsgID
+[11:33:36]   Start Uplink Task.
+[11:33:36]  Send Packet of Ptype : 10. Check Terminal Log.
+[11:33:36]  [OK]CMD Packet Header: 0x18 0x50 0xc0 0x0 0x0 0x1 0x0 0x76
+|| Uplink || Length: 8
+18	50	c0	00	00	01	00	76	
+
+[11:33:36]  Communication Time : 336
+[11:33:53]  Ping Success at node 5, 465ms
+[11:33:57]  AX100 Boot Count : 1927
+[11:34:02]  Total RX Bytes : 3402306
+[11:34:45]  Remote Param Control OK. can_en : true
+[11:35:54]  Ping Success at node 5, 467ms
+Unknown MsgID
+[11:37:06]   Start Uplink Task.
+[11:37:06]  Send Packet of Ptype : 10. Check Terminal Log.
+[11:37:06]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x1 0x6 0x3
+|| Uplink || Length: 8
+18	23	c0	00	00	01	06	03	
+
+[11:37:06]  Communication Time : 337
+Unknown MsgID
+[11:37:15]   Start Uplink Task.
+[11:37:15]  Send Packet of Ptype : 10. Check Terminal Log.
+[11:37:15]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x1 0x6 0x3
+|| Uplink || Length: 8
+18	23	c0	00	00	01	06	03	
+
+[11:37:16]  Communication Time : 336
+[11:37:35]  Ping Success at node 5, 454ms
+Unknown MsgID
+[11:37:43]   Start Uplink Task.
+[11:37:43]  Send Packet of Ptype : 10. Check Terminal Log.
+[11:37:43]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x1 0x6 0x3
+|| Uplink || Length: 8
+18	23	c0	00	00	01	06	03	
+
+[11:37:43]  Communication Time : 337
+Unknown MsgID
+[11:38:58]   Start Uplink Task.
+[11:38:58]  Send Packet of Ptype : 10. Check Terminal Log.
+[11:38:58]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x1 0x6 0x3
+|| Uplink || Length: 8
+18	23	c0	00	00	01	06	03	
+
+[11:38:58]  Communication Time : 337
+[11:44:00]  Ping Success at node 5, 457ms
+[11:44:03]  Remote Param Control OK. csp_rtable : 3/5 CAN, 0/0 AX100
+[11:44:05]  Remote Param Control OK. Active Conf : 2
+[11:44:07]  Remote Param Control OK. Last RSSI : -30
+[11:44:09]  Remote Param Control OK. rx_guard : 0
+[11:44:11]  Remote Param Control OK. tx_guard : 0
+[11:44:13]  Remote Param Control OK. rx_baud : 4800
+[11:44:15]  Remote Param Control OK. tx_baud : 4800
+Unknown MsgID
+[11:53:17]   Start Uplink Task.
+[11:53:17]  Send Packet of Ptype : 10. Check Terminal Log.
+[11:53:17]  [OK]CMD Packet Header: 0x18 0x23 0xc0 0x0 0x0 0x1 0x6 0x3
+|| Uplink || Length: 8
+18	23	c0	00	00	01	06	03	
+
+[11:53:17]  Communication Time : 337
+[11:53:42]  !!!!!!!!!Received COSMIC Beacon from port : 23.!!!!!!!!!
+
+[11:53:52]  Received FTP file Spec.
+[11:53:52]  Received FTP File Spec. Filesize : 129704, CRC : 2655291442.
+[11:53:55]  Transfer Status: 0 of 1014 (0.0%)
+
+[11:53:55]  Progress : 0/1014
+[11:53:56]  Progress : 1/1014
+[11:53:57]  Progress : 2/1014
+[11:53:57]  Progress : 3/1014
+[11:53:58]  Progress : 4/1014
+[11:53:58]  Progress : 5/1014
+[11:53:59]  Progress : 6/1014
+[11:54:14]  Progress : 7/1014
+[11:54:15]  Progress : 8/1014
+[11:54:15]  Progress : 9/1014
+[11:54:16]  Progress : 10/1014
+[11:54:16]  Progress : 11/1014
+[11:54:17]  Progress : 12/1014
+[11:54:32]  Progress : 13/1014
+[11:54:33]  Progress : 14/1014
+[11:54:33]  Progress : 15/1014
+[11:54:34]  Progress : 16/1014
+[11:54:34]  Progress : 17/1014
+[11:54:35]  Progress : 18/1014
+[11:54:49]  Progress : 19/1014
+[11:54:50]  Progress : 20/1014
+[11:54:51]  Progress : 21/1014
+[11:54:51]  Progress : 22/1014
+[11:54:52]  Progress : 23/1014
+[11:54:52]  Progress : 24/1014
+[11:55:07]  Progress : 25/1014
+[11:55:07]  Progress : 26/1014
+[11:55:08]  Progress : 27/1014
+[11:55:09]  Progress : 28/1014
+[11:55:09]  Progress : 29/1014
+[11:55:10]  Progress : 30/1014

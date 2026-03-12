@@ -1,0 +1,24 @@
+[15:56:04]  Connect to Switch Box.............Success.
+[15:56:04]  Connect to Rotator................Success.
+[15:56:04]  Connect to GS100..................Success.
+[15:56:04]  TM Port 13 bind success.
+[15:56:04]  BCN Port 31 bind success.
+[15:56:04]  RPT Port 25 bind success.
+[15:56:12]  Ping Failed.
+[15:56:52]  You Tried Ping without Tracking. Please Check Again.
+[15:56:59]  Ping Failed.
+[15:57:06]  Ping Success at node 5, 465ms
+[15:57:09]  Ping Success at node 5, 467ms
+[15:57:43]  Start FTP Downlink.
+[15:57:46]  Received FTP file Spec.
+[15:57:46]  Received FTP File Spec. Filesize : 45704, CRC : 3446119361.
+[15:57:46]  Transfer Status: 0 of 254 (0.0%)
+
+[15:57:47]  Progress : 0/254
+[15:57:48]  Progress : 1/254
+[15:57:48]  Progress : 2/254
+[15:57:48]  Progress : 3/254
+[15:57:49]  Progress : 4/254
+[15:57:49]  Progress : 5/254
+[15:57:50]  Progress : 6/254
+[15:57:50]  Progress : 7/254

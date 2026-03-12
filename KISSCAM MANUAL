@@ -1,0 +1,11 @@
+251211 - Kweon Hyeokjin
+
+For KissaCAM App update, I revise several command buffer
+- ftp upload `Local` to payuzuc
+- ftp uplaod `Remote` to payuzuc
+- CFE_ES_Reload(a.k.a. TO Reload) `Application`, `AppFileName` to payuzuc
+
+Do ftp same as before. Do not modify the file name
+When ftp done, do CFE_ES Reload App (To reload)
+
+New app file is already prepared in directory. (same as to_lab file )

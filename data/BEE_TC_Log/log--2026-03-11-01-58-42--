@@ -1,0 +1,11 @@
+[01:58:45]  Connect to Switch Box.............Success.
+[01:58:45]  Connect to Rotator................Success.
+[01:58:45]  Connect to GS100..................Success.
+[01:58:45]  TM Port 13 bind success.
+[01:58:45]  BCN Port 31 bind success.
+[01:58:45]  RPT Port 25 bind success.
+[01:58:46]  Forked Safe Amplifier Process.(ON, Timer)
+[01:58:48]  Tracking : Az 0, El 0.
+[01:58:52]  TLE "cubesat" Download Completed.
+[01:58:53]  OBJECT A	Error: (e <= -0.001)	
+[02:01:22]  Forked Safe Amplifier Process. (OFF)

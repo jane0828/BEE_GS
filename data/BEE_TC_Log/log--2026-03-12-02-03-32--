@@ -1,0 +1,42 @@
+[02:03:34]  Connect to Switch Box.............Success.
+[02:03:34]  Connect to Rotator................Success.
+[02:03:34]  Connect to GS100..................Success.
+[02:03:34]  TM Port 13 bind success.
+[02:03:34]  BCN Port 31 bind success.
+[02:03:34]  RPT Port 25 bind success.
+[02:03:53]  TLE "active" Download Completed.
+[02:03:55]  BEE-1000	Error: (e <= -0.001)	
+[02:03:59]  Forked Safe Amplifier Process.(ON, Timer)
+[02:04:04]  Received FTP file Spec.
+[02:04:04]  Received FTP File Spec. Filesize : 129704, CRC : 2655291442.
+[02:04:07]  Transfer Status: 283 of 649 (43.6%)
+
+[02:04:07]  Progress : 283/649
+[02:04:08]  Progress : 284/649
+[02:04:09]  Progress : 285/649
+[02:04:10]  Progress : 286/649
+[02:04:10]  Progress : 287/649
+[02:04:11]  Progress : 288/649
+[02:04:12]  Progress : 289/649
+[02:04:30]  Progress : 290/649
+[02:04:31]  Progress : 291/649
+[02:04:32]  Progress : 292/649
+[02:04:32]  Progress : 293/649
+[02:04:33]  Progress : 294/649
+[02:04:34]  Progress : 295/649
+[02:04:51]  Progress : 296/649
+[02:04:52]  Progress : 297/649
+[02:04:53]  Progress : 298/649
+[02:04:54]  Progress : 299/649
+[02:04:54]  Progress : 300/649
+[02:04:55]  Progress : 301/649
+[02:05:22]  Start Engaging.
+[02:05:22]  Azimuth : 206, Elevation : 8
+
+[02:05:22]  Tracking : Az 206, El 8.
+[02:05:24]  Start Doppler Correction.
+[02:05:24]  TX : 436509856, RX : 436490143
+[02:05:24]  TX : 436509859, RX : 436490140
+[02:05:24]  Azimuth : 206, Elevation : 8
+
+[02:05:24]  Tracking : Az 206, El 8.

@@ -33,7 +33,7 @@ typedef enum __attribute__ ((__packed__)) {
     */
     GS_FTP_BACKEND_FAT   = 1,
     /**
-       Legacy refernce to the file system used on e.g. A3200 Nanomind FLASH chip.
+       Legacy reference to the file system used on e.g. A3200 Nanomind FLASH chip.
     */
     GS_FTP_BACKEND_UFFS  = 2,
     /**
@@ -43,8 +43,7 @@ typedef enum __attribute__ ((__packed__)) {
 } gs_ftp_backend_type_t;
 
 /**
-   Return codes from backend implementation.
-   These codes must be mappable to gs_error_t - one to one.
+   FTP error codes.
 */
 typedef enum __attribute__ ((__packed__)) {
     /** No error */
@@ -79,7 +78,9 @@ typedef enum {
     GS_FTP_LIST_DIR	= 1,
 } __attribute__ ((__packed__)) gs_ftp_list_entry_type_t;
 
-/** List files entry */
+/**
+   List files entry
+*/
 typedef struct {
     /** Entry index (zero based). */
     uint16_t entry;
@@ -91,13 +92,15 @@ typedef struct {
     uint32_t size;
 } __attribute__ ((__packed__)) gs_ftp_list_entry_t;
 
+/**
+   FTP zip action codes
+*/
 typedef enum {
     /** Zip file. */
     GS_FTP_ZIP    = 1,
     /** Un zip file. */
     GS_FTP_UNZIP  = 2,
 } __attribute__ ((__packed__)) gs_ftp_zip_action_t;
-
 
 
 #ifdef __cplusplus

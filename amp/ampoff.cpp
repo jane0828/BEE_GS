@@ -10,52 +10,19 @@
 #include <fcntl.h>
 #include <locale.h>
 
-char * devname = "/dev/GPIO8C";
+const char * devname = "/dev/ttyACM0";
 struct termios new_gpio_tio;
 int gpio = 0;
 int duration = 60 * 14;
-int port_default = 1;
+char off = '0';
 int status  = 0;
-static int gpio_set_on(int port) {
+
+static int gpio_set_off(char cmd) {
     tcflush(gpio, TCIOFLUSH);
     char buf[64];
-    sprintf(buf, "gpio set %d\r", port);
-    // buf[10] = 13;
-    if(write(gpio, buf, strlen(buf)+1) > 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
-    memset(buf, 0, sizeof(buf));
-
-}
-
-static int gpio_clear_off(int port) {
-    tcflush(gpio, TCIOFLUSH);
-    char buf[64];
-    sprintf(buf, "gpio clear %d\r", port);
-    // buf[13] = 13;
-    if(write(gpio, buf, strlen(buf)+1) > 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
-    memset(buf, 0, sizeof(buf));
-}
-
-static int gpio_buf_clean(int port ) {
-    char buf[64];
-
-    tcflush(gpio, TCIOFLUSH);
-    buf[0] = 0;
+    sprintf(buf, "%c", cmd);
     buf[1] = 13;
-    if(write(gpio, buf, 2) > 0)
+    if(write(gpio, buf, 1) > 0)
     {
         return 0;
     }
@@ -64,8 +31,6 @@ static int gpio_buf_clean(int port ) {
         return -1;
     }
     memset(buf, 0, sizeof(buf));
-
-    tcflush(gpio, TCIOFLUSH);
 }
 
 int init_gpio() {
@@ -80,7 +45,7 @@ int init_gpio() {
 	}
     // tcgetattr(rotator, &new_gpio_tio);
     tcflush(gpio, TCIOFLUSH);
-    new_gpio_tio.c_cflag = B19200;
+    new_gpio_tio.c_cflag = B9600;
     new_gpio_tio.c_cflag |= (CLOCAL | CREAD); 	// Receiver and local mode
     new_gpio_tio.c_cflag &= ~HUPCL;				// Do not change modem signals
     new_gpio_tio.c_cflag &= ~CSIZE;
@@ -133,22 +98,19 @@ int main() {
     tm_info = localtime(&ref);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", tm_info);
     
-    gpio_clear_off(port_default);
-    printf("GPIO OFF at port : %d, End time : %s\n", port_default, buffer);
-
+    if(gpio_set_off(off) == 0){
+        printf("Command off success at %s \n", buffer);
+    }
+    else{
+        printf("Command off fail at %s \n", buffer);
+    }
+   
     memset(buffer, 0, sizeof(buffer));
 
-    
 
     printf("Now Finish GPIO Task.\n");
 
-    if (gpio > 0)
-    {
-        gpio_buf_clean(port_default);
-        tcflush(gpio, TCIOFLUSH);
-        tcsetattr(gpio, TCSANOW, &new_gpio_tio);
-        tcflush(gpio, TCIOFLUSH);
-        close(gpio);
-    }
+    close(gpio);
+
     return 0;
 }
