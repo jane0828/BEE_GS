@@ -1,3 +1,0 @@
-/home/miman/Desktop/BEE_GS_0311/build2/CMakeFiles/BEE-1000.dir
-/home/miman/Desktop/BEE_GS_0311/build2/CMakeFiles/edit_cache.dir
-/home/miman/Desktop/BEE_GS_0311/build2/CMakeFiles/rebuild_cache.dir

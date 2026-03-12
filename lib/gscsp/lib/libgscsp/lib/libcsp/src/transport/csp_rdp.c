@@ -978,10 +978,30 @@ int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 			
 			switch_to_rx(conn->idout.dst);
 			usleep(switch_delay(conn->idout.dst));
+			csp_log_warn("RDP %p: TX window full before send, waiting for ACK/window update (snd_nxt=%u snd_una=%u window=%u tx_queue=%d conn_timeout=%u ms packet_timeout=%u ms rcv_cur=%u)",
+			             conn,
+			             conn->rdp.snd_nxt,
+			             conn->rdp.snd_una,
+			             conn->rdp.window_size,
+			             csp_queue_size(conn->rdp.tx_queue),
+			             conn->rdp.conn_timeout,
+			             conn->rdp.packet_timeout,
+			             conn->rdp.rcv_cur);
 		}
 		csp_log_protocol("RDP %p: Waiting for window update before sending seq %u", conn, conn->rdp.snd_nxt);
 		if ((csp_bin_sem_wait(&conn->rdp.tx_wait, conn->rdp.conn_timeout)) != CSP_SEMAPHORE_OK) {
-			csp_log_error("RDP %p: Timeout during send", conn);
+			csp_log_error("RDP %p: Timeout during send (snd_nxt=%u snd_una=%u window=%u tx_queue=%d conn_timeout=%u ms packet_timeout=%u ms ack_timeout=%u ms delayed_acks=%u rcv_cur=%u state=%u)",
+			              conn,
+			              conn->rdp.snd_nxt,
+			              conn->rdp.snd_una,
+			              conn->rdp.window_size,
+			              csp_queue_size(conn->rdp.tx_queue),
+			              conn->rdp.conn_timeout,
+			              conn->rdp.packet_timeout,
+			              conn->rdp.ack_timeout,
+			              conn->rdp.delayed_acks,
+			              conn->rdp.rcv_cur,
+			              conn->rdp.state);
 			return CSP_ERR_TIMEDOUT;
 		}
 	}

@@ -221,6 +221,9 @@ gs_error_t gs_ftp_upload(const gs_ftp_settings_t * settings, const char * local_
     state.info_callback = info_callback;
     state.info_data     = info_data;
 
+    log_info("FTP upload begin: local [%s], remote [%s], timeout %u ms, chunk_size %d, chunks %"PRIu32,
+             local_url_info.path, remote_url_info.path, state.timeout, state.chunk_size, state.chunks);
+
     if (info_callback) {
         gs_ftp_info_t info = {
             .user_data = info_data,
@@ -254,6 +257,7 @@ gs_error_t gs_ftp_upload(const gs_ftp_settings_t * settings, const char * local_
     ftp_packet_t rep;
     int rep_length = sizeof(rep.type) + sizeof(rep.uprep);
     if (csp_transaction_persistent(state.conn, gs_ftp_get_timeout(settings), &req, req_length, &rep, rep_length) != rep_length) {
+        log_error("FTP upload failed during upload request transaction");
         ftp_done(&state, 0);
         return GS_ERROR_TIMEOUT;
     }
@@ -264,22 +268,29 @@ gs_error_t gs_ftp_upload(const gs_ftp_settings_t * settings, const char * local_
     }
 
     /* Handle data stage */
+    log_info("FTP upload stage: status request");
     gs_error_t status = ftp_status_request(&state);
     if (status) {
+        log_error("FTP upload failed during status request, status=%d", status);
         ftp_done(&state, 0);
         return status;
     }
+    log_info("FTP upload stage: data transfer");
     status = ftp_data(&state, 0);
     if (status) {
+        log_error("FTP upload failed during data transfer, status=%d", status);
         ftp_done(&state, 0);
         return status;
     }
+    log_info("FTP upload stage: crc verification");
     status = ftp_crc(&state);
     if (status) {
+        log_error("FTP upload failed during crc verification, status=%d", status);
         ftp_done(&state, 0);
         return status;
     }
 
+    log_info("FTP upload stage: done");
     ftp_done(&state, 0);
     return GS_OK;
 }
@@ -313,6 +324,9 @@ gs_error_t gs_ftp_download(const gs_ftp_settings_t * settings, const char * loca
         .info_data = info_data,
     };
     GS_STRNCPY(state.file_name, local_url_info.path);
+
+    log_info("FTP download begin: remote [%s], local [%s], timeout %u ms, chunk_size %d",
+             remote_url_info.path, local_url_info.path, state.timeout, state.chunk_size);
 
     ftp_packet_t req;
     req.type = FTP_DOWNLOAD_REQUEST;
@@ -420,18 +434,23 @@ gs_error_t gs_ftp_download(const gs_ftp_settings_t * settings, const char * loca
     }
 
     /* Handle data stage */
+    log_info("FTP download stage: status reply / data receive");
     gs_error_t status = ftp_status_reply(&state);
     if (status) {
+        log_error("FTP download failed during status/data stage, status=%d", status);
         ftp_done(&state, 0);
         return GS_ERROR_UNKNOWN;
     }
 
+    log_info("FTP download stage: crc verification");
     status = ftp_crc(&state);
     if (status) {
+        log_error("FTP download failed during crc verification, status=%d", status);
         ftp_done(&state, 0);
         return status;
     }
 
+    log_info("FTP download stage: done");
     ftp_done(&state, 1);
     return GS_OK;
 }
@@ -673,10 +692,13 @@ static gs_error_t ftp_data(gs_ftp_state_t *state, int count)
     packet.type = FTP_DATA;
     for (i = 0; i < state->last_entries; i++) {
         ftp_status_element_t * n = &state->last_status[i];
+        log_info("FTP upload resend range: start %"PRIu32", count %"PRIu32,
+                 n->next, n->count);
 
         for (j = 0; j < n->count; j++) {
             /* Calculate chunk number */
-            packet.data.chunk = n->next + j;
+            uint32_t chunk_nr = n->next + j;
+            packet.data.chunk = chunk_nr;
 
             /* Print progress bar */
             if (state->info_callback) {
@@ -716,9 +738,9 @@ static gs_error_t ftp_data(gs_ftp_state_t *state, int count)
             /* Send data */
             int length = sizeof(packet.type) + sizeof(uint32_t) + state->chunk_size;
             if (csp_transaction_persistent(state->conn, state->timeout, &packet, length, NULL, 0) != 1) {
-                log_error("Data transaction failed");
+                log_error("FTP upload data transaction failed at chunk %"PRIu32, chunk_nr);
                 csp_close(state->conn);
-                break;
+                return GS_ERROR_IO;
             }
         }
     }

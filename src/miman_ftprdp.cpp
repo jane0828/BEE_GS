@@ -362,6 +362,9 @@ extern pthread_t p_thread[16];
 extern pthread_mutex_t conn_lock;
 extern Setup * setup;
 
+void miman_begin_ftp_rdp_profile(uint32_t ftp_timeout_ms);
+void miman_end_ftp_rdp_profile(void);
+
 static unsigned int ftp_chunk_size = 180;
 static unsigned int ftp_backend = 3; // Use file backend as standard
 static const char * const packet_missing = "-";
@@ -528,8 +531,12 @@ void * ftp_downlink_onorbit(void * param){
     // ftp_config.timeout = 30000; //default timeout value
     ftp_config.timeout = 3000000; //default timeout value
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
+    console.AddLog("[FTP]##Download config: host=%u port=%u ftp_timeout=%u ms chunk=%u",
+                   ftp_config.host, ftp_config.port, ftp_config.timeout, ftp_config.chunk_size);
     pthread_mutex_lock(&conn_lock);
+    miman_begin_ftp_rdp_profile(ftp_config.timeout);
     int status = (int)gs_ftp_download(&ftp_config, FTP->local_path, FTP->remote_path, ftp_info_print_callback, NULL);
+    miman_end_ftp_rdp_profile();
     pthread_mutex_unlock(&conn_lock);
     if (status != 0) {
 		console.AddLog("[ERROR]##Fail to complete ftp_download. Retcode : %d", status);\
@@ -572,8 +579,12 @@ void * ftp_uplink_onorbit(void * param){
     ftp_config.timeout = 3000000; //default timeout value
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
     int status = 0;
+    console.AddLog("[FTP]##Upload config: host=%u port=%u ftp_timeout=%u ms chunk=%u",
+                   ftp_config.host, ftp_config.port, ftp_config.timeout, ftp_config.chunk_size);
     pthread_mutex_lock(&conn_lock);
+    miman_begin_ftp_rdp_profile(ftp_config.timeout);
     status = (int)gs_ftp_upload(&ftp_config, FTP->local_path, FTP->remote_path, ftp_info_print_callback, NULL);
+    miman_end_ftp_rdp_profile();
     pthread_mutex_unlock(&conn_lock);
     printftp("FTP task DONE.");
     

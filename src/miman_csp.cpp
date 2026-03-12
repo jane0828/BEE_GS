@@ -50,6 +50,114 @@ char WatchdogReadBuf[32];
 extern Setup * setup;
 struct usart_conf conf;
 
+static const unsigned int k_rdp_default_window_size = 6;
+static const unsigned int k_rdp_default_conn_timeout_ms = 30000;
+static const unsigned int k_rdp_default_packet_timeout_ms = 16000;
+static const unsigned int k_rdp_default_delayed_acks = 1;
+static const unsigned int k_rdp_default_ack_timeout_ms = 8000;
+static const unsigned int k_rdp_default_ack_delay_count = 3;
+
+static const unsigned int k_rdp_ftp_conn_timeout_cap_ms = 180000;
+static const unsigned int k_rdp_ftp_packet_timeout_ms = 30000;
+
+static pthread_mutex_t g_rdp_profile_lock = PTHREAD_MUTEX_INITIALIZER;
+static bool g_rdp_ftp_profile_active = false;
+static unsigned int g_saved_rdp_window_size = 0;
+static unsigned int g_saved_rdp_conn_timeout_ms = 0;
+static unsigned int g_saved_rdp_packet_timeout_ms = 0;
+static unsigned int g_saved_rdp_delayed_acks = 0;
+static unsigned int g_saved_rdp_ack_timeout_ms = 0;
+static unsigned int g_saved_rdp_ack_delay_count = 0;
+
+static void miman_apply_rdp_profile(unsigned int window_size,
+                                    unsigned int conn_timeout_ms,
+                                    unsigned int packet_timeout_ms,
+                                    unsigned int delayed_acks,
+                                    unsigned int ack_timeout_ms,
+                                    unsigned int ack_delay_count)
+{
+    csp_rdp_set_opt(window_size, conn_timeout_ms, packet_timeout_ms,
+                    delayed_acks, ack_timeout_ms, ack_delay_count);
+}
+
+void miman_restore_default_rdp_profile(void)
+{
+    miman_apply_rdp_profile(k_rdp_default_window_size,
+                            k_rdp_default_conn_timeout_ms,
+                            k_rdp_default_packet_timeout_ms,
+                            k_rdp_default_delayed_acks,
+                            k_rdp_default_ack_timeout_ms,
+                            k_rdp_default_ack_delay_count);
+}
+
+void miman_begin_ftp_rdp_profile(uint32_t ftp_timeout_ms)
+{
+    pthread_mutex_lock(&g_rdp_profile_lock);
+    if (g_rdp_ftp_profile_active) {
+        pthread_mutex_unlock(&g_rdp_profile_lock);
+        return;
+    }
+
+    csp_rdp_get_opt(&g_saved_rdp_window_size,
+                    &g_saved_rdp_conn_timeout_ms,
+                    &g_saved_rdp_packet_timeout_ms,
+                    &g_saved_rdp_delayed_acks,
+                    &g_saved_rdp_ack_timeout_ms,
+                    &g_saved_rdp_ack_delay_count);
+
+    unsigned int ftp_conn_timeout_ms = g_saved_rdp_conn_timeout_ms;
+    if (ftp_timeout_ms > ftp_conn_timeout_ms) {
+        ftp_conn_timeout_ms = ftp_timeout_ms;
+    }
+    if (ftp_conn_timeout_ms > k_rdp_ftp_conn_timeout_cap_ms) {
+        ftp_conn_timeout_ms = k_rdp_ftp_conn_timeout_cap_ms;
+    }
+
+    unsigned int ftp_packet_timeout_ms = g_saved_rdp_packet_timeout_ms;
+    if (ftp_packet_timeout_ms < k_rdp_ftp_packet_timeout_ms) {
+        ftp_packet_timeout_ms = k_rdp_ftp_packet_timeout_ms;
+    }
+
+    csp_log_info("FTP RDP profile enable: conn_timeout=%u ms packet_timeout=%u ms window=%u ack_timeout=%u ms",
+                 ftp_conn_timeout_ms,
+                 ftp_packet_timeout_ms,
+                 g_saved_rdp_window_size,
+                 g_saved_rdp_ack_timeout_ms);
+
+    miman_apply_rdp_profile(g_saved_rdp_window_size,
+                            ftp_conn_timeout_ms,
+                            ftp_packet_timeout_ms,
+                            g_saved_rdp_delayed_acks,
+                            g_saved_rdp_ack_timeout_ms,
+                            g_saved_rdp_ack_delay_count);
+    g_rdp_ftp_profile_active = true;
+    pthread_mutex_unlock(&g_rdp_profile_lock);
+}
+
+void miman_end_ftp_rdp_profile(void)
+{
+    pthread_mutex_lock(&g_rdp_profile_lock);
+    if (!g_rdp_ftp_profile_active) {
+        pthread_mutex_unlock(&g_rdp_profile_lock);
+        return;
+    }
+
+    miman_apply_rdp_profile(g_saved_rdp_window_size,
+                            g_saved_rdp_conn_timeout_ms,
+                            g_saved_rdp_packet_timeout_ms,
+                            g_saved_rdp_delayed_acks,
+                            g_saved_rdp_ack_timeout_ms,
+                            g_saved_rdp_ack_delay_count);
+    g_rdp_ftp_profile_active = false;
+
+    csp_log_info("FTP RDP profile restore: conn_timeout=%u ms packet_timeout=%u ms window=%u ack_timeout=%u ms",
+                 g_saved_rdp_conn_timeout_ms,
+                 g_saved_rdp_packet_timeout_ms,
+                 g_saved_rdp_window_size,
+                 g_saved_rdp_ack_timeout_ms);
+    pthread_mutex_unlock(&g_rdp_profile_lock);
+}
+
 void miman_usart_rx(uint8_t * buf, int len, void * pxTaskWoken) {
 	csp_kiss_rx(&csp_if_kiss, buf, len, pxTaskWoken);
 }
@@ -84,7 +192,7 @@ int init_transceiver()
 
 	usart_set_callback(miman_usart_rx);
 
-	csp_rdp_set_opt(6, 30000, 16000, 1, 8000, 3);
+	miman_restore_default_rdp_profile();
 	csp_route_start_task(0, 0);
 	
 	return 0;
