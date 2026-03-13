@@ -1,0 +1,13 @@
+[16:50:41]  Connect to Switch Box.............Success.
+[16:50:41]  Connect to Rotator................Success.
+[16:50:41]  Connect to GS100..................Success.
+[16:50:41]  TM Port 13 bind success.
+[16:50:41]  BCN Port 31 bind success.
+[16:50:41]  RPT Port 25 bind success.
+[16:50:41]  Event Port 27 bind success.
+[16:50:41]  COSMIC Beacon Port 23 bind success.
+[16:50:41]  COSMIC Report Port 24 bind success.
+[16:50:43]  Forked Safe Amplifier Process.(ON, Timer)
+[16:50:53]  Upload config: host=3 port=9 ftp_timeout=120000 ms chunk=200
+[16:50:53]  Received FTP file Spec.
+[16:50:53]  Received FTP File Spec. Filesize : 129704, CRC : 2655291442.
