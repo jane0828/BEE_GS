@@ -75,26 +75,26 @@ void SatelliteModelInitialize(int index)
     {
         if(strlen(State.Fatellites->Name()) != 0 && State.NowTracking)
         {
-            Fatellites2D = new Rectangle(false);
-            ShaderFatellites2D = new Shader("./src/shader/3DTexture.vs", "./src/shader/3DTexture.fs", NULL);
-            Fatellites2D->XYZScale(0.02, 0.02, 0.0);
-            FatRange2D = new Circle();
-            ShaderFatRange2D = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
-            Fatpoint = new Circle();
-            ShaderFatpoint = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
+            // Fatellites2D = new Rectangle(false);
+            // ShaderFatellites2D = new Shader("./src/shader/3DTexture.vs", "./src/shader/3DTexture.fs", NULL);
+            // Fatellites2D->XYZScale(0.02, 0.02, 0.0);
+            // FatRange2D = new Circle();
+            // ShaderFatRange2D = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
+            // Fatpoint = new Circle();
+            // ShaderFatpoint = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
         }
     }
     else
     {
         if(strlen(State.Satellites[index]->Name()) != 0 && State.NowTracking)
         {
-            Satellites2D[index] = new Rectangle(false);
-            ShaderSatellites2D[index] = new Shader("./src/shader/3DTexture.vs", "./src/shader/3DTexture.fs", NULL);
-            Satellites2D[index]->XYZScale(0.02, 0.02, 0.0);
-            SatRange2D[index] = new Circle();
-            ShaderSatRange2D[index] = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
-            Satpoint[index] = new Circle();
-            ShaderSatpoint[index] = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
+            // Satellites2D[index] = new Rectangle(false);
+            // ShaderSatellites2D[index] = new Shader("./src/shader/3DTexture.vs", "./src/shader/3DTexture.fs", NULL);
+            // Satellites2D[index]->XYZScale(0.02, 0.02, 0.0);
+            // SatRange2D[index] = new Circle();
+            // ShaderSatRange2D[index] = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
+            // Satpoint[index] = new Circle();
+            // ShaderSatpoint[index] = new Shader("./src/shader/3DRGB.vs", "./src/shader/3DRGB.fs", NULL);
         }
     }
     

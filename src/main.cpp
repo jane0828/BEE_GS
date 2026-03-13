@@ -226,12 +226,21 @@ int main(int, char**)
 
         if (g_shutdown_requested) {
         // 시그널로 인한 종료 요청 들어옴
+        printf("[MAIN-DIAG] signal shutdown detected (g_shutdown_requested=1)\n");
+
         State.GUI = false;       // GUI 루프 정지
         State.AllThread = false; // while 탈출
     }
         if(State.GUI)
         {   
             GUIneedshutdown = true;
+
+            bool should_close = glfwWindowShouldClose(window);
+
+if (should_close) {
+    printf("[MAIN-DIAG] glfwWindowShouldClose(window) became TRUE\n");
+}
+
             State.GUI = !glfwWindowShouldClose(window);
             glfwPollEvents();
             // Start the Dear ImGui frame
@@ -478,7 +487,8 @@ int main(int, char**)
             // sleep(1/MIMAN_FRAMERATE);
             continue;
         }
-        
+        printf("[MAIN-DIAG] leaving GUI loop: State.GUI=%d State.AllThread=%d\n",
+        State.GUI, State.AllThread);
         // Cleanup
         if(GUIneedshutdown)
         {
@@ -494,6 +504,13 @@ int main(int, char**)
 
         if (State.AllThread) // "Start" at popup
         {
+
+            printf("[MAIN-DIAG] entering shutdown sequence\n");
+    printf("[MAIN-DIAG] TRx=%d downlink=%d uplink=%d ftp=%d\n",
+            State.TRx_mode,
+            State.downlink_mode,
+            State.uplink_mode,
+            State.ftp_mode);
             printf("Ending procedure...\n");
             State.TRx_mode = false;
             State.downlink_mode = false;
@@ -569,6 +586,8 @@ int main(int, char**)
     sleep(0.5);
 fclose(log_ptr);
 system("../amp/ampoff");
+printf("[MAIN-DIAG] program exiting normally\n");
+
 printf("Finish BEE-1000 GS.\n");
 return 0;
 
