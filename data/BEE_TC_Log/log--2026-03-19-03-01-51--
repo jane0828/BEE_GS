@@ -1,0 +1,14 @@
+[03:01:54]  Connect to Switch Box.............Success.
+[03:01:54]  Connect to Rotator................Success.
+[03:01:54]  Connect to GS100..................Success.
+[03:01:54]  TM Port 13 bind success.
+[03:01:54]  BCN Port 31 bind success.
+[03:01:54]  RPT Port 25 bind success.
+[03:01:54]  Event Port 27 bind success.
+[03:01:54]  COSMIC Beacon Port 23 bind success.
+[03:01:54]  COSMIC Report Port 24 bind success.
+[03:01:57]  Forked Safe Amplifier Process.(ON, Timer)
+[03:01:57]  Forked Safe Amplifier Process. (OFF)
+[03:02:04]  Tracking : Az 0, El 0.
+[03:03:46]  TLE "cubesat" Download Completed.
+[03:03:47]  BEE-1000	Error: (e <= -0.001)	

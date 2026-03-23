@@ -51,6 +51,7 @@ uint16_t remote_boot_count = 0;
 
 
 static constexpr size_t REPORT_WIRE_SIZE = 540;
+static const unsigned int REPORT_CONN_DRAIN_TIMEOUT_MS = 100;
 
 static uint8_t g_report_wire[REPORT_WIRE_SIZE];
 static size_t  g_report_off = 0;
@@ -1146,9 +1147,14 @@ void * task_downlink_onorbit(void * socketinfo)
             continue;
         }
 
-        while ((packet = csp_read(conn, setup->default_timeout)) != NULL) {
+        const int dport = csp_conn_dport(conn);
+        unsigned int read_timeout = setup->default_timeout;
 
-            const int dport = csp_conn_dport(conn);
+        if (dport == 25) {
+            read_timeout = REPORT_CONN_DRAIN_TIMEOUT_MS;
+        }
+
+        while ((packet = csp_read(conn, read_timeout)) != NULL) {
 
             switch (dport) {
 
