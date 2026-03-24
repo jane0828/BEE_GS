@@ -793,6 +793,7 @@ static gs_error_t ftp_crc(gs_ftp_state_t *state)
     /* Reply */
     int repsiz = sizeof(packet.type) + sizeof(packet.crcrep);
     if (csp_transaction_persistent(state->conn, state->timeout, &packet, sizeof(packet.type), &packet, repsiz) != repsiz) {
+        log_info("FTP upload failed during crc verification, reply size mismatch: expected %d, got %d", repsiz, csp_transaction_persistent(state->conn, state->timeout, &packet, sizeof(packet.type), &packet, repsiz));
         return GS_ERROR_IO;
     }
     if (packet.type != FTP_CRC_REPLY) {
