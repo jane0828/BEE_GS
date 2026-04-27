@@ -131,6 +131,24 @@ static bool DecodePayloadToView(ReportView_t &v, const uint8_t *payload, uint16_
         }
     }
 
+            if (v.kind == REPORT_KIND_ADCS_GET_RAW_GYR_SENSOR) {
+        if (payload_len < sizeof(ADCS2_RawGYRSensorTlm_Payload_t)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.adcs2_rawgyr_sensor, payload, sizeof(ADCS2_RawGYRSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
+            if (v.kind == REPORT_KIND_ADCS_GET_RAW_RW_SENSOR) {
+        if (payload_len < sizeof(ADCS2_RawRWLSensorTlm_Payload_t)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.adcs2_rawrwl_sensor, payload, sizeof(ADCS2_RawRWLSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
     v.kind = REPORT_KIND_SC_GENERIC;
 
     uint16_t n = payload_len;
