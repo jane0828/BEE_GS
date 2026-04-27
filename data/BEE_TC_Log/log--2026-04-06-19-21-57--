@@ -1,0 +1,10 @@
+[19:22:01]  Connect to Switch Box.............Success.
+[19:22:01]  Connect to Rotator................Success.
+[19:22:01]  Connect to GS100..................Success.
+[19:22:01]  TM Port 13 bind success.
+[19:22:01]  BCN Port 31 bind success.
+[19:22:01]  RPT Port 25 bind success.
+[19:22:01]  Event Port 27 bind success.
+[19:22:01]  Response Port 23 bind success.
+[19:22:04]  TLE "cubesat" Download Completed.
+[19:22:05]  BEE-1000	Error: (e <= -0.001)	

@@ -1699,17 +1699,6 @@ void ImGui_BeaconWindow(float fontscale)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
                         case REPORT_KIND_EPS_P60_DOCK_GET_TABLE_HK:
                         {
                             auto &pl = view.u.eps_p60dockgettablehk;
@@ -2014,6 +2003,179 @@ void ImGui_BeaconWindow(float fontscale)
 
                         break;
                     }
+
+                    case REPORT_KIND_ADCS_RAW_GYR_SENSOR_TLM:
+                    {
+                        auto &pl = view.u.adcs_raw_gyr_sensor;
+
+                        ImGui::TextUnformatted("ADCS2 Raw GYR Sensor Telemetry");
+
+                        ImGui::Separator();
+                        ImGui::Text("[Time]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Time Seconds");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.TimeSeconds);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Time Nanoseconds");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.TimeNanoSeconds);
+
+                        // ========================
+                        ImGui::Separator();
+                        ImGui::Text("[GYR0 Raw Rate]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR0 X");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.GYR0RawRateX);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR0 Y");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.GYR0RawRateY);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR0 Z");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.GYR0RawRateZ);
+
+                        // ========================
+                        ImGui::Separator();
+                        ImGui::Text("[GYR1 Raw Rate]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR1 X");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.GYR1RawRateX);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR1 Y");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.GYR1RawRateY);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR1 Z");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.GYR1RawRateZ);
+
+                        // ========================
+                        ImGui::Separator();
+                        ImGui::Text("[Valid Flags]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR0 Valid");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u (%s)", pl.GYR0ValidFlag,
+                                    pl.GYR0ValidFlag ? "Valid" : "Invalid");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("GYR1 Valid");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u (%s)", pl.GYR1ValidFlag,
+                                    pl.GYR1ValidFlag ? "Valid" : "Invalid");
+
+                        break;
+                    }
+
+
+                    case REPORT_KIND_ADCS_RAW_RW_SENSOR_TLM:
+                    {
+                        auto &pl = view.u.adcs_raw_rw_sensor;
+
+                        ImGui::TextUnformatted("ADCS2 Raw RW Sensor Telemetry");
+
+                        ImGui::Separator();
+                        ImGui::Text("[Time]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Time Seconds");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.TimeSeconds);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Time Nanoseconds");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.TimeNanoSeconds);
+
+                        // ========================
+                        ImGui::Separator();
+                        ImGui::Text("[Reaction Wheel Speed]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL0 Speed");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.RWL0MeasSpeed);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL1 Speed");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.RWL1MeasSpeed);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL2 Speed");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.RWL2MeasSpeed);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL3 Speed");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%.6f", pl.RWL3MeasSpeed);
+
+                        // ========================
+                        ImGui::Separator();
+                        ImGui::Text("[Valid Flags]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL0 Valid");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u (%s)", pl.RWL0ValidFlag,
+                                    pl.RWL0ValidFlag ? "Valid" : "Invalid");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL1 Valid");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u (%s)", pl.RWL1ValidFlag,
+                                    pl.RWL1ValidFlag ? "Valid" : "Invalid");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL2 Valid");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u (%s)", pl.RWL2ValidFlag,
+                                    pl.RWL2ValidFlag ? "Valid" : "Invalid");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("RWL3 Valid");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u (%s)", pl.RWL3ValidFlag,
+                                    pl.RWL3ValidFlag ? "Valid" : "Invalid");
+
+                        break;
+                    }
+
+
 
                 case REPORT_KIND_UANT_GET_STATUS_TLM:
                 {
@@ -6609,7 +6771,7 @@ case 66: {
                 command->adcswhlconfigcmd.Payload.Rwl3MaxMomentum    = 0.00996;
                 command->adcswhlconfigcmd.Payload.Rwl3MaxToque       = 0.002;
 
-                command->adcswhlconfigcmd.Payload.WheelRampTorque    = 0.0002;
+                command->adcswhlconfigcmd.Payload.WheelRampTorque    = 0.00002;
 
                 command->adcswhlconfigcmd.Payload.WheelScheme        = 3;
                 command->adcswhlconfigcmd.Payload.FailedWheelID      = 0;
@@ -7185,13 +7347,13 @@ case 66: {
                 p.CSS9_mounting = 6;
 
                 // ==== FSS0..3 ====
-                p.FSS0_alpha = 90; p.FSS0_beta = 180; p.FSS0_gamma = 0;
+                p.FSS0_alpha = 9000; p.FSS0_beta = 18000; p.FSS0_gamma = 0;
                 p.FSS1_alpha = p.FSS1_beta = p.FSS1_gamma = 0;
                 p.FSS2_alpha = p.FSS2_beta = p.FSS2_gamma = 0;
                 p.FSS3_alpha = p.FSS3_beta = p.FSS3_gamma = 0;
 
                 // ==== HSS0..1 ====
-                p.HSS0_alpha = 0; p.HSS0_beta = -90; p.HSS0_gamma = 0;
+                p.HSS0_alpha = 0; p.HSS0_beta = -9000; p.HSS0_gamma = 0;
                 p.HSS1_alpha = p.HSS1_beta = p.HSS1_gamma = 0;
 
                 // ==== MAG0..1 ====
@@ -7336,7 +7498,7 @@ case 66: {
                 p.DefaultBackupEstimatorMode = 0; 
 
                 p.MAGMeasurementNoise  =0.001;
-                p.CSSMeasurementNoise  =10;
+                p.CSSMeasurementNoise  =10.0;
                 p.FSSMeasurementNoise = 0.0001;
                 p.HSSMeasurementNoise = 0.0001;
                 p.STRMeasurementNoise  = 1E-8;
@@ -7357,8 +7519,8 @@ case 66: {
                 // p.Spare        = 0;   // unused padding
 //revise
                 // ---- Bit-fields ----
-                p.UseFSSinEKF = 0;
-                p.UseCSSinEKF = 0;
+                p.UseFSSinEKF = 1;
+                p.UseCSSinEKF = 1;
                 p.UseHSSinEKF = 0;
                 p.UseSTRinEKF = 0;
 
@@ -7943,6 +8105,62 @@ case 80: {
             }
             break;
         }
+
+
+        case 89: // cc 43 ADCS_OPEN_LOOP_RW_CMD
+        {
+            static uint16_t msgid   = ADCS_CMD_ID;
+            static uint8_t  fnccode = 43;
+
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            ImGui::InputScalar("Flag_TLM Type", ImGuiDataType_U32,
+                            &command->adcsopenlooprwcmd.Payload.float1);
+
+            ImGui::InputScalar("Flag_EST Mode", ImGuiDataType_U32,
+                            &command->adcsopenlooprwcmd.Payload.float2);
+
+            ImGui::InputScalar("Flag_Cont Mode", ImGuiDataType_U32,
+                            &command->adcsopenlooprwcmd.Payload.float3);
+
+            if (ImGui::Button("Generate CMD")) {
+                WriteSystemName(msgid);
+
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(ADCS_OpenLoopRWCmd_t) - 7)
+                };
+
+                memcpy(command->adcsopenlooprwcmd.CmdHeader,     &mid, 2);
+                memcpy(command->adcsopenlooprwcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->adcsopenlooprwcmd.CmdHeader + 4, len,  2);
+                memcpy(command->adcsopenlooprwcmd.CmdHeader + 6, &fnccode, 1);
+
+                uint16_t total = sizeof(ADCS_OpenLoopRWCmd_t);
+                const uint8_t *p = (const uint8_t *)&command->adcsopenlooprwcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->adcsopenlooprwcmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 + sizeof(ADCS_OpenLoopRWCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(ADCS_OpenLoopRWCmd_t);
+                memcpy(pkt->Data, &command->adcsopenlooprwcmd,
+                    sizeof(ADCS_OpenLoopRWCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
 
 
         // SC_NOOP_CC (0)
@@ -13577,6 +13795,7 @@ void Initialize_CMDLabels()
     snprintf(Templabels[87],  64, "ADCS Set Unsolicited Event Msg Setup");
     // Telemetry GET commands
     snprintf(Templabels[88],  64, "ADCS CC 101");
+    snprintf(Templabels[89],  64, "ADCS Open-Loop Reaction Wheel Command");
 
 
 

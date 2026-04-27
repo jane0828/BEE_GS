@@ -386,11 +386,7 @@ csp_socket_t * DL_sock_initialize()
         console.AddLog("[OK]##Event Port 27 bind success.");
     }
         if(!csp_bind(sock, 23)) {
-        console.AddLog("[OK]##COSMIC Beacon Port 23 bind success.");
-    }
-        
-        if(!csp_bind(sock, 24)) {
-        console.AddLog("[OK]##COSMIC Report Port 24 bind success.");
+        console.AddLog("[OK]##Response Port 23 bind success.");
     }
         
         
@@ -1200,7 +1196,7 @@ void * task_downlink_onorbit(void * socketinfo)
                     struct tm *local = localtime(&tmtime);
 
                     sprintf(cosbcnfilename,
-                            "../data/cosmic/beacon--%04d-%02d-%02d-%02d-%02d-%02d--",
+                            "../data/response/unknown--%04d-%02d-%02d-%02d-%02d-%02d--",
                             local->tm_year + 1900,
                             local->tm_mon + 1,
                             local->tm_mday,
@@ -1208,10 +1204,10 @@ void * task_downlink_onorbit(void * socketinfo)
                             local->tm_min,
                             local->tm_sec);
 
-                    console.AddLog("!!!!!!!!!Received COSMIC Beacon from port : %d.!!!!!!!!!\n", dport);
+                    console.AddLog("Received Response from port : %d.!!!!!!!!!\n", dport);
 
                     FILE *cosbcn_fp = fopen(cosbcnfilename, "wb");
-                    printf("\nCOSMIC Beacon Length: %u", packet->length);
+                    printf("\nDownlink Length: %u", packet->length);
 
                     for (int i = 0; i < packet->length; i++) {
                         if (!(i % 10) && i != 0) {
@@ -1224,8 +1220,8 @@ void * task_downlink_onorbit(void * socketinfo)
 
                     if (cosbcn_fp) fclose(cosbcn_fp);
 
-                    printf("Beacon Packet Length: %u\n", packet->length);
-                    printf("===== Beacon PACKET DUMP =====\n");
+                    printf("Downlink Packet Length: %u\n", packet->length);
+                    printf("===== Downlink PACKET DUMP =====\n");
                     for (int i = 0; i < packet->length; i++) {
                         if (!(i % 10) && i != 0) printf("\n");
                         printf("0x%02X ", packet->data[i]);
@@ -1235,45 +1231,6 @@ void * task_downlink_onorbit(void * socketinfo)
                     break;
                 }
 
-                case 24: {
-                    char cosrptfilename[128];
-                    time_t tmtime = time(0);
-                    struct tm *local = localtime(&tmtime);
-
-                    sprintf(cosrptfilename,
-                            "../data/cosmic/report--%04d-%02d-%02d-%02d-%02d-%02d--",
-                            local->tm_year + 1900,
-                            local->tm_mon + 1,
-                            local->tm_mday,
-                            local->tm_hour,
-                            local->tm_min,
-                            local->tm_sec);
-
-                    console.AddLog("!!!!!!!!!Received COSMIC Report from port : %d.!!!!!!!!!\n", dport);
-
-                    FILE *cosrpt_fp = fopen(cosrptfilename, "wb");
-                    printf("\nCOSMIC Report Length: %u", packet->length);
-
-                    for (int i = 0; i < packet->length; i++) {
-                        if (!(i % 10) && i != 0) {
-                            printf("\n");
-                            if (cosrpt_fp) fprintf(cosrpt_fp, "\n");
-                        }
-                        printf("0x%x ", packet->data[i]);
-                        if (cosrpt_fp) fprintf(cosrpt_fp, "%02hhx\t", packet->data[i]);
-                    }
-
-                    if (cosrpt_fp) fclose(cosrpt_fp);
-
-                    printf("Report Packet Length: %u\n", packet->length);
-                    printf("===== Report PACKET DUMP =====\n");
-                    for (int i = 0; i < packet->length; i++) {
-                        if (!(i % 10) && i != 0) printf("\n");
-                        printf("0x%02X ", packet->data[i]);
-                    }
-                    printf("\n===============================\n");
-                    break;
-                }
 
                 case 27: {
                     if (packet->length == BEE_LEN_EVENT) {

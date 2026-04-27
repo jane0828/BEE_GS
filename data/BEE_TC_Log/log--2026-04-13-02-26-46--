@@ -1,0 +1,14 @@
+[02:26:49]  Connect to Switch Box.............Success.
+[02:26:49]  Connect to Rotator................Success.
+[02:26:49]  Connect to GS100..................Success.
+[02:26:49]  TM Port 13 bind success.
+[02:26:49]  BCN Port 31 bind success.
+[02:26:49]  RPT Port 25 bind success.
+[02:26:49]  Event Port 27 bind success.
+[02:26:49]  Response Port 23 bind success.
+[02:26:51]  Forked Safe Amplifier Process.(ON, Timer)
+[02:26:51]  Forked Safe Amplifier Process. (OFF)
+[02:27:08]  TLE "active" Download Completed.
+[02:27:08]  TLE Load Error. Index : 0, Error : Invalid length for line one
+[02:27:14]  TLE "active" Download Completed.
+[02:27:16]  BEE-1000	Error: (e <= -0.001)	

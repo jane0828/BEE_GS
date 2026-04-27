@@ -530,7 +530,7 @@ void * ftp_downlink_onorbit(void * param){
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
     // ftp_config.timeout = 30000; //default timeout value
-    ftp_config.timeout = ftp_transfer_timeout_ms;
+    ftp_config.timeout = 30000;
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
     console.AddLog("[FTP]##Download config: host=%u port=%u ftp_timeout=%u ms chunk=%u",
                    ftp_config.host, ftp_config.port, ftp_config.timeout, ftp_config.chunk_size);

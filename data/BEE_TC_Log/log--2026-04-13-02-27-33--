@@ -1,0 +1,10 @@
+[02:27:37]  Connect to Switch Box.............Success.
+[02:27:37]  Connect to Rotator................Success.
+[02:27:37]  Connect to GS100..................Success.
+[02:27:37]  TM Port 13 bind success.
+[02:27:37]  BCN Port 31 bind success.
+[02:27:37]  RPT Port 25 bind success.
+[02:27:37]  Event Port 27 bind success.
+[02:27:37]  Response Port 23 bind success.
+[02:27:47]  TLE "active" Download Completed.
+[02:27:47]  TLE Load Error. Index : 0, Error : Invalid length for line one

@@ -1,0 +1,15 @@
+[14:59:00]  Connect to Switch Box.............Success.
+[14:59:00]  Connect to Rotator................Success.
+[14:59:00]  Connect to GS100..................Success.
+[14:59:00]  TM Port 13 bind success.
+[14:59:00]  BCN Port 31 bind success.
+[14:59:00]  RPT Port 25 bind success.
+[14:59:00]  Event Port 27 bind success.
+[14:59:00]  Response Port 23 bind success.
+[14:59:04]  TLE "cubesat" Download Completed.
+[14:59:04]  TLE Load Error. Index : 0, Error : Invalid length for line one
+[14:59:13]  TLE "active" Download Completed.
+[14:59:13]  TLE Load Error. Index : 0, Error : Invalid length for line one
+[14:59:16]  TLE "active" Download Completed.
+[14:59:16]  TLE Load Error. Index : 0, Error : Invalid length for line one
+[15:06:29]  TLE "active" Download Completed.

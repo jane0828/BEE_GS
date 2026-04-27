@@ -236,55 +236,75 @@ void PathInitializer()
 
 void PathGenerator(int Selected)
 {
-    if(Selected == -1)
+    if (Selected < -1 || Selected >= SAT_MAX_NUM)
     {
-        State.Fatellites->GeneratePath();
-        if(State.NowTracking && Selected > -2)
+        console.AddLog("[ERROR]##[Path]Invalid selection for PathGenerator: %d", Selected);
+        return;
+    }
+
+    if (Selected == -1)
+    {
+        if (State.Fatellites == NULL)
         {
-            
-            // int k = 0;
-            // for(int i = 0; i < 1024; i++)
-            // {
-            //     Footprint->spline_vertices[k] = 0.9f * (float)(sin(State.Fatellites->path_az[i]) * (M_PI / 2 - State.Fatellites->path_el[i]) / (M_PI / 2));
-            //     Footprint->spline_vertices[k + 1] = 0.9f * (float)(cos(State.Fatellites->path_az[i]) * (M_PI / 2 - State.Fatellites->path_el[i]) / (M_PI / 2));
-            //     Footprint->spline_vertices[k + 2] = 0;
-            //     k += 3;
-                
-            // }
-            // Footprint->Setcolor(1.000f, 0.447f, 0.463f);
+            console.AddLog("[ERROR]##[Path]No FDS satellite available for path generation.");
+            return;
+        }
+
+        State.Fatellites->GeneratePath();
+
+        if (State.NowTracking && Selected > -2)
+        {
+            if (Footprint == NULL)
+            {
+                console.AddLog("[ERROR]##[Path]Footprint spline is not initialized. Skip path rendering update.");
+                return;
+            }
+
+            // 나중에 FDS용 path rendering 코드가 필요하면 여기에 추가
         }
     }
     else
     {
-        State.Satellites[Selected]->GeneratePath();
-        if(State.NowTracking && Selected > -2)
+        if (State.Satellites[Selected] == NULL)
         {
-            
+            console.AddLog("[ERROR]##[Path]Selected satellite is null. idx=%d", Selected);
+            return;
+        }
+
+        State.Satellites[Selected]->GeneratePath();
+
+        if (State.NowTracking && Selected > -2)
+        {
+            if (Footprint == NULL)
+            {
+                console.AddLog("[ERROR]##[Path]Footprint spline is not initialized. Skip path rendering update.");
+                return;
+            }
+
             int k = 0;
-            for(int i = 0; i < 1024; i++)
+            for (int i = 0; i < 1024; i++)
             {
                 Footprint->spline_vertices[k] = 0.9f * (float)(sin(State.Satellites[Selected]->path_az[i]) * (M_PI / 2 - State.Satellites[Selected]->path_el[i]) / (M_PI / 2));
                 Footprint->spline_vertices[k + 1] = 0.9f * (float)(cos(State.Satellites[Selected]->path_az[i]) * (M_PI / 2 - State.Satellites[Selected]->path_el[i]) / (M_PI / 2));
                 Footprint->spline_vertices[k + 2] = 0;
 
-                if(i >= 1)
+                if (i >= 1)
                 {
-                    if(abs(State.Satellites[Selected]->path_az[i] - State.Satellites[Selected]->path_az[i - 1]) > 2.0f / RAD_TO_DEG || abs(State.Satellites[Selected]->path_el[i] - State.Satellites[Selected]->path_el[i - 1]) > 2.0f / RAD_TO_DEG)
+                    if (abs(State.Satellites[Selected]->path_az[i] - State.Satellites[Selected]->path_az[i - 1]) > 2.0f / RAD_TO_DEG ||
+                        abs(State.Satellites[Selected]->path_el[i] - State.Satellites[Selected]->path_el[i - 1]) > 2.0f / RAD_TO_DEG)
                     {
                         Footprint->spline_vertices[k] = Footprint->spline_vertices[k - 3];
                         Footprint->spline_vertices[k + 1] = Footprint->spline_vertices[k - 2];
                         console.AddLog("[DEBUG]##PathFinder Error. Calculate again this spline vertices. index : %d, %d, %d", k, k + 1, k + 2);
-                        // printf("Az : %lf, El : %lf, Az_passed : %lf, El_passed : %lf\n", State.Satellites[Selected]->path_az[i], State.Satellites[Selected]->path_el[i], State.Satellites[Selected]->path_az[i-1], State.Satellites[Selected]->path_el[i-1]);
-                
                     }
                 }
+
                 k += 3;
-                
             }
+
             Footprint->Setcolor(1.000f, 0.447f, 0.463f);
         }
     }
-    
 }
 
 void PathDisplayer(int Selected)

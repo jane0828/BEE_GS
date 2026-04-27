@@ -74,6 +74,8 @@ typedef struct {
     uint16_t CCCount;
     uint16_t CCLength;
     uint8_t CCTime_code[6];
+
+
     uint16_t msg_id;
     uint8_t cc;
     uint8_t ret_type;
@@ -391,6 +393,9 @@ typedef enum
     REPORT_KIND_EPS_P60_PDU_GET_TABLE_HK,
     REPORT_KIND_EPS_P60_ACU_GET_TABLE_HK,
 
+    REPORT_KIND_ADCS_RAW_GYR_SENSOR_TLM,
+    REPORT_KIND_ADCS_RAW_RW_SENSOR_TLM,
+
 
 
     REPORT_KIND_SC_GENERIC,
@@ -404,6 +409,10 @@ static ReportKind_t DetermineReportKind(uint16_t reflected_mid, uint8_t reflecte
     if ((reflected_mid == EPS_CMD_ID || reflected_mid == 0x7518) && reflected_cc == EPS_P60_DOCK_GET_TABLE_HK_CC) return REPORT_KIND_EPS_P60_DOCK_GET_TABLE_HK;
     if ((reflected_mid == EPS_CMD_ID || reflected_mid == 0x7518) && reflected_cc == EPS_P60_PDU_GET_TABLE_HK_CC) return REPORT_KIND_EPS_P60_PDU_GET_TABLE_HK;
     if ((reflected_mid == EPS_CMD_ID || reflected_mid == 0x7518) && reflected_cc == EPS_P60_ACU_GET_TABLE_HK_CC) return REPORT_KIND_EPS_P60_ACU_GET_TABLE_HK;
+
+
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_RAW_GYR_SENSOR_CC) return REPORT_KIND_ADCS_RAW_GYR_SENSOR_TLM;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS2_GET_RAW_RW_SENSOR_CC) return REPORT_KIND_ADCS_RAW_RW_SENSOR_TLM;
 
 
     return REPORT_KIND_SC_GENERIC;
@@ -578,7 +587,33 @@ typedef struct EPS_P60_ACU_GET_TABLE_HK {
 
 } EPS_P60_ACU_GET_TABLE_HK;
 
+typedef struct
+{ // ID 205
+    uint32 TimeSeconds;
+    uint32 TimeNanoSeconds;
+    float RWL0MeasSpeed;
+    float RWL1MeasSpeed;
+    float RWL2MeasSpeed;
+    float RWL3MeasSpeed;
+    uint8 RWL0ValidFlag:1;
+    uint8 RWL1ValidFlag:1;
+    uint8 RWL2ValidFlag:1;
+    uint8 RWL3ValidFlag:1;
+} __attribute__((packed)) ADCS2_RawRWLSensorTlm_Payload_t;
 
+typedef struct
+{ // ID 204
+    uint32 TimeSeconds;
+    uint32 TimeNanoSeconds;
+    float GYR0RawRateX;
+    float GYR0RawRateY;
+    float GYR0RawRateZ;
+    float GYR1RawRateX;
+    float GYR1RawRateY;
+    float GYR1RawRateZ;
+    uint8 GYR0ValidFlag:1;
+    uint8 GYR1ValidFlag:1;
+} __attribute__((packed)) ADCS2_RawGYRSensorTlm_Payload_t;
 
 typedef struct
 {
@@ -608,6 +643,9 @@ typedef struct
         EPS_P60_DOCK_GET_TABLE_HK              eps_p60dockgettablehk;
         EPS_P60_PDU_GET_TABLE_HK               eps_p60pdugettablehk;
         EPS_P60_ACU_GET_TABLE_HK               eps_p60acugettablehk;
+
+        ADCS2_RawRWLSensorTlm_Payload_t         adcs_raw_rw_sensor;
+        ADCS2_RawGYRSensorTlm_Payload_t          adcs_raw_gyr_sensor;
 
 
 
