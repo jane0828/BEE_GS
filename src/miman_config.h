@@ -1040,6 +1040,7 @@ typedef struct {
 #define ADCS_SET_UNSOLICIT_TLM_MSG_SETUP_CC		40 // 112
 #define ADCS_SET_UNSOLICIT_EVENT_MSG_SETUP_CC	41 // 116
 #define ADCS_SET_INITIATE_EVENT_LOG_TRANSFER_CC	42 // 120
+#define ADCS_OpenLoopReactionWheelCmd_CC		43 // 121
 
 /* Telemetry */
 #define	ADCS_GET_ERROR_LOG_SETTING_CC			51 // 132
@@ -1071,6 +1072,7 @@ typedef struct {
 #define	ADCS_GET_ESTIMATION_MODE_CC				77 // 199
 #define ADCS_GET_OPERATIONAL_STATE_CC			78 // 200
 #define ADCS_GET_RAW_CSS_SENSOR_CC				79 // 203
+
 #define ADCS_GET_RAW_GYR_SENSOR_CC				80 // 204
 #define ADCS_GET_CALIBRATED_GYR_SENSOR_CC		81 // 207
 #define	ADCS_GET_MAG_SENSING_ELM_CONFIG_CC		82 // 221
@@ -1079,6 +1081,8 @@ typedef struct {
 #define ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP_CC	85 // 233
 #define ADCS_GET_EVENT_LOG_STATUS_RESPONSE_CC	86 // 235
 #define ADCS_GET_PORTMAP_CC	                    87 // 239
+
+#define ADCS2_GET_RAW_RW_SENSOR_CC              90 // 205
 
 #define ADCS_SEQ_DTUMB_CC						100
 #define ADCS_SEQ_SUNPT_CC						101
@@ -1106,6 +1110,20 @@ typedef struct{ // COMM 01
 	uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
 	ADCS2_COMM_FLAG_Payload_t	Payload;
 } ADCS2_Comm01Cmd_t;
+
+
+typedef struct
+{	// COMM TLM AMOUNT FLAG
+
+	uint32	float1;
+	uint32	float2;
+	uint32	float3;
+	
+} __attribute__((packed)) ADCS2_OpenLoopRW_Payload_t;
+typedef struct{ // COMM 01
+	uint8_t CmdHeader[CFE_SB_CMD_HDR_SIZE];
+	ADCS2_OpenLoopRW_Payload_t	Payload;
+} ADCS2_OpenLoopRWCmd_t;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 /*                                                                           */
@@ -5312,6 +5330,7 @@ typedef struct {
     ADCS_SequenceCmdDetumblingCmd_t        adcsseqdetumblingcmd;          // CC 100
     ADCS_SequenceCmdSunpointingCmd_t       adcsseqsunpointingcmd;         // CC 101
     ADCS2_Comm01Cmd_t                      adcs101cmd;
+    ADCS2_OpenLoopRWCmd_t                  adcsopenlooprwcmd;
 
     ADCS_SequenceCmdVpointingCmd_t         adcsseqvpointingcmd;           // CC 102
     ADCS_SequenceCmdKSCpointingCmd_t       adcsseqkscpointingcmd;         // CC 103
