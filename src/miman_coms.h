@@ -395,6 +395,18 @@ typedef enum
     REPORT_KIND_ADCS_GET_RAW_GYR_SENSOR,
     REPORT_KIND_ADCS_GET_RAW_RW_SENSOR,
 
+    /****************************************************************************************************************************************************************** */
+    REPORT_KIND_ADCS_GET_WHL_CONFIG,
+    REPORT_KIND_ADCS_GET_SATELLITE_CONFIG,
+    REPORT_KIND_ADCS_GET_CONTROLLER_CONFIG,
+    REPORT_KIND_ADCS_GET_DEFAULT_MODE_CONFIG,
+    REPORT_KIND_ADCS_GET_MOUNTING_CONFIG,
+    REPORT_KIND_ADCS_GET_ESTIMATOR_CONFIG,
+    REPORT_KIND_ADCS_GET_NODE_SELECTION_CONFIG,
+    REPORT_KIND_ADCS_GET_MTQ_CONFIG,
+    REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG,
+    REPORT_KIND_ADCS_GET_SAT_ORBIT_PARAM_CONFIG,
+    /****************************************************************************************************************************************************************** */
 
     REPORT_KIND_SC_GENERIC,
 
@@ -410,6 +422,19 @@ static ReportKind_t DetermineReportKind(uint16_t reflected_mid, uint8_t reflecte
 
     if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_RAW_GYR_SENSOR_CC) return REPORT_KIND_ADCS_GET_RAW_GYR_SENSOR;
     if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS2_GET_RAW_RW_SENSOR_CC) return REPORT_KIND_ADCS_GET_RAW_RW_SENSOR;
+
+    /********************************************************************************************************************************************************************* */
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_WHL_CONFIG_CC) return REPORT_KIND_ADCS_GET_WHL_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_SATELLITE_CONFIG_CC) return REPORT_KIND_ADCS_GET_SATELLITE_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_CONTROLLER_CONFIG_CC) return REPORT_KIND_ADCS_GET_CONTROLLER_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_DEFAULT_MODE_CONFIG_CC) return REPORT_KIND_ADCS_GET_DEFAULT_MODE_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MOUNTING_CONFIG_CC) return REPORT_KIND_ADCS_GET_MOUNTING_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_ESTIMATOR_CONFIG_CC) return REPORT_KIND_ADCS_GET_ESTIMATOR_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_NODE_SELECTION_CONFIG_CC) return REPORT_KIND_ADCS_GET_NODE_SELECTION_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MTQ_CONFIG_CC) return REPORT_KIND_ADCS_GET_MTQ_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MAG_SENSING_ELM_CONFIG_CC) return REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_SAT_ORBIT_PARAM_CONFIG_CC) return REPORT_KIND_ADCS_GET_SAT_ORBIT_PARAM_CONFIG;
+    /*********************************************************************************************************************************************************************** */
 
 
     return REPORT_KIND_SC_GENERIC;
@@ -644,8 +669,18 @@ typedef struct
         ADCS2_RawGYRSensorTlm_Payload_t        adcs2_rawgyr_sensor;
         ADCS2_RawRWLSensorTlm_Payload_t        adcs2_rawrwl_sensor;
 
-
-
+        /************************************************************************************************************************************************ */
+        ADCS_WhlConfigTlm_Payload_t            adcs_whlconfig;
+        ADCS_SatelliteConfigTlm_Payload_t      adcs_satelliteconfig;
+        ADCS_ControllerConfigTlm_Payload_t     adcs_controllerconfig;
+        ADCS_DefaultModeConfigTlm_Payload_t    adcs_defaultmodeconfig;
+        ADCS_MountingConfigTlm_Payload_t       adcs_mountingconfig;
+        ADCS_EstimatorConfigTlm_Payload_t      adcs_estimatorconfig;
+        ADCS_NodeSelectionConfigTlm_Payload_t  adcs_nodeselectionconfig;
+        ADCS_MTQConfigTlm_Payload_t            adcs_mtqconfig;
+        ADCS_MagSensingElmConfigTlm_Payload_t  adcs_magsensingelmconfig;
+        ADCS_SatOrbitParamConfigTlm_Payload_t  adcs_satorbitparamconfig;
+        /************************************************************************************************************************************************* */
     } u;
 } ReportView_t;
 

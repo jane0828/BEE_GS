@@ -149,6 +149,136 @@ static bool DecodePayloadToView(ReportView_t &v, const uint8_t *payload, uint16_
         }
     }
 
+    if (v.kind == REPORT_KIND_ADCS_GET_WHL_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_WhlConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_whlconfig, payload, sizeof(ADCS_WhlConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_SATELLITE_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_SatelliteConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_satelliteconfig, payload, sizeof(ADCS_SatelliteConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_CONTROLLER_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_ControllerConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_controllerconfig, payload, sizeof(ADCS_ControllerConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_DEFAULT_MODE_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_DefaultModeConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_defaultmodeconfig, payload, sizeof(ADCS_DefaultModeConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_MOUNTING_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_MountingConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_mountingconfig, payload, sizeof(ADCS_MountingConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_ESTIMATOR_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_EstimatorConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_estimatorconfig, payload, sizeof(ADCS_EstimatorConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_NODE_SELECTION_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_NodeSelectionConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_nodeselectionconfig, payload, sizeof(ADCS_NodeSelectionConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_MTQ_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_NodeSelectionConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_mtqconfig, payload, sizeof(ADCS_MTQConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_MagSensingElmConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_magsensingelmconfig, payload, sizeof(ADCS_MagSensingElmConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_SAT_ORBIT_PARAM_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_SatOrbitParamConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else
+        {
+            memcpy(&v.u.adcs_satorbitparamconfig, payload, sizeof(ADCS_SatOrbitParamConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
     v.kind = REPORT_KIND_SC_GENERIC;
 
     uint16_t n = payload_len;
