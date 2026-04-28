@@ -1114,9 +1114,9 @@ typedef struct{ // COMM 01
 typedef struct
 {	// COMM TLM AMOUNT FLAG
 
-	uint32	float1;
-	uint32	float2;
-	uint32	float3;
+	float	float1;
+	float	float2;
+	float	float3;
 	
 } __attribute__((packed)) ADCS_OpenLoopCmd_Payload_t;
 typedef struct{ // COMM 01
@@ -2327,7 +2327,7 @@ typedef struct
     float  GYR1RawRateZ;
     uint8   GYR0ValidFlag:1; // GYR0, 1
     uint8   GYR1ValidFlag:1; // GYR1, 0
-} __attribute__((packed)) ADCS_RawGYRSensorTlm_Paylaod_t;
+} __attribute__((packed)) ADCS_RawGYRSensorTlm_Payload_t;
 
 typedef struct
 { // ID 207

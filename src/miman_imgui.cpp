@@ -8115,13 +8115,13 @@ case 80: {
             ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
             ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
 
-            ImGui::InputScalar("Flag_TLM Type", ImGuiDataType_U32,
+            ImGui::InputScalar("Float1", ImGuiDataType_Float,
                             &command->adcsopenlooprwcmd.Payload.float1);
 
-            ImGui::InputScalar("Flag_EST Mode", ImGuiDataType_U32,
+            ImGui::InputScalar("Float2", ImGuiDataType_Float,
                             &command->adcsopenlooprwcmd.Payload.float2);
 
-            ImGui::InputScalar("Flag_Cont Mode", ImGuiDataType_U32,
+            ImGui::InputScalar("Float3", ImGuiDataType_Float,
                             &command->adcsopenlooprwcmd.Payload.float3);
 
             if (ImGui::Button("Generate CMD")) {

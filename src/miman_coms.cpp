@@ -132,6 +132,24 @@ static bool DecodePayloadToView(ReportView_t &v, const uint8_t *payload, uint16_
         }
     }
 
+            if (v.kind == REPORT_KIND_ADCS_RAW_RW_SENSOR_TLM) {
+        if (payload_len < sizeof(ADCS2_RawRWLSensorTlm_Payload_t)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.adcs_raw_rw_sensor, payload, sizeof(ADCS2_RawRWLSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
+            if (v.kind == REPORT_KIND_ADCS_RAW_GYR_SENSOR_TLM) {
+        if (payload_len < sizeof(ADCS2_RawGYRSensorTlm_Payload_t)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.adcs_raw_gyr_sensor, payload, sizeof(ADCS2_RawGYRSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
     v.kind = REPORT_KIND_SC_GENERIC;
 
     uint16_t n = payload_len;
@@ -1285,14 +1303,18 @@ void * task_downlink_onorbit(void * socketinfo)
                     time_t tmtime = time(0);
                     struct tm *local = localtime(&tmtime);
 
+                    struct timespec ts;
+                    clock_gettime(CLOCK_REALTIME, &ts);
+
                     sprintf(rptpktfilename,
-                            "../data/report/rpt_raw--%04d-%02d-%02d-%02d-%02d-%02d--",
-                            local->tm_year + 1900,
-                            local->tm_mon + 1,
-                            local->tm_mday,
-                            local->tm_hour,
-                            local->tm_min,
-                            local->tm_sec);
+                        "../data/report/rpt_raw--%04d-%02d-%02d-%02d-%02d-%02d-%03ld--",
+                        local->tm_year + 1900,
+                        local->tm_mon + 1,
+                        local->tm_mday,
+                        local->tm_hour,
+                        local->tm_min,
+                        local->tm_sec,
+                        ts.tv_nsec / 1000000);
 
                     console.AddLog("Received Report from port : %d.", dport);
                     rpt_fp = fopen(rptpktfilename, "wb");
