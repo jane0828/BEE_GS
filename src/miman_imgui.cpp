@@ -66,15 +66,11 @@ static bool show_tmtcWindow           = false;      // 초기관제
 static bool show_initialControlWindow = false;      // 초기관제
 static const int INITIAL_CMD_INDICES[] = {
     0, 1, 2, 3, 4,   // no arg, u8, u16, u32, u64
-    72, 73, 74, 76, 77, 79, 81, 82, 85, 86, 58,80, // ADCS sunpointing용
-    155,    // Enable Beacon
-    200,
-    205,    // UANT burn channel
-    160,    // UANT Get Status
-    25,     // EPS Dock Get HK
-    164, 165, 166, 167,   // Deploy SP
-    204,       // FM Get File Info
-    206,       // UTRX GNDWDT clear
+    232,
+    222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 
+    207, 208, 209, 210, 211, 212, 213, 214, 215, 
+    203, 204,
+    153, 154, 155, 156, 157, 158, 159, 
     -1               // 끝 표시
 };
 ReportPacket_t g_last_report = {};                  // RPT
@@ -1693,21 +1689,6 @@ void ImGui_BeaconWindow(float fontscale)
                             break;
                         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                         case REPORT_KIND_EPS_P60_DOCK_GET_TABLE_HK:
                         {
                             auto &pl = view.u.eps_p60dockgettablehk;
@@ -1905,9 +1886,6 @@ void ImGui_BeaconWindow(float fontscale)
                         }
 
 
-
-
-
                     case REPORT_KIND_ADCS_LOG_MASK:
                     {
                         ImGui::TextUnformatted("ADCS Log Inclusion Mask");
@@ -1941,6 +1919,261 @@ void ImGui_BeaconWindow(float fontscale)
                         break;
                     }
 
+
+                    
+                    case REPORT_KIND_UEL_GETCAMSHOTSTATUS_CMD:
+                    {
+                        auto &pl = view.u.uel_getcamshotstatus;
+
+                        ImGui::TextUnformatted("UEL Get Cam Shot Status");
+
+                        ImGui::Separator();
+
+                        ImGui::Text("[Image Info]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Image Slot");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.ImageSlot);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Image Number");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.ImageNumber);
+
+                        ImGui::Separator();
+
+                        ImGui::Text("[Chunk Info]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Total Chunk");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.TotalChunk);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("Last Chunk Size");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.LastChunkSize);
+
+                        break;
+                    }
+
+                    case REPORT_KIND_UEL_SETCAMSHOT_CMD:
+                    {
+                        auto &pl = view.u.uel_setcamshot;
+
+                        ImGui::TextUnformatted("UEL Set Cam Shot Command");
+
+                        ImGui::Separator();
+
+                        ImGui::Text("[Status]");
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("If Fail");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.ifFail);
+
+                        break;
+                    }
+
+
+                    case REPORT_KIND_COSMIC_EPS_GETHKALL_CMD:
+                    {
+                        auto &pl = view.u.cosmic_eps_gethkall_cmd;
+
+                        ImGui::TextUnformatted("COSMIC EPS Get HK All");
+
+                        ImGui::Separator();
+
+                        // ---- Voltage ----
+                        ImGui::Text("[Voltage]");
+                        for (int i = 0; i < 3; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("vboost[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.vboost[i]);
+                        }
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("vbatt");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.vbatt);
+
+                        ImGui::Separator();
+
+                        // ---- Current ----
+                        ImGui::Text("[Current]");
+                        for (int i = 0; i < 3; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("curin[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.curin[i]);
+                        }
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("cursun");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.cursun);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("cursys");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.cursys);
+
+                        ImGui::Separator();
+
+                        // ---- Output current ----
+                        ImGui::Text("[Output Current]");
+                        for (int i = 0; i < 6; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("curout[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.curout[i]);
+                        }
+
+                        ImGui::Separator();
+
+                        // ---- Output state ----
+                        ImGui::Text("[Output State]");
+                        for (int i = 0; i < 8; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("output[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.output[i]);
+                        }
+
+                        ImGui::Separator();
+
+                        // ---- Output delta ----
+                        ImGui::Text("[Output Delta]");
+                        for (int i = 0; i < 8; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("on_delta[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.output_on_delta[i]);
+
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("off_delta[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.output_off_delta[i]);
+                        }
+
+                        ImGui::Separator();
+
+                        // ---- Latchup ----
+                        ImGui::Text("[Latchup]");
+                        for (int i = 0; i < 6; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("latchup[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.latchup[i]);
+                        }
+
+                        ImGui::Separator();
+
+                        // ---- Watchdog ----
+                        ImGui::Text("[Watchdog]");
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("wdt_i2c_time_left");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.wdt_i2c_time_left);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("wdt_gnd_time_left");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.wdt_gnd_time_left);
+
+                        for (int i = 0; i < 2; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("wdt_csp_pings_left[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.wdt_csp_pings_left[i]);
+                        }
+
+                        ImGui::Separator();
+
+                        // ---- Counters ----
+                        ImGui::Text("[Counters]");
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("counter_wdt_i2c");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.counter_wdt_i2c);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("counter_wdt_gnd");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.counter_wdt_gnd);
+
+                        for (int i = 0; i < 2; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("counter_wdt_csp[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u", pl.counter_wdt_csp[i]);
+                        }
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("counter_boot");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.counter_boot);
+
+                        ImGui::Separator();
+
+                        // ---- Temperature ----
+                        ImGui::Text("[Temperature]");
+                        for (int i = 0; i < 6; i++) {
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("temp[%d]", i);
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%d", pl.temp[i]);
+                        }
+
+                        ImGui::Separator();
+
+                        // ---- Status ----
+                        ImGui::Text("[Status]");
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("bootcause");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.bootcause);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("battmode");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.battmode);
+
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::TextUnformatted("pptmode");
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u", pl.pptmode);
+
+                        break;
+                    }
 
                     case REPORT_KIND_ADCS_UNSOLICIT_TLM_SETUP_TLM:
                     {
@@ -3046,6 +3279,7 @@ static void DrawCmdGeneratorBody(bool initial_mode)
         static uint16_t msgid = 0;
         static uint8_t fnccode = 0;
         ImGui::Text("For ADCS NoOp CMD, MsgID = 6245");
+        ImGui::Text("For COSMIC EPS Get HK All CMD, MsgID = 6257, CC = 30");
         ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
         ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
 
@@ -10551,15 +10785,15 @@ case 155: { // TO_LAB Add Packet
 
 
     case 203: { 
-        static uint16_t msgid = 0;
-        static uint8_t  fnccode = 0;
+        static uint16_t msgid = 6262;
+        static uint8_t  fnccode = 2;
         static char     name_buf[64] = "";
 
 
         ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
         ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
 
-        ImGui::InputText("name", name_buf, sizeof(name_buf));
+        ImGui::InputText("path", name_buf, sizeof(name_buf));
         ImGui::InputScalar("start_byte u32", ImGuiDataType_U32, &command->ftpsendfilecmd.start_byte);
         ImGui::InputScalar("end_byte u32",   ImGuiDataType_U32, &command->ftpsendfilecmd.end_byte);
         ImGui::InputScalar("interval u8",    ImGuiDataType_U8,  &command->ftpsendfilecmd.interval);
@@ -10573,6 +10807,46 @@ case 155: { // TO_LAB Add Packet
         ImGui::InputScalar("padding[2] u8", ImGuiDataType_U8, &command->ftpsendfilecmd.padding[2]);
 
         if (ImGui::Button("Generate CMD")) {
+
+
+            
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
             uint16_t msgid_be = htons(msgid);
 
             memset(command->ftpsendfilecmd.name, 0, sizeof(command->ftpsendfilecmd.name));
@@ -10623,7 +10897,7 @@ case 155: { // TO_LAB Add Packet
             command->ftpsendfilecmd.CmdHeader[7]);
 
         ImGui::Text("Params:");
-        ImGui::Text("  name        = %s", name_buf);
+        ImGui::Text("  path        = %s", name_buf);
         ImGui::Text("  start_byte  = %u", command->ftpsendfilecmd.start_byte);
         ImGui::Text("  end_byte    = %u", command->ftpsendfilecmd.end_byte);
         ImGui::Text("  interval    = %u", command->ftpsendfilecmd.interval);
@@ -10644,6 +10918,8 @@ case 155: { // TO_LAB Add Packet
         static uint8_t fnccode = 10;
         static char path_buf[64] = "/cf/adcs.so";
 
+        ImGui::Text("Dual Emission -> Get File Info");
+
         ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
         ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
         ImGui::InputText("path", path_buf, sizeof(path_buf));
@@ -10651,6 +10927,46 @@ case 155: { // TO_LAB Add Packet
 
 
         if (ImGui::Button("Generate CMD")) {
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+
             uint16_t msgid_be = htons(msgid);
             memset(command->ftpfilenamecmd.path, 0, sizeof(command->ftpfilenamecmd.path));
             strncpy(command->ftpfilenamecmd.path, path_buf, sizeof(command->ftpfilenamecmd.path) - 1);
@@ -10991,7 +11307,7 @@ case 206: {
         pthread_join(p_thread[4], NULL);
 
 
-            sleep(0.1);
+            usleep(100000);   // 100 ms
 
         pthread_join(p_thread[4], NULL);
 
@@ -11041,7 +11357,7 @@ case 206: {
 
 
 
-        sleep(0.1);
+        usleep(100000);   // 100 ms
 
         uint8_t cmd2[12] = {0};
 
@@ -11351,6 +11667,7 @@ case 213: { // FTP_filenameCmd
         static uint8_t fnccode = 15;
         static char path_buf[64] = "/cf/sdcard/";
 
+        ImGui::Text("Dual Emission -> FM Get Directory List");
         ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
         ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
         ImGui::InputText("path", path_buf, sizeof(path_buf));
@@ -11361,6 +11678,45 @@ case 213: { // FTP_filenameCmd
         ImGui::InputScalar("Spare01[2] u8",   ImGuiDataType_U8, &command->ftpdirlistpktcmd.Spare01_2);
 
         if (ImGui::Button("Generate CMD")) {
+
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms            
 
             uint16_t msgid_be = htons(msgid);
             memset(command->ftpdirlistpktcmd.path, 0, sizeof(command->ftpdirlistpktcmd.path));
@@ -11417,9 +11773,56 @@ case 213: { // FTP_filenameCmd
         static uint8_t  fnccode = 8;
         ImGui::Text("MsgID   : 0x%04X", msgid);
         ImGui::Text("FncCode : %u",     fnccode);
-
+        ImGui::Text("Dual Emission -> Pi ON");
 
         if (ImGui::Button("Generate CMD")) {
+
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+
+
+
+
+
+
+
                 WriteSystemName(msgid);
                 pthread_join(p_thread[4], NULL);
 
@@ -11459,11 +11862,56 @@ case 213: { // FTP_filenameCmd
     case 215: { //  COSMIC UEL Pi OFF
         static uint16_t msgid   = 6277;
         static uint8_t  fnccode = 9;
+        ImGui::Text("DUAL EMISSION -> Pi OFF");
         ImGui::Text("MsgID   : 0x%04X", msgid);
         ImGui::Text("FncCode : %u",     fnccode);
 
 
         if (ImGui::Button("Generate CMD")) {
+
+
+
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+
+
                 WriteSystemName(msgid);
                 pthread_join(p_thread[4], NULL);
 
@@ -11830,6 +12278,960 @@ case 213: { // FTP_filenameCmd
         break;
     }
 
+        case 222: { // TO SET DUAL EMISSION
+            static uint16_t msgid   = 0x1823;
+            static uint8_t  fnccode = 27;
+
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+
+            if (ImGui::Button("Generate CMD")) {
+                WriteSystemName(msgid);
+
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {0x00, (uint8_t)(sizeof(TO_LAB_NoopCmd_t) - 7)};
+
+                memcpy(command->tolabnoopcmd.CmdHeader,     &mid, 2);
+                memcpy(command->tolabnoopcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->tolabnoopcmd.CmdHeader + 4, len,  2);
+                memcpy(command->tolabnoopcmd.CmdHeader + 6, &fnccode, 1);
+
+                command->tolabnoopcmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(TO_LAB_NoopCmd_t);
+                const uint8_t *p = (const uint8_t *)&command->tolabnoopcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+                command->tolabnoopcmd.CmdHeader[7] = crc;
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 + sizeof(TO_LAB_NoopCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(TO_LAB_NoopCmd_t);
+                memcpy(pkt->Data, &command->tolabnoopcmd, sizeof(TO_LAB_NoopCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void *)pkt);
+            }
+
+            ImGui::Text("Header: %02X %02X %02X %02X %02X %02X %02X %02X",
+                        command->tolabnoopcmd.CmdHeader[0],
+                        command->tolabnoopcmd.CmdHeader[1],
+                        command->tolabnoopcmd.CmdHeader[2],
+                        command->tolabnoopcmd.CmdHeader[3],
+                        command->tolabnoopcmd.CmdHeader[4],
+                        command->tolabnoopcmd.CmdHeader[5],
+                        command->tolabnoopcmd.CmdHeader[6],
+                        command->tolabnoopcmd.CmdHeader[7]);
+
+            break;
+        }
+
+        case 223: { // uel noop
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_NOOP_CC;
+            ImGui::Text("Dual Emission -> UEL NoOp");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            if (ImGui::Button("Generate CMD")) {
+
+
+
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+
+
+
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_NoopCmd_t) - 7)
+                };
+
+                memcpy(command->uelappnoopcmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappnoopcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappnoopcmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappnoopcmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappnoopcmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_NoopCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappnoopcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappnoopcmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_NoopCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_NoopCmd_t);
+                memcpy(pkt->Data, &command->uelappnoopcmd,
+                    sizeof(UEL_APP_NoopCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+
+        case 224: { // uel reset counters
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_RESET_COUNTERS_CC;
+
+            ImGui::Text("Dual Emission -> UEL Reset Counters");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            if (ImGui::Button("Generate CMD")) {
+
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_ResetCountersCmd_t) - 7)
+                };
+
+                memcpy(command->uelappresetcounterscmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappresetcounterscmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappresetcounterscmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappresetcounterscmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappresetcounterscmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_ResetCountersCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappresetcounterscmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappresetcounterscmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_ResetCountersCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_ResetCountersCmd_t);
+                memcpy(pkt->Data, &command->uelappresetcounterscmd,
+                    sizeof(UEL_APP_ResetCountersCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+
+        case 225: { // uel Send Beacon
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_SEND_BCN_CC;
+            ImGui::Text("DUAL Emission -> Send BCN");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            if (ImGui::Button("Generate CMD")) {
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_SendBcnCmd_t) - 7)
+                };
+
+                memcpy(command->uelappsendbcncmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappsendbcncmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappsendbcncmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappsendbcncmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappsendbcncmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_SendBcnCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappsendbcncmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappsendbcncmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_SendBcnCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_SendBcnCmd_t);
+                memcpy(pkt->Data, &command->uelappsendbcncmd,
+                    sizeof(UEL_APP_SendBcnCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+        case 226: { // uel Get sensor data
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_GET_SENS_DATA_CC;
+
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            if (ImGui::Button("Generate CMD")) {
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_GetSensDataCmd_t) - 7)
+                };
+
+                memcpy(command->uelappgetsensdatacmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappgetsensdatacmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappgetsensdatacmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappgetsensdatacmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappgetsensdatacmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_GetSensDataCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappgetsensdatacmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappgetsensdatacmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_GetSensDataCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_GetSensDataCmd_t);
+                memcpy(pkt->Data, &command->uelappgetsensdatacmd,
+                    sizeof(UEL_APP_GetSensDataCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+        case 227: { // uel Set Cam shot
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_SET_CAM_SHOT_CC;
+            static uint8_t  ImageSlot = 0xc8;
+            ImGui::Text("Dual Emission -> Set Cam Shot");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+            ImGui::InputScalar("ImageSlot", ImGuiDataType_U8, &ImageSlot);
+
+            if (ImGui::Button("Generate CMD")) {
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_SetCamShotCmd_t) - 7)
+                };
+
+                memcpy(command->uelappsetcamshotcmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappsetcamshotcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappsetcamshotcmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappsetcamshotcmd.CmdHeader + 6, &fnccode, 1);
+                command->uelappsetcamshotcmd.ImageSlot = ImageSlot;
+                command->uelappsetcamshotcmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_SetCamShotCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappsetcamshotcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappsetcamshotcmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_SetCamShotCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_SetCamShotCmd_t);
+                memcpy(pkt->Data, &command->uelappsetcamshotcmd,
+                    sizeof(UEL_APP_SetCamShotCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+        case 228: { // uel Get Cam shot status
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_GET_CAM_SHOT_STATUS_CC;
+            static uint8_t  ImageSlot = 0xc8;
+            static uint8_t  ImageNumber = 0x05;
+
+            ImGui::Text("Dual Emission -> Get Cam Shot Status");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+            ImGui::InputScalar("ImageSlot", ImGuiDataType_U8, &ImageSlot);
+            ImGui::InputScalar("ImageNumber", ImGuiDataType_U8, &ImageNumber);
+
+            if (ImGui::Button("Generate CMD")) {
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_GetCamShootStatusCmd_t) - 7)
+                };
+
+                memcpy(command->uelappgetcamshootstatuscmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappgetcamshootstatuscmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappgetcamshootstatuscmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappgetcamshootstatuscmd.CmdHeader + 6, &fnccode, 1);
+                command->uelappgetcamshootstatuscmd.ImageSlot   = ImageSlot;
+                command->uelappgetcamshootstatuscmd.ImageNumber = ImageNumber;  
+
+                command->uelappgetcamshootstatuscmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_GetCamShootStatusCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappgetcamshootstatuscmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappgetcamshootstatuscmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_GetCamShootStatusCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_GetCamShootStatusCmd_t);
+                memcpy(pkt->Data, &command->uelappgetcamshootstatuscmd,
+                    sizeof(UEL_APP_GetCamShootStatusCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+        case 229: { // uel Get Cam Image
+
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_GET_CAM_IMAGE_CC;
+            static uint8   ImgSlot;
+            static uint8   ImgNumber;     /* 추가 */
+            static uint16  ChunkNumber;
+
+            ImGui::Text("Dual Emission -> Get Cam Image");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+            ImGui::InputScalar("ImgSlot", ImGuiDataType_U8, &ImgSlot);
+            ImGui::InputScalar("ImgNumber", ImGuiDataType_U8, &ImgNumber);
+            ImGui::InputScalar("ChunkNumber", ImGuiDataType_U16, &ChunkNumber);
+
+            if (ImGui::Button("Generate CMD")) {
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_GetCamImageCmd_t) - 7)
+                };
+
+                memcpy(command->uelappgetcamimagecmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappgetcamimagecmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappgetcamimagecmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappgetcamimagecmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappgetcamimagecmd.ImgSlot = ImgSlot;
+                command->uelappgetcamimagecmd.ImgNumber = ImgNumber;
+                command->uelappgetcamimagecmd.ChunkNumber = htons(ChunkNumber);
+
+                command->uelappgetcamimagecmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_GetCamImageCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappgetcamimagecmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappgetcamimagecmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_GetCamImageCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_GetCamImageCmd_t);
+                memcpy(pkt->Data, &command->uelappgetcamimagecmd,
+                    sizeof(UEL_APP_GetCamImageCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+
+        case 230: {
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_SET_TERMINAL_CC;
+
+            ImGui::Text("Dual Emission -> Set Terminal");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+
+            if (ImGui::Button("Generate CMD")) {
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+
+                memset(&command->uelappsetterminalcmd, 0, sizeof(UEL_APP_SetTerminalCmd_t));
+
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_SetTerminalCmd_t) - 7)
+                };
+
+                memcpy(command->uelappsetterminalcmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappsetterminalcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappsetterminalcmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappsetterminalcmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappsetterminalcmd.CMDLength = (25);
+
+                {
+                    const uint8_t terminal_cmd[25] = {
+                        0x6c, 0x73, 0x20, 0x2d, 0x6c,
+                        0x20, 0x2f, 0x68, 0x6f, 0x6d,
+                        0x65, 0x2f, 0x75, 0x65, 0x6c,
+                        0x2f, 0x69, 0x6d, 0x61, 0x67,
+                        0x65, 0x2f, 0x32, 0x30, 0x30
+                    };
+
+                    memcpy(command->uelappsetterminalcmd.CMD, terminal_cmd, sizeof(terminal_cmd));
+                }
+
+                command->uelappsetterminalcmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_SetTerminalCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappsetterminalcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappsetterminalcmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 +
+                                        sizeof(UEL_APP_SetTerminalCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_SetTerminalCmd_t);
+                memcpy(pkt->Data, &command->uelappsetterminalcmd,
+                    sizeof(UEL_APP_SetTerminalCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+        case 231: {
+            static uint16_t msgid   = UEL_APP_CMD_MSGID;
+            static uint8_t  fnccode = UEL_APP_DOWNLOAD_IMG_CC;
+            static uint8    ImgSlot;
+            static uint8    ImgNumber;
+            static uint16   StartChunNumber;
+            static uint16   EndChunNumber;
+
+            ImGui::Text("Dual Emission -> Download Image");
+            ImGui::InputScalar("msgid",   ImGuiDataType_U16, &msgid);
+            ImGui::InputScalar("fnccode", ImGuiDataType_U8,  &fnccode);
+            ImGui::InputScalar("ImgSlot", ImGuiDataType_U8,  &ImgSlot);
+            ImGui::InputScalar("ImgNumber", ImGuiDataType_U8, &ImgNumber);
+            ImGui::InputScalar("StartChunkNumber", ImGuiDataType_U16, &StartChunNumber);
+            ImGui::InputScalar("EndChunkNumber",   ImGuiDataType_U16, &EndChunNumber);
+
+            if (ImGui::Button("Generate CMD")) {
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum0 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum0 ^= cmd0[i];
+        cmd0[7] = checksum0;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+            usleep(100000);   // 100 ms
+
+                WriteSystemName(msgid);
+
+                memset(&command->uelappdownloadallcmd, 0, sizeof(UEL_APP_DownloadAllCmd_t));
+
+                uint16_t mid = htons(msgid);
+                uint8_t  seq[2] = {0xC0, 0x00};
+                uint8_t  len[2] = {
+                    0x00,
+                    (uint8_t)(sizeof(UEL_APP_DownloadAllCmd_t) - 7)
+                };
+
+                memcpy(command->uelappdownloadallcmd.CmdHeader,     &mid, 2);
+                memcpy(command->uelappdownloadallcmd.CmdHeader + 2, seq,  2);
+                memcpy(command->uelappdownloadallcmd.CmdHeader + 4, len,  2);
+                memcpy(command->uelappdownloadallcmd.CmdHeader + 6, &fnccode, 1);
+
+                command->uelappdownloadallcmd.ImgSlot = ImgSlot;
+                command->uelappdownloadallcmd.ImgNumber = ImgNumber;
+                command->uelappdownloadallcmd.StartChunNumber = htons(StartChunNumber);
+                command->uelappdownloadallcmd.EndChunNumber   = htons(EndChunNumber);
+                command->uelappdownloadallcmd.CmdHeader[7] = 0;
+                uint16_t total = sizeof(UEL_APP_DownloadAllCmd_t);
+                const uint8_t *p =
+                    (const uint8_t *)&command->uelappdownloadallcmd;
+                uint8_t crc = 0xFF;
+                while (total--) crc ^= *(p++);
+
+                memcpy(command->uelappdownloadallcmd.CmdHeader + 7, &crc, 1);
+
+                packetsign *pkt =
+                    (packetsign *)malloc(2 + 2 + 4 + sizeof(UEL_APP_DownloadAllCmd_t));
+                pkt->Identifier = HVD_TEST;
+                pkt->PacketType = MIM_PT_TMTC_TEST;
+                pkt->Length     = sizeof(UEL_APP_DownloadAllCmd_t);
+                memcpy(pkt->Data, &command->uelappdownloadallcmd,
+                    sizeof(UEL_APP_DownloadAllCmd_t));
+
+                pthread_join(p_thread[4], NULL);
+                pthread_create(&p_thread[4], NULL,
+                            task_uplink_onorbit, (void *)pkt);
+            }
+            break;
+        }
+
+
+
+        case 232: { // eps p31u get hk all
+
+
+            // Add packet
+            ImGui::Text("TO SET DUAL EMISSION");
+            ImGui::Text("->");
+            ImGui::Text("EPS P31U Get HK All");
+
+            if (ImGui::Button("Generate CMD")) {
+
+  
+
+
+        uint8_t cmd0[8] = {0};
+
+            //mid
+        cmd0[0] = 0x18;
+        cmd0[1] = 0x23;
+            //seq
+        cmd0[2] = 0xC0;
+        cmd0[3] = 0x00;
+            //length
+        cmd0[4] = 0x00;
+        cmd0[5] = 0x01;
+
+        // CC
+        cmd0[6] = 27;   // 0
+
+        uint8_t checksum = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd0); ++i)
+            checksum ^= cmd0[i];
+        cmd0[7] = checksum;
+
+
+
+
+
+
+        packetsign* TestPacket0 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd0));
+        TestPacket0->Identifier = HVD_TEST;
+        TestPacket0->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket0->Length     = sizeof(cmd0);   
+        memcpy(TestPacket0->Data, cmd0, sizeof(cmd0));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket0);
+        pthread_join(p_thread[4], NULL);
+
+
+            sleep(0.1);
+
+
+        uint8_t cmd1[8] = {0};
+
+            //mid
+        cmd1[0] = 0x18;
+        cmd1[1] = 0x71;
+            //seq
+        cmd1[2] = 0xC0;
+        cmd1[3] = 0x00;
+            //length
+        cmd1[4] = 0x00;
+        cmd1[5] = 0x01;
+
+        // CC
+        cmd1[6] = 0x1e;   // 0
+
+        uint8_t checksum1 = 0xFF;
+        for (size_t i = 0; i < sizeof(cmd1); ++i)
+            checksum1 ^= cmd1[i];
+        cmd1[7] = checksum1;
+
+
+
+
+
+
+        packetsign* TestPacket1 =
+            (packetsign*)malloc(2 + 2 + 4 + sizeof(cmd1));
+        TestPacket1->Identifier = HVD_TEST;
+        TestPacket1->PacketType = MIM_PT_TMTC_TEST;
+        TestPacket1->Length     = sizeof(cmd1);   
+        memcpy(TestPacket1->Data, cmd1, sizeof(cmd1));
+
+        pthread_create(&p_thread[4], NULL,
+                       task_uplink_onorbit, (void*)TestPacket1);
+        pthread_join(p_thread[4], NULL);
+
+
+
+
+
+
+            }
+
+
+
+                    break;
+        }
+
+
+
+
+
+
+
     }
 }
 
@@ -11907,7 +13309,7 @@ void ImGui_ControlWindow(float fontscale)
     }
 
     ImGui::SameLine();
-    if (ImGui::Button("Initial Ops", ImVec2(eachW, buttonHeight)))
+    if (ImGui::Button("COSMIC", ImVec2(eachW, buttonHeight)))
     {
         show_initialControlWindow = true;
     }
@@ -12046,7 +13448,7 @@ void ImGui_ControlWindow(float fontscale)
     {
         ImGui::SetNextWindowSize(popup_size, ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowPos(popup_pos, ImGuiCond_FirstUseEver);
-        ImGui::Begin("Initial Operations##INITIAL_CMD_WINDOW", &show_initialControlWindow);
+        ImGui::Begin("COSMIC##INITIAL_CMD_WINDOW", &show_initialControlWindow);
         DrawCmdGeneratorBody(true);
         ImGui::End();
     }
@@ -13691,6 +15093,22 @@ void Initialize_CMDLabels()
     snprintf(Templabels[219], 64, "ES Reload App");
     snprintf(Templabels[220], 64, "ES Query One"); 
     snprintf(Templabels[221], 64, "ES Query All");
+
+
+    snprintf(Templabels[222], 64, "TO Set Dual Emission");
+    snprintf(Templabels[223], 64, "UEL NoOp");
+    snprintf(Templabels[224], 64, "UEL Reset Counters");
+    snprintf(Templabels[225], 64, "UEL Send Beacon");
+    snprintf(Templabels[226], 64, "UEL Get Sensor Data");
+    snprintf(Templabels[227], 64, "UEL Set Cam Shot");
+    snprintf(Templabels[228], 64, "UEL Get Cam Shot Status");
+    snprintf(Templabels[229], 64, "UEL Get Cam Image");
+    snprintf(Templabels[230], 64, "UEL Set Terminal Command");
+    snprintf(Templabels[231], 64, "UEL Download Image Range");
+
+    snprintf(Templabels[232], 64, "COSMIC EPS P31U Get HK All");
+
+
 
 
 }

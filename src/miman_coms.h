@@ -390,6 +390,9 @@ typedef enum
     REPORT_KIND_EPS_P60_DOCK_GET_TABLE_HK,
     REPORT_KIND_EPS_P60_PDU_GET_TABLE_HK,
     REPORT_KIND_EPS_P60_ACU_GET_TABLE_HK,
+    REPORT_KIND_UEL_SETCAMSHOT_CMD,
+    REPORT_KIND_UEL_GETCAMSHOTSTATUS_CMD,
+    REPORT_KIND_COSMIC_EPS_GETHKALL_CMD,
 
 
 
@@ -404,6 +407,9 @@ static ReportKind_t DetermineReportKind(uint16_t reflected_mid, uint8_t reflecte
     if ((reflected_mid == EPS_CMD_ID || reflected_mid == 0x7518) && reflected_cc == EPS_P60_DOCK_GET_TABLE_HK_CC) return REPORT_KIND_EPS_P60_DOCK_GET_TABLE_HK;
     if ((reflected_mid == EPS_CMD_ID || reflected_mid == 0x7518) && reflected_cc == EPS_P60_PDU_GET_TABLE_HK_CC) return REPORT_KIND_EPS_P60_PDU_GET_TABLE_HK;
     if ((reflected_mid == EPS_CMD_ID || reflected_mid == 0x7518) && reflected_cc == EPS_P60_ACU_GET_TABLE_HK_CC) return REPORT_KIND_EPS_P60_ACU_GET_TABLE_HK;
+    if ((reflected_mid == UEL_APP_CMD_MSGID || reflected_mid == 0x8518) && reflected_cc == UEL_APP_SET_CAM_SHOT_CC) return REPORT_KIND_UEL_SETCAMSHOT_CMD;
+    if ((reflected_mid == UEL_APP_CMD_MSGID || reflected_mid == 0x8518) && reflected_cc == UEL_APP_GET_CAM_SHOT_STATUS_CC) return REPORT_KIND_UEL_GETCAMSHOTSTATUS_CMD;
+    if ((reflected_mid == 0x1871 || reflected_mid == 0x7118) && reflected_cc == 30) return REPORT_KIND_COSMIC_EPS_GETHKALL_CMD;
 
 
     return REPORT_KIND_SC_GENERIC;
@@ -579,6 +585,60 @@ typedef struct EPS_P60_ACU_GET_TABLE_HK {
 } EPS_P60_ACU_GET_TABLE_HK;
 
 
+typedef struct COSMIC_EPS_GETHKALL_CMD {
+
+    uint16_t vboost[3];
+    uint16_t vbatt;
+
+    uint16_t curin[3];
+    uint16_t cursun;
+    uint16_t cursys;
+
+    uint16_t reserved1;
+
+    uint16_t curout[6];
+
+    uint8_t  output[8];
+
+    uint16_t output_on_delta[8];
+    uint16_t output_off_delta[8];
+
+    uint16_t latchup[6];
+
+    uint32_t wdt_i2c_time_left;
+    uint32_t wdt_gnd_time_left;
+
+    uint8_t  wdt_csp_pings_left[2];
+
+    uint32_t counter_wdt_i2c;
+    uint32_t counter_wdt_gnd;
+    uint32_t counter_wdt_csp[2];
+
+    uint32_t counter_boot;
+
+    int16_t  temp[6];
+
+    uint8_t  bootcause;
+    uint8_t  battmode;
+    uint8_t  pptmode;
+
+    uint16_t reserved2;
+
+}__attribute__((packed)) COSMIC_EPS_GETHKALL_CMD;
+
+#define a sizeof(COSMIC_EPS_GETHKALL_CMD)
+
+
+typedef struct {
+    uint8_t  ifFail;
+} UEL_SETCAMSHOT_CMD;
+
+typedef struct {
+    uint8_t  ImageSlot;
+    uint8_t  ImageNumber;
+    uint16_t TotalChunk;
+    uint8_t  LastChunkSize;
+} UEL_GETCAMSHOTSTATUS_CMD;
 
 typedef struct
 {
@@ -609,7 +669,10 @@ typedef struct
         EPS_P60_PDU_GET_TABLE_HK               eps_p60pdugettablehk;
         EPS_P60_ACU_GET_TABLE_HK               eps_p60acugettablehk;
 
+        UEL_SETCAMSHOT_CMD                     uel_setcamshot;
+        UEL_GETCAMSHOTSTATUS_CMD               uel_getcamshotstatus;
 
+        COSMIC_EPS_GETHKALL_CMD                cosmic_eps_gethkall_cmd;
 
     } u;
 } ReportView_t;

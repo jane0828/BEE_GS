@@ -1,0 +1,12 @@
+[12:38:04]  Connect to Switch Box.............Success.
+[12:38:04]  Connect to Rotator................Success.
+[12:38:04]  Connect to GS100..................Success.
+[12:38:04]  TM Port 13 bind success.
+[12:38:04]  BCN Port 31 bind success.
+[12:38:04]  RPT Port 25 bind success.
+[12:38:04]  Event Port 27 bind success.
+[12:38:04]  COSMIC Beacon Port 23 bind success.
+[12:38:04]  COSMIC Report Port 24 bind success.
+[12:38:08]  Cannot Read 20 parameters of Table 0.
+[12:38:11]  Cannot Read 13 parameters of Table 1.
+[12:38:15]  Cannot Read 18 parameters of Table 5.

@@ -51,6 +51,8 @@ uint16_t remote_boot_count = 0;
 
 
 static constexpr size_t REPORT_WIRE_SIZE = 540;
+static const unsigned int REPORT_CONN_DRAIN_TIMEOUT_MS = 100;
+
 
 static uint8_t g_report_wire[REPORT_WIRE_SIZE];
 static size_t  g_report_off = 0;
@@ -130,6 +132,35 @@ static bool DecodePayloadToView(ReportView_t &v, const uint8_t *payload, uint16_
             return true;
         }
     }
+
+        if (v.kind == REPORT_KIND_UEL_SETCAMSHOT_CMD) {
+        if (payload_len < sizeof(UEL_SETCAMSHOT_CMD)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.uel_setcamshot, payload, sizeof(UEL_SETCAMSHOT_CMD));
+            return true;
+        }
+    }
+
+        if (v.kind == REPORT_KIND_UEL_GETCAMSHOTSTATUS_CMD) {
+        if (payload_len < sizeof(UEL_GETCAMSHOTSTATUS_CMD)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.uel_getcamshotstatus, payload, sizeof(UEL_GETCAMSHOTSTATUS_CMD));
+            return true;
+        }
+    }
+
+        if (v.kind == REPORT_KIND_COSMIC_EPS_GETHKALL_CMD) {
+        if (payload_len < sizeof(COSMIC_EPS_GETHKALL_CMD)) {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        } else {
+            memcpy(&v.u.cosmic_eps_gethkall_cmd, payload, sizeof(COSMIC_EPS_GETHKALL_CMD));
+            return true;
+        }
+    }
+
+
 
     v.kind = REPORT_KIND_SC_GENERIC;
 
@@ -997,6 +1028,122 @@ static void DumpReportPayloadParsed_ByMidCc(FILE *fp, const Report *rpt)
                 break;
         }
     }
+    else if ((rpt->ReflectedMID == UEL_APP_CMD_MSGID) ||(rpt->ReflectedMID == 0x8518))
+    {
+        switch (rpt->ReflectedCC)
+        {
+            case UEL_APP_SET_CAM_SHOT_CC:
+            {
+                fprintf(fp, "\n[UEL SET CAM SHOT]\n");
+                if (payload_len < sizeof(UEL_SETCAMSHOT_CMD)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(UEL_SETCAMSHOT_CMD), payload_len);
+                    break;
+                }
+
+                UEL_SETCAMSHOT_CMD pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Report Data]\n");
+ 
+                fprintf(fp, "ifFail(0 = success, 1 = fail)              : %" PRIu8 "\n", pl.ifFail);
+                break;
+            }
+
+            case UEL_APP_GET_CAM_SHOT_STATUS_CC:
+            {
+                fprintf(fp, "\n[UEL GET CAM SHOT STATUS]\n");
+                if (payload_len < sizeof(UEL_GETCAMSHOTSTATUS_CMD)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(UEL_GETCAMSHOTSTATUS_CMD), payload_len);
+                    break;
+                }
+
+                UEL_GETCAMSHOTSTATUS_CMD pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Report Data]\n");
+                fprintf(fp, "ImageSlot              : %" PRIu8 "\n", pl.ImageSlot);
+                fprintf(fp, "ImageNumber            : %" PRIu8 "\n", pl.ImageNumber);
+                fprintf(fp, "TotalChunk             : %" PRIu16 "\n", pl.TotalChunk);
+                fprintf(fp, "LastChunkSize          : %" PRIu8 "\n", pl.LastChunkSize);
+                break;
+            }
+
+
+
+
+            default:
+                fprintf(fp, "\n[UEL APP] Unknown CC: 0x%02X\n", (unsigned)rpt->ReflectedCC);
+                break;
+        }
+    }
+
+    else if ((rpt->ReflectedMID == 0x1871) ||(rpt->ReflectedMID == 0x7118))
+    {
+        switch (rpt->ReflectedCC)
+        {
+    case 30:
+    {
+        fprintf(fp, "\n[COSMIC EPS GETHKALL]\n");
+        if (payload_len < sizeof(COSMIC_EPS_GETHKALL_CMD)) {
+            fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                    sizeof(COSMIC_EPS_GETHKALL_CMD), payload_len);
+            break;
+        }
+
+        COSMIC_EPS_GETHKALL_CMD pl;
+        memcpy(&pl, p, sizeof(pl));
+
+        fprintf(fp, "\n[Report Data]\n");
+
+        fprintf(fp, "\n[Voltage]\n");
+        DumpArr_u16(fp, "vboost[0..2]", pl.vboost, 3);
+        fprintf(fp, "vbatt: %" PRIu16 "\n", pl.vbatt);
+
+        fprintf(fp, "\n[Current]\n");
+        DumpArr_u16(fp, "curin[0..2]",  pl.curin,  3);
+        fprintf(fp, "cursun: %" PRIu16 "\n", pl.cursun);
+        fprintf(fp, "cursys: %" PRIu16 "\n", pl.cursys);
+        fprintf(fp, "reserved1: %" PRIu16 "\n", pl.reserved1);
+        DumpArr_u16(fp, "curout[0..5]", pl.curout, 6);
+
+        fprintf(fp, "\n[Outputs]\n");
+        DumpArr_u8 (fp, "output[0..7]",           pl.output,           8);
+        DumpArr_u16(fp, "output_on_delta[0..7]",  pl.output_on_delta,  8);
+        DumpArr_u16(fp, "output_off_delta[0..7]", pl.output_off_delta, 8);
+
+        fprintf(fp, "\n[Latchup]\n");
+        DumpArr_u16(fp, "latchup[0..5]", pl.latchup, 6);
+
+        fprintf(fp, "\n[WDT]\n");
+        fprintf(fp, "wdt_i2c_time_left : %" PRIu32 "\n", pl.wdt_i2c_time_left);
+        fprintf(fp, "wdt_gnd_time_left : %" PRIu32 "\n", pl.wdt_gnd_time_left);
+        DumpArr_u8(fp, "wdt_csp_pings_left[0..1]", pl.wdt_csp_pings_left, 2);
+        fprintf(fp, "counter_wdt_i2c   : %" PRIu32 "\n", pl.counter_wdt_i2c);
+        fprintf(fp, "counter_wdt_gnd   : %" PRIu32 "\n", pl.counter_wdt_gnd);
+        DumpArr_u32(fp, "counter_wdt_csp[0..1]", pl.counter_wdt_csp, 2);
+        fprintf(fp, "counter_boot      : %" PRIu32 "\n", pl.counter_boot);
+
+        fprintf(fp, "\n[Temperature]\n");
+        DumpArr_i16(fp, "temp[0..5]", pl.temp, 6);
+
+        fprintf(fp, "\n[Mode/Boot]\n");
+        fprintf(fp, "bootcause: %" PRIu8 "\n", pl.bootcause);
+        fprintf(fp, "battmode : %" PRIu8 "\n", pl.battmode);
+        fprintf(fp, "pptmode  : %" PRIu8 "\n", pl.pptmode);
+        fprintf(fp, "reserved2: %" PRIu16 "\n", pl.reserved2);
+
+        break;
+    }
+
+
+            default:
+                fprintf(fp, "\n[COSMIC EPS] Unknown CC: 0x%02X\n", (unsigned)rpt->ReflectedCC);
+                break;
+        }
+    }
+
     else
     {
         fprintf(fp, "\n[UNKNOWN MID] No parser for ReflectedMID=0x%04X\n", (unsigned)rpt->ReflectedMID);
@@ -1146,9 +1293,14 @@ void * task_downlink_onorbit(void * socketinfo)
             continue;
         }
 
-        while ((packet = csp_read(conn, setup->default_timeout)) != NULL) {
+        const int dport = csp_conn_dport(conn);
+        unsigned int read_timeout = setup->default_timeout;
 
-            const int dport = csp_conn_dport(conn);
+        if (dport == 24) {
+            read_timeout = REPORT_CONN_DRAIN_TIMEOUT_MS;
+        }
+
+        while ((packet = csp_read(conn, read_timeout)) != NULL) {
 
             switch (dport) {
 
@@ -1159,7 +1311,7 @@ void * task_downlink_onorbit(void * socketinfo)
                         struct tm *local = localtime(&tmtime);
 
                         sprintf(getfileinfofilename,
-                                "../data/response/GETFILEINFO--%04d-%02d-%02d-%02d-%02d-%02d--",
+                                "../data/FM--%04d-%02d-%02d-%02d-%02d-%02d--",
                                 local->tm_year + 1900,
                                 local->tm_mon + 1,
                                 local->tm_mday,
@@ -1167,10 +1319,10 @@ void * task_downlink_onorbit(void * socketinfo)
                                 local->tm_min,
                                 local->tm_sec);
 
-                        console.AddLog("Received GETFILEINFO Response from port : %d.\n", dport);
+                        console.AddLog("Received FM Response from port : %d.\n", dport);
 
                         FILE *GETFILEINFO_fp = fopen(getfileinfofilename, "wb");
-                        printf("Received GETFILEINFO response Length: %u", packet->length);
+                        printf("Received FM response Length: %u", packet->length);
 
                         for (int i = 0; i < packet->length; i++) {
                             if (!(i % 10) && i != 0) {
@@ -1187,14 +1339,14 @@ void * task_downlink_onorbit(void * socketinfo)
                         if (GETFILEINFO_fp) fclose(GETFILEINFO_fp);
                     }
 
-                    else {
+                    if (packet->length == 192) {
 
                     char cosbcnfilename[128];
                     time_t tmtime = time(0);
                     struct tm *local = localtime(&tmtime);
 
                     sprintf(cosbcnfilename,
-                            "../data/cosmic/beacon--%04d-%02d-%02d-%02d-%02d-%02d--",
+                            "../data/beacon--%04d-%02d-%02d-%02d-%02d-%02d--",
                             local->tm_year + 1900,
                             local->tm_mon + 1,
                             local->tm_mday,
@@ -1230,12 +1382,14 @@ void * task_downlink_onorbit(void * socketinfo)
                 }
 
                 case 24: {
-                    char cosrptfilename[128];
+                    FILE *rpt_fp = NULL;
+
+                    char rptpktfilename[128];
                     time_t tmtime = time(0);
                     struct tm *local = localtime(&tmtime);
 
-                    sprintf(cosrptfilename,
-                            "../data/cosmic/report--%04d-%02d-%02d-%02d-%02d-%02d--",
+                    sprintf(rptpktfilename,
+                            "../data/report/rpt_raw--%04d-%02d-%02d-%02d-%02d-%02d--",
                             local->tm_year + 1900,
                             local->tm_mon + 1,
                             local->tm_mday,
@@ -1243,32 +1397,112 @@ void * task_downlink_onorbit(void * socketinfo)
                             local->tm_min,
                             local->tm_sec);
 
-                    console.AddLog("!!!!!!!!!Received COSMIC Report from port : %d.!!!!!!!!!\n", dport);
+                    console.AddLog("Received Report from port : %d.", dport);
+                    rpt_fp = fopen(rptpktfilename, "wb");
 
-                    FILE *cosrpt_fp = fopen(cosrptfilename, "wb");
-                    printf("\nCOSMIC Report Length: %u", packet->length);
+                    const time_t now = time(NULL);
+                    const size_t chunk_len = packet->length;
 
-                    for (int i = 0; i < packet->length; i++) {
-                        if (!(i % 10) && i != 0) {
+                    printf("case24: chunk_len=%zu\n", chunk_len);
+
+                    // ===== RAW DUMP (terminal + file) =====
+                    printf("===== REPORT RAW CHUNK DUMP (%zu bytes) =====\n", chunk_len);
+                    if (rpt_fp) fprintf(rpt_fp, "===== REPORT RAW CHUNK DUMP (%zu bytes) =====\n", chunk_len);
+
+                    for (size_t i = 0; i < chunk_len; i++) {
+                        printf("%02X ", packet->data[i]);
+                        if (rpt_fp) fprintf(rpt_fp, "%02hhx ", packet->data[i]);
+
+                        if ((i + 1) % 16 == 0) {
                             printf("\n");
-                            if (cosrpt_fp) fprintf(cosrpt_fp, "\n");
+                            if (rpt_fp) fprintf(rpt_fp, "\n");
                         }
-                        printf("0x%x ", packet->data[i]);
-                        if (cosrpt_fp) fprintf(cosrpt_fp, "%02hhx\t", packet->data[i]);
                     }
 
-                    if (cosrpt_fp) fclose(cosrpt_fp);
-
-                    printf("Report Packet Length: %u\n", packet->length);
-                    printf("===== Report PACKET DUMP =====\n");
-                    for (int i = 0; i < packet->length; i++) {
-                        if (!(i % 10) && i != 0) printf("\n");
-                        printf("0x%02X ", packet->data[i]);
+                    if (chunk_len % 16 != 0) {
+                        printf("\n");
+                        if (rpt_fp) fprintf(rpt_fp, "\n");
                     }
-                    printf("\n===============================\n");
+
+                    printf("===========================================\n");
+                    if (rpt_fp) fprintf(rpt_fp, "===========================================\n");
+                    // ===== END RAW DUMP =====
+
+                    if (g_report_collecting && g_report_have_last_time) {
+                        double dt = difftime(now, g_report_last_chunk_time);
+                        if (dt > 5.0) {
+                            printf("case24: timeout dt=%.1f sec (>5). drop current report assembler.\n", dt);
+
+                            g_report_collecting = false;
+                            g_report_off = 0;
+                            memset(g_report_wire, 0, sizeof(g_report_wire));
+
+                            g_report_have_last_time = false;
+                            g_report_last_chunk_time = 0;
+                        }
+                    }
+
+                    if (!g_report_collecting) {
+                        g_report_collecting = true;
+                        g_report_off = 0;
+                        memset(g_report_wire, 0, sizeof(g_report_wire));
+                    }
+
+                    g_report_last_chunk_time = now;
+                    g_report_have_last_time = true;
+
+                    if (g_report_off > REPORT_WIRE_SIZE) {
+                        g_report_collecting = false;
+                        g_report_off = 0;
+                        memset(g_report_wire, 0, sizeof(g_report_wire));
+                        g_report_have_last_time = false;
+                        g_report_last_chunk_time = 0;
+                    }
+
+                    size_t remain = REPORT_WIRE_SIZE - g_report_off;
+
+                    if (chunk_len > remain) {
+                        printf("case24: overflow (off=%zu, chunk=%zu). drop current and restart with this chunk.\n",
+                            g_report_off, chunk_len);
+
+                        g_report_collecting = true;
+                        g_report_off = 0;
+                        memset(g_report_wire, 0, sizeof(g_report_wire));
+                        remain = REPORT_WIRE_SIZE;
+                    }
+
+                    if (chunk_len <= remain) {
+                        memcpy(g_report_wire + g_report_off, packet->data, chunk_len);
+                        g_report_off += chunk_len;
+
+                        printf("case24: assembled %zu/%zu\n", g_report_off, (size_t)REPORT_WIRE_SIZE);
+
+                        if (g_report_off == REPORT_WIRE_SIZE) {
+                            Report rpt;
+                            bool ok = ParseReportWire540(g_report_wire, REPORT_WIRE_SIZE, rpt);
+
+                            if (ok) {
+                                printf("\ncase24: REPORT COMPLETE \nMsgId=0x%04x \nRefMID=0x%04x \nCC=0x%02x \nRetSize=%u\n",
+                                    rpt.CCSDS_MsgId, rpt.ReflectedMID, rpt.ReflectedCC, (unsigned)rpt.RetValSize);
+                                UpdateReportViewFromReport(rpt);
+                                ReportSaver(&rpt);
+                            } else {
+                                printf("case24: ParseReportWire540 failed\n");
+                            }
+
+                            g_report_collecting = false;
+                            g_report_off = 0;
+                            memset(g_report_wire, 0, sizeof(g_report_wire));
+                            g_report_have_last_time = false;
+                            g_report_last_chunk_time = 0;
+                        }
+                    } else {
+                        printf("case24: chunk too big to fit even after restart (%zu)\n", chunk_len);
+                    }
+
+                    if (rpt_fp) fclose(rpt_fp);
                     break;
                 }
-
                 case 27: {
                     if (packet->length == BEE_LEN_EVENT) {
                         char eventfilename[128];
@@ -1315,411 +1549,8 @@ void * task_downlink_onorbit(void * socketinfo)
                     break;
                 }
 
-                case 25: {
-                    FILE *rpt_fp = NULL;
 
-                    char rptpktfilename[128];
-                    time_t tmtime = time(0);
-                    struct tm *local = localtime(&tmtime);
 
-                    sprintf(rptpktfilename,
-                            "../data/report/rpt_raw--%04d-%02d-%02d-%02d-%02d-%02d--",
-                            local->tm_year + 1900,
-                            local->tm_mon + 1,
-                            local->tm_mday,
-                            local->tm_hour,
-                            local->tm_min,
-                            local->tm_sec);
-
-                    console.AddLog("Received Report from port : %d.", dport);
-                    rpt_fp = fopen(rptpktfilename, "wb");
-
-                    const time_t now = time(NULL);
-                    const size_t chunk_len = packet->length;
-
-                    printf("case25: chunk_len=%zu\n", chunk_len);
-
-                    // ===== RAW DUMP (terminal + file) =====
-                    printf("===== REPORT RAW CHUNK DUMP (%zu bytes) =====\n", chunk_len);
-                    if (rpt_fp) fprintf(rpt_fp, "===== REPORT RAW CHUNK DUMP (%zu bytes) =====\n", chunk_len);
-
-                    for (size_t i = 0; i < chunk_len; i++) {
-                        printf("%02X ", packet->data[i]);
-                        if (rpt_fp) fprintf(rpt_fp, "%02hhx ", packet->data[i]);
-
-                        if ((i + 1) % 16 == 0) {
-                            printf("\n");
-                            if (rpt_fp) fprintf(rpt_fp, "\n");
-                        }
-                    }
-
-                    if (chunk_len % 16 != 0) {
-                        printf("\n");
-                        if (rpt_fp) fprintf(rpt_fp, "\n");
-                    }
-
-                    printf("===========================================\n");
-                    if (rpt_fp) fprintf(rpt_fp, "===========================================\n");
-                    // ===== END RAW DUMP =====
-
-                    if (g_report_collecting && g_report_have_last_time) {
-                        double dt = difftime(now, g_report_last_chunk_time);
-                        if (dt > 5.0) {
-                            printf("case25: timeout dt=%.1f sec (>5). drop current report assembler.\n", dt);
-
-                            g_report_collecting = false;
-                            g_report_off = 0;
-                            memset(g_report_wire, 0, sizeof(g_report_wire));
-
-                            g_report_have_last_time = false;
-                            g_report_last_chunk_time = 0;
-                        }
-                    }
-
-                    if (!g_report_collecting) {
-                        g_report_collecting = true;
-                        g_report_off = 0;
-                        memset(g_report_wire, 0, sizeof(g_report_wire));
-                    }
-
-                    g_report_last_chunk_time = now;
-                    g_report_have_last_time = true;
-
-                    if (g_report_off > REPORT_WIRE_SIZE) {
-                        g_report_collecting = false;
-                        g_report_off = 0;
-                        memset(g_report_wire, 0, sizeof(g_report_wire));
-                        g_report_have_last_time = false;
-                        g_report_last_chunk_time = 0;
-                    }
-
-                    size_t remain = REPORT_WIRE_SIZE - g_report_off;
-
-                    if (chunk_len > remain) {
-                        printf("case25: overflow (off=%zu, chunk=%zu). drop current and restart with this chunk.\n",
-                            g_report_off, chunk_len);
-
-                        g_report_collecting = true;
-                        g_report_off = 0;
-                        memset(g_report_wire, 0, sizeof(g_report_wire));
-                        remain = REPORT_WIRE_SIZE;
-                    }
-
-                    if (chunk_len <= remain) {
-                        memcpy(g_report_wire + g_report_off, packet->data, chunk_len);
-                        g_report_off += chunk_len;
-
-                        printf("case25: assembled %zu/%zu\n", g_report_off, (size_t)REPORT_WIRE_SIZE);
-
-                        if (g_report_off == REPORT_WIRE_SIZE) {
-                            Report rpt;
-                            bool ok = ParseReportWire540(g_report_wire, REPORT_WIRE_SIZE, rpt);
-
-                            if (ok) {
-                                printf("\ncase25: REPORT COMPLETE \nMsgId=0x%04x \nRefMID=0x%04x \nCC=0x%02x \nRetSize=%u\n",
-                                    rpt.CCSDS_MsgId, rpt.ReflectedMID, rpt.ReflectedCC, (unsigned)rpt.RetValSize);
-                                UpdateReportViewFromReport(rpt);
-                                ReportSaver(&rpt);
-                            } else {
-                                printf("case25: ParseReportWire540 failed\n");
-                            }
-
-                            g_report_collecting = false;
-                            g_report_off = 0;
-                            memset(g_report_wire, 0, sizeof(g_report_wire));
-                            g_report_have_last_time = false;
-                            g_report_last_chunk_time = 0;
-                        }
-                    } else {
-                        printf("case25: chunk too big to fit even after restart (%zu)\n", chunk_len);
-                    }
-
-                    if (rpt_fp) fclose(rpt_fp);
-                    break;
-                }
-
-
-                case 13: {
-                    if (packet->length == MIM_LEN_BEACON) {
-                        char bcnpktfilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(bcnpktfilename,
-                                "../data/bcnpkt/bcnpktp13--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        console.AddLog("Received Beacon from port : %d.", dport);
-
-                        FILE *bcn_fp = fopen(bcnpktfilename, "wb");
-                        printf("\nBeacon Length: %u", packet->length);
-
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) {
-                                printf("\n");
-                                if (bcn_fp) fprintf(bcn_fp, "\n");
-                            }
-                            printf("0x%x ", packet->data[i]);
-                            if (bcn_fp) fprintf(bcn_fp, "%02hhx\t", packet->data[i]);
-                        }
-
-                        memset(beacon, 0, sizeof(*beacon));
-                        memcpy(beacon, packet->data, MIM_LEN_BEACON);
-                        BeaconSaver(beacon);
-
-                        if (bcn_fp) fclose(bcn_fp);
-                    }
-                    else if (packet->length == BEE_LEN_MISSIONBEACON) {
-                        char misnbcnpktfilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(misnbcnpktfilename,
-                                "../data/bcnpkt/misnbcnpkt--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        console.AddLog("!!!!!!!!!Received Mission Beacon from port : %d.!!!!!!!!!", dport);
-
-                        FILE *misnbcn_fp = fopen(misnbcnpktfilename, "wb");
-                        printf("\nMission Beacon Length: %u", packet->length);
-
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) {
-                                printf("\n");
-                                if (misnbcn_fp) fprintf(misnbcn_fp, "\n");
-                            }
-                            printf("0x%x ", packet->data[i]);
-                            if (misnbcn_fp) fprintf(misnbcn_fp, "%02hhx\t", packet->data[i]);
-                        }
-
-                        memset(missionbeacon, 0, sizeof(*missionbeacon));
-                        memcpy(missionbeacon, packet->data, BEE_LEN_MISSIONBEACON);
-                        MissionBeaconSaver(missionbeacon);
-
-                        if (misnbcn_fp) fclose(misnbcn_fp);
-                    }
-                    else if (packet->length == BEE_LEN_GETFILEINFO) {
-                        char getfileinfofilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(getfileinfofilename,
-                                "../data/response/GETFILEINFO--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        console.AddLog("Received GETFILEINFO Response from port : %d.", dport);
-
-                        FILE *GETFILEINFO_fp = fopen(getfileinfofilename, "wb");
-                        printf("Received GETFILEINFO response Length: %u", packet->length);
-
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) {
-                                printf("\n");
-                                if (GETFILEINFO_fp) fprintf(GETFILEINFO_fp, "\n");
-                            }
-                            printf("0x%x ", packet->data[i]);
-                            if (GETFILEINFO_fp) fprintf(GETFILEINFO_fp, "%02hhx\t", packet->data[i]);
-                        }
-
-                        memset(getfileinfo, 0, sizeof(*getfileinfo));
-                        memcpy(getfileinfo, packet->data, BEE_LEN_GETFILEINFO);
-
-                        if (GETFILEINFO_fp) fclose(GETFILEINFO_fp);
-                    }
-                    else {
-                        console.AddLog("Received Something but brocken.");
-
-                        char unknownfilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(unknownfilename,
-                                "../data/unknown/port13/unknown_--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        FILE *unk_fp = fopen(unknownfilename, "wb");
-
-                        printf("Unknown Packet Length: %u\n", packet->length);
-                        printf("===== UNKNOWN PACKET DUMP =====\n");
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) printf("\n");
-                            printf("0x%02X ", packet->data[i]);
-
-                            if (unk_fp) {
-                                if (!(i % 10) && i != 0) fprintf(unk_fp, "\n");
-                                fprintf(unk_fp, "%02hhx\t", packet->data[i]);
-                            }
-                        }
-                        printf("\n===============================\n");
-
-                        if (unk_fp) fclose(unk_fp);
-                    }
-
-                    break;
-                }
-
-                case 31: {
-                    if (packet->length == MIM_LEN_BEACON) {
-                        char bcnpktfilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(bcnpktfilename,
-                                "../data/bcnpkt/bcnpktp13--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        console.AddLog("Received Beacon from port : %d.\n", dport);
-
-                        FILE *bcn_fp = fopen(bcnpktfilename, "wb");
-                        printf("\nBeacon Length: %u", packet->length);
-
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) {
-                                printf("\n");
-                                if (bcn_fp) fprintf(bcn_fp, "\n");
-                            }
-                            printf("0x%x ", packet->data[i]);
-                            if (bcn_fp) fprintf(bcn_fp, "%02hhx\t", packet->data[i]);
-                        }
-
-                        memset(beacon, 0, sizeof(*beacon));
-                        memcpy(beacon, packet->data, MIM_LEN_BEACON);
-                        BeaconSaver(beacon);
-
-                        if (bcn_fp) fclose(bcn_fp);
-                    }
-                    else if (packet->length == BEE_LEN_MISSIONBEACON) {
-                        char misnbcnpktfilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(misnbcnpktfilename,
-                                "../data/bcnpkt/misnbcnpkt--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        console.AddLog("!!!!!!!!!Received Mission Beacon from port : %d.!!!!!!!!!", dport);
-
-                        FILE *misnbcn_fp = fopen(misnbcnpktfilename, "wb");
-                        printf("\nMission Beacon Length: %u\n", packet->length);
-
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) {
-                                printf("\n");
-                                if (misnbcn_fp) fprintf(misnbcn_fp, "\n");
-                            }
-                            printf("0x%x ", packet->data[i]);
-                            if (misnbcn_fp) fprintf(misnbcn_fp, "%02hhx\t", packet->data[i]);
-                        }
-
-                        memset(missionbeacon, 0, sizeof(*missionbeacon));
-                        memcpy(missionbeacon, packet->data, BEE_LEN_MISSIONBEACON);
-                        MissionBeaconSaver(missionbeacon);
-
-                        if (misnbcn_fp) fclose(misnbcn_fp);
-                    }
-                    else {
-                        console.AddLog("Received Beacon but brocken.");
-
-                        char unknownfilename[128];
-                        time_t tmtime = time(0);
-                        struct tm *local = localtime(&tmtime);
-
-                        sprintf(unknownfilename,
-                                "../data/unknown/port31/unknown--%04d-%02d-%02d-%02d-%02d-%02d--",
-                                local->tm_year + 1900,
-                                local->tm_mon + 1,
-                                local->tm_mday,
-                                local->tm_hour,
-                                local->tm_min,
-                                local->tm_sec);
-
-                        FILE *unk_fp = fopen(unknownfilename, "wb");
-
-                        printf("Unknown Packet Length: %u\n", packet->length);
-                        printf("===== UNKNOWN PACKET DUMP =====\n");
-                        for (int i = 0; i < packet->length; i++) {
-                            if (!(i % 10) && i != 0) printf("\n");
-                            printf("0x%02X ", packet->data[i]);
-
-                            if (unk_fp) {
-                                if (!(i % 10) && i != 0) fprintf(unk_fp, "\n");
-                                fprintf(unk_fp, "%02hhx\t", packet->data[i]);
-                            }
-                        }
-                        printf("\n===============================\n");
-
-                        if (unk_fp) fclose(unk_fp);
-                    }
-                    break;
-                }
-
-                case 12: {
-                    char bcnpktfilename[128];
-                    time_t tmtime = time(0);
-                    struct tm *local = localtime(&tmtime);
-
-                    sprintf(bcnpktfilename,
-                            "../data/bcnpkt/bcnpktp13--%04d-%02d-%02d-%02d-%02d-%02d--",
-                            local->tm_year + 1900,
-                            local->tm_mon + 1,
-                            local->tm_mday,
-                            local->tm_hour,
-                            local->tm_min,
-                            local->tm_sec);
-
-                    console.AddLog("Received Beacon from port : %d.", dport);
-
-                    FILE *bcn_fp = fopen(bcnpktfilename, "wb");
-                    printf("Beacon Length: %u", packet->length);
-
-                    for (int i = 0; i < packet->length; i++) {
-                        if (!(i % 10) && i != 0) {
-                            printf("\n");
-                            if (bcn_fp) fprintf(bcn_fp, "\n");
-                        }
-                        printf("0x%x ", packet->data[i]);
-                        if (bcn_fp) fprintf(bcn_fp, "%02hhx\t", packet->data[i]);
-                    }
-
-                    if (packet->length == MIM_LEN_BEACON) {
-                        memcpy(beacon, packet->data, MIM_LEN_BEACON);
-                    } else {
-                        console.AddLog("Received Beacon but brocken.");
-                    }
-
-                    if (bcn_fp) fclose(bcn_fp);
-                    break;
-                }
 
                 default: {
                     if (dport == 1) {

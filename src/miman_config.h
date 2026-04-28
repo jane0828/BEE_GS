@@ -186,7 +186,7 @@ Console()
     time_t t = time(NULL);
     struct tm* lt = localtime(&t);
 
-    sprintf(hist_name, "../data/BEE_Console_Log/console--%04d-%02d-%02d-%02d-%02d-%02d.log",
+    sprintf(hist_name, "../data/COSMIC_Console_Log/console--%04d-%02d-%02d-%02d-%02d-%02d.log",
             lt->tm_year + 1900,
             lt->tm_mon + 1,
             lt->tm_mday,
@@ -194,7 +194,7 @@ Console()
             lt->tm_min,
             lt->tm_sec);
 
-    sprintf(dbg_name, "../data/BEE_Debug_Log/debug--%04d-%02d-%02d-%02d-%02d-%02d.log",
+    sprintf(dbg_name, "../data/COSMIC_Debug_Log/debug--%04d-%02d-%02d-%02d-%02d-%02d.log",
             lt->tm_year + 1900,
             lt->tm_mon + 1,
             lt->tm_mday,
@@ -212,7 +212,7 @@ Console()
 
 
 
-    Console(float x_pos, float y_pos, float width, float height, const char * const log_name = "../data/BEE_Console_Log/console.log", const char * const debug_name = "../data/BEE_Debug_Log/debug.log")
+    Console(float x_pos, float y_pos, float width, float height, const char * const log_name = "../data/COSMIC_Console_Log/console.log", const char * const debug_name = "../data/COSMIC_Debug_Log/debug.log")
     : _x_pos(x_pos), _y_pos(y_pos), _width(width), _height(height), _push_to_bottom(false), _history_fs(log_name, std::fstream::in | std::fstream::out | std::fstream::app), _debug_fs(debug_name, std::fstream::in | std::fstream::out | std::fstream::app)
     {
         Initializer();
@@ -5156,7 +5156,127 @@ typedef struct {
 } __attribute__((packed)) SP_DEPLOY;
 
 
+// COSMIC UEL APP CMD
+#define UEL_APP_TERMINAL_CMD_MAX_LEN 128
 
+// MID
+#define UEL_APP_CMD_MSGID       0x1885
+
+// Function codes
+#define UEL_APP_NOOP_CC                     0
+#define UEL_APP_RESET_COUNTERS_CC           1
+#define UEL_APP_SEND_BCN_CC                 2
+#define UEL_APP_GET_SENS_DATA_CC            3
+#define UEL_APP_SET_CAM_SHOT_CC             4
+#define UEL_APP_GET_CAM_SHOT_STATUS_CC      5
+#define UEL_APP_GET_CAM_IMAGE_CC            6
+#define UEL_APP_SET_MOTOR_MODE_CC           7
+#define UEL_APP_SET_CAM_POWER_ON_CC         8
+#define UEL_APP_SET_CAM_POWER_OFF_CC        9
+#define UEL_APP_SET_TERMINAL_CC             10
+
+#define UEL_APP_DOWNLOAD_IMG_CC             23
+
+// MSG struct
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} UEL_APP_NoopCmd_t;
+
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} UEL_APP_ResetCountersCmd_t;
+
+/* Sensor Commands */
+typedef struct 
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} UEL_APP_GetSensDataCmd_t;
+
+/* Camera Power Commands */
+typedef struct 
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} UEL_APP_SetCamPowerCmd_t;
+
+
+/* Motor Commands */
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8                   Mode;           /* Motor mode */
+    uint8                   Seconds;        /* Duration in seconds */
+} UEL_APP_SetMotorMode_t;
+
+/* Camera Shot Commands */
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8                   ImageSlot;      /* Image slot number */
+} UEL_APP_SetCamShotCmd_t;
+
+typedef struct 
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8                   ImageSlot;      /* Image slot to query */
+    uint8                   ImageNumber;
+} UEL_APP_GetCamShootStatusCmd_t;
+
+/* Camera Image Commands */
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8   ImgSlot;
+    uint8   ImgNumber;     /* 추가 */
+    uint16  ChunkNumber;
+} UEL_APP_GetCamImageCmd_t;
+
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint16  CMDLength;
+    uint8   CMD[UEL_APP_TERMINAL_CMD_MAX_LEN];
+} UEL_APP_SetTerminalCmd_t;
+
+typedef struct
+{
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+} UEL_APP_SendBcnCmd_t;
+
+
+typedef struct {
+    uint8_t  CmdHeader[CFE_SB_CMD_HDR_SIZE];
+    uint8 ImgSlot;
+    uint8 ImgNumber;
+    uint16 StartChunNumber;
+    uint16 EndChunNumber;
+} UEL_APP_DownloadAllCmd_t;
+
+typedef struct {
+    int16_t IMU_cnt;   
+    int16_t IMU_diag;   
+    int16_t IMU_gx   ;   
+    int16_t IMU_gy    ;  
+    int16_t IMU_gz     ; 
+    int16_t IMU_ax      ;
+    int16_t IMU_ay      ;
+    int16_t IMU_az      ;
+    int16_t IMU_temp    ;
+    int16_t IMU_chk_ok  ;
+
+    int16_t ESC_Ia_mA    ;       
+    int16_t ESC_Ib_mA     ;     
+    int16_t ESC_Ic_mA      ;     
+    int16_t ESC_I_rms_true_mA;   
+    int16_t ESC_I_std_abs_mA ;   
+    int16_t ESC_temp_C         ; 
+    int16_t ESC_vbus_mV         ;
+    int16_t ESC_timestamp_ms    ;
+    int16_t ESC_esc_seq         ;
+    int16_t ESC_crc16           ;
+
+}UEL_APP_Sense_Data;
 
 
 
@@ -5412,7 +5532,18 @@ typedef struct {
      EPS_P31U_SET_OUT_SINGLE epsp31usetoutsingle;
      SP_DEPLOY               spdeploy;
 
-
+    // UEL APP
+    UEL_APP_NoopCmd_t               uelappnoopcmd;
+    UEL_APP_ResetCountersCmd_t      uelappresetcounterscmd;
+    UEL_APP_SendBcnCmd_t            uelappsendbcncmd;
+    UEL_APP_GetSensDataCmd_t        uelappgetsensdatacmd;
+    UEL_APP_SetCamShotCmd_t         uelappsetcamshotcmd;
+    UEL_APP_GetCamShootStatusCmd_t  uelappgetcamshootstatuscmd;
+    UEL_APP_GetCamImageCmd_t        uelappgetcamimagecmd;
+    UEL_APP_SetMotorMode_t          uelappsetmotormodecmd;
+    UEL_APP_SetCamPowerCmd_t        uelappsetcampowercmd;
+    UEL_APP_SetTerminalCmd_t        uelappsetterminalcmd;
+    UEL_APP_DownloadAllCmd_t        uelappdownloadallcmd;
 
 
 

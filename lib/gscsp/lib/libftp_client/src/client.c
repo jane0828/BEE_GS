@@ -1217,3 +1217,15 @@ const char * gs_ftp_mode_to_string(gs_ftp_mode_t mode)
     }
     return "unknown";
 }
+
+
+float gs_ftp_percent_completed(uint32_t completed, uint32_t total)
+{
+    if (completed >= total) {
+        return 100.0f;
+    }
+    if (completed == 0) {
+        return 0.0f;
+    }
+    return (float) (completed * 100) / (float) total;
+}

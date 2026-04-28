@@ -89,11 +89,11 @@ void Initialize_ConfigSettings()
     setup->Transceiver_baud = 500000; // These three baud rate is between computer & GS machine - USART
     setup->Rotator_baud = 9600; 
     setup->Switch_baud = 115200; 
-    setup->gs100_node = 20;
-    setup->kiss_node = 8;
+    setup->gs100_node = 8;
+    setup->kiss_node = 20;
     setup->obc_node = 3;
     setup->ax100_node = 5;
-    setup->default_freq = 436500000; // UHF freq?
+    setup->default_freq = 400462000; // UHF freq?
     setup->default_timeout = 1000;
     setup->pingsize = 4;
     setup->guard_delay = 150;
@@ -216,7 +216,7 @@ int main(int, char**)
     char logfilename[128] ={0,};
     time_t tmtime = time(0);
     struct tm * local = localtime(&tmtime);
-    sprintf(logfilename, "../data/BEE_TC_Log/log--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
+    sprintf(logfilename, "../data/COSMIC_TC_Log/log--%04d-%02d-%02d-%02d-%02d-%02d--", local->tm_year+1900, local->tm_mon+1, local->tm_mday,local->tm_hour, local->tm_min, local->tm_sec);
     log_ptr = fopen(logfilename, "wb");
     if(log_ptr == NULL) {
         printf("Invalid log file pointer.\n");
