@@ -2306,11 +2306,11 @@ void ImGui_BeaconWindow(float fontscale)
                     break;
                 }
 
-                case REPORT_KIND_ADCS_GET_SATELLITE_CONFIG
+                case REPORT_KIND_ADCS_GET_SATELLITE_CONFIG :
                 {
-                    auto &pl = view.u.adcs_satelliteconfig
+                    auto &pl = view.u.adcs_satelliteconfig;
 
-                        ImGui::TextUnformatted("ADCS Satellite Config Telemetry");
+                    ImGui::TextUnformatted("ADCS Satellite Config Telemetry");
                     
                     //=========================================================
                     ImGui::Separator();
@@ -3370,7 +3370,7 @@ void ImGui_BeaconWindow(float fontscale)
 
                 case REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG :
                 {
-                    auto &pl = view.u.adcs_magsensingelm config;
+                    auto &pl = view.u.adcs_magsensingelmconfig;
 
                     ImGui::TextUnformatted("ADCS Mag Sensing Element Config Telemetry");
 
