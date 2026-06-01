@@ -280,6 +280,318 @@ static bool DecodePayloadToView(ReportView_t &v, const uint8_t *payload, uint16_
         }
     }
 
+    if (v.kind == REPORT_KIND_ADCS_GET_ERROR_LOG_SETTING)
+    {
+        if (payload_len < sizeof(ADCS_ErrorLogSettingTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_errorlogsetting, payload, sizeof(ADCS_ErrorLogSettingTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_CURRENT_UNIX_TIME)
+    {
+        if (payload_len < sizeof(ADCS_CurrentUnixTimeTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_currentunixtime, payload, sizeof(ADCS_CurrentUnixTimeTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_PERSIST_CONFIG_DIAGNOSTIC)
+    {
+        if (payload_len < sizeof(ADCS_PersistConfigDiagnosticTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_persistconfigdiagnostic, payload, sizeof(ADCS_PersistConfigDiagnosticTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_COMMUNICATION_STATUS)
+    {
+        if (payload_len < sizeof(ADCS_CommunicationStatusTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_communicationstatus, payload, sizeof(ADCS_CommunicationStatusTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_CONTROL_ESTIMATION_MODE)
+    {
+        if (payload_len < sizeof(ADCS_ControlEstimationModeTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_controlestimationmode, payload, sizeof(ADCS_ControlEstimationModeTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_REFERENCE_IRC_VECTOR)
+    {
+        if (payload_len < sizeof(ADCS_ReferenceIRCVectorTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_referenceircvector, payload, sizeof(ADCS_ReferenceIRCVectorTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_REFERENCE_LLH_TARGET)
+    {
+        if (payload_len < sizeof(ADCS_ReferenceLLHTargetTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_referenceircvector, payload, sizeof(ADCS_ReferenceLLHTargetTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_ORBIT_MODE)
+    {
+        if (payload_len < sizeof(ADCS_OrbitModeTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_orbitmode, payload, sizeof(ADCS_OrbitModeTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_HEALTH_TLM_MMT)
+    {
+        if (payload_len < sizeof(ADCS_HealthTlmMMTTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_healthtlmmmt, payload, sizeof(ADCS_HealthTlmMMTTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_RAW_CUBESENSE_SUN)
+    {
+        if (payload_len < sizeof(ADCS_RawCubeSenseSunTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_rawcubesensesun, payload, sizeof(ADCS_RawCubeSenseSunTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_REFERENCE_RPY_VALUES)
+    {
+        if (payload_len < sizeof(ADCS_ReferenceRPYvaluesTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_referencerpyvalues, payload, sizeof(ADCS_ReferenceRPYvaluesTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_OPENLOOPCMD_MTQ)
+    {
+        if (payload_len < sizeof(ADCS_OpenLoopCmdMTQTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_openloopcmdmtq, payload, sizeof(ADCS_OpenLoopCmdMTQTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_POWER_STATE)
+    {
+        if (payload_len < sizeof(ADCS_PowerStateTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_powerstate, payload, sizeof(ADCS_PowerStateTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_RUN_MODE)
+    {
+        if (payload_len < sizeof(ADCS_RunModeTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_runmode, payload, sizeof(ADCS_RunModeTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_CONTROL_MODE)
+    {
+        if (payload_len < sizeof(ADCS_ControlModeTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_controlmode, payload, sizeof(ADCS_ControlModeTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_MAG0_MMT_CALIB_CONFIG)
+    {
+        if (payload_len < sizeof(ADCS_Mag0MMTCalibConfigTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_mag0mmtcalibconfig, payload, sizeof(ADCS_Mag0MMTCalibConfigTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_ESTIMATION_MODE)
+    {
+        if (payload_len < sizeof(ADCS_EstimationModeTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_estimationmode, payload, sizeof(ADCS_EstimationModeTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_OPERATIONAL_STATE)
+    {
+        if (payload_len < sizeof(ADCS_OperationalStateTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_operationalstate, payload, sizeof(ADCS_OperationalStateTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_RAW_CSS_SENSOR)
+    {
+        if (payload_len < sizeof(ADCS_RawCSSSensorTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_rawcsssensor, payload, sizeof(ADCS_RawCSSSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_RAW_GYR_SENSOR)
+    {
+        if (payload_len < sizeof(ADCS_RawGYRSensorTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_rawgyrsensor, payload, sizeof(ADCS_RawGYRSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_CALIBRATED_GYR_SENSOR)
+    {
+        if (payload_len < sizeof(ADCS_CalibratedGYRSensorTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_calibratedgyrsensor, payload, sizeof(ADCS_CalibratedGYRSensorTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_TLM_LOG_INCLMASK)
+    {
+        if (payload_len < sizeof(ADCS_TlmLogInclMaskTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_tlmloginclmask, payload, sizeof(ADCS_TlmLogInclMaskTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_UNSOLICIT_TLM_MSG_SETUP)
+    {
+        if (payload_len < sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_unsolicittlmmsgsetup, payload, sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP)
+    {
+        if (payload_len < sizeof(ADCS_UnsolicitEventMsgSetupTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_unsoliciteventmsgsetup, payload, sizeof(ADCS_UnsolicitEventMsgSetupTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_EVENT_LOG_STATUS_RESPONSE)
+    {
+        if (payload_len < sizeof(ADCS_EventLogStatusResponseTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_eventlogstatusresponse, payload, sizeof(ADCS_EventLogStatusResponseTlm_Payload_t));
+            return true;
+        }
+    }
+
+    if (v.kind == REPORT_KIND_ADCS_GET_PORTMAP)
+    {
+        if (payload_len < sizeof(ADCS_PortMapTlm_Payload_t))
+        {
+            v.kind = REPORT_KIND_SC_GENERIC;
+        }
+        else{
+            memcpy(&v.u.adcs_portmap, payload, sizeof(ADCS_PortMapTlm_Payload_t));
+            return true;
+        }
+    }
+
     v.kind = REPORT_KIND_SC_GENERIC;
 
     uint16_t n = payload_len;

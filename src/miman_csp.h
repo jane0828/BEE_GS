@@ -41,6 +41,9 @@ int csp_transaction_persistent_custom(csp_conn_t * conn, uint32_t timeout, void 
 int csp_transaction2_custom(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen, uint32_t opts);
 int csp_transaction_custom(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen);
 
+unsigned int miman_get_rdp_default_window_size(void);
+void miman_set_rdp_default_window_size(unsigned int window_size);
+
 void * csp_ping_scan(void *);
 void * csp_baud_calibration(void*);
 void * csp_freq_calibration(void*);

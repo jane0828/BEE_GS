@@ -336,9 +336,9 @@ gs_error_t gs_ftp_download(const gs_ftp_settings_t * settings, const char * loca
     req.down.backend = gs_ftp_get_backend(&remote_url_info, settings);
     GS_STRNCPY(req.down.path, remote_url_info.path);
     int req_length = sizeof(req.type) + sizeof(req.down);
-
+printf("full opt\n");
     state.conn = csp_connect(CSP_PRIO_NORM, settings->host, gs_ftp_get_csp_port(settings), gs_ftp_get_timeout(settings),
-                             CSP_O_RDP | CSP_O_CRC32);
+                              CSP_O_RDP | CSP_O_CRC32);
     if (state.conn == NULL) {
         return GS_ERROR_IO;
     }

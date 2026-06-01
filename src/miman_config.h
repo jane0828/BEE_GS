@@ -366,8 +366,8 @@ typedef struct {
 
 typedef struct{
 	char name[30];
-	char local_path[256] = "file://../data/ftp_downlink/adcs_comm_06_1_20260422.bin";
-	char remote_path[256] = "file://./cf/adcs_comm_06_1.bin";
+	char local_path[256] = "file://../data/ftp_downlink/missiondata1010.dat";
+	char remote_path[256] = "file://./cf/sdcard/mission/mission00001010.dat";
 }__attribute__((packed)) ftpinfo;
 
 typedef struct{

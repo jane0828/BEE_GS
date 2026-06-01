@@ -397,16 +397,43 @@ typedef enum
     REPORT_KIND_ADCS_RAW_RW_SENSOR_TLM,
 
     /****************************************************************************************************************************************************************** */
+    REPORT_KIND_ADCS_GET_ERROR_LOG_SETTING,
+    REPORT_KIND_ADCS_GET_CURRENT_UNIX_TIME,
+    REPORT_KIND_ADCS_GET_PERSIST_CONFIG_DIAGNOSTIC,
+    REPORT_KIND_ADCS_GET_COMMUNICATION_STATUS,
+    REPORT_KIND_ADCS_GET_CONTROL_ESTIMATION_MODE,
+    REPORT_KIND_ADCS_GET_REFERENCE_IRC_VECTOR,
+    REPORT_KIND_ADCS_GET_REFERENCE_LLH_TARGET,
+    REPORT_KIND_ADCS_GET_ORBIT_MODE,
+    REPORT_KIND_ADCS_GET_HEALTH_TLM_MMT,
+    REPORT_KIND_ADCS_GET_RAW_CUBESENSE_SUN,
+    REPORT_KIND_ADCS_GET_REFERENCE_RPY_VALUES,
+    REPORT_KIND_ADCS_GET_OPENLOOPCMD_MTQ,
+    REPORT_KIND_ADCS_GET_POWER_STATE,
+    REPORT_KIND_ADCS_GET_RUN_MODE,
+    REPORT_KIND_ADCS_GET_CONTROL_MODE,
     REPORT_KIND_ADCS_GET_WHL_CONFIG,
     REPORT_KIND_ADCS_GET_SATELLITE_CONFIG,
     REPORT_KIND_ADCS_GET_CONTROLLER_CONFIG,
+    REPORT_KIND_ADCS_GET_MAG0_MMT_CALIB_CONFIG,
     REPORT_KIND_ADCS_GET_DEFAULT_MODE_CONFIG,
     REPORT_KIND_ADCS_GET_MOUNTING_CONFIG,
+    REPORT_KIND_ADCS_GET_MAG1_MMT_CALIB_CONFIG,
     REPORT_KIND_ADCS_GET_ESTIMATOR_CONFIG,
+    REPORT_KIND_ADCS_GET_SAT_ORBIT_PARAM_CONFIG,
     REPORT_KIND_ADCS_GET_NODE_SELECTION_CONFIG,
     REPORT_KIND_ADCS_GET_MTQ_CONFIG,
+    REPORT_KIND_ADCS_GET_ESTIMATION_MODE,
+    REPORT_KIND_ADCS_GET_OPERATIONAL_STATE,
+    REPORT_KIND_ADCS_GET_RAW_CSS_SENSOR,
+    REPORT_KIND_ADCS_GET_RAW_GYR_SENSOR,
+    REPORT_KIND_ADCS_GET_CALIBRATED_GYR_SENSOR,
     REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG,
-    REPORT_KIND_ADCS_GET_SAT_ORBIT_PARAM_CONFIG,
+    REPORT_KIND_ADCS_GET_TLM_LOG_INCLMASK,
+    REPORT_KIND_ADCS_GET_UNSOLICIT_TLM_MSG_SETUP,
+    REPORT_KIND_ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP,
+    REPORT_KIND_ADCS_GET_EVENT_LOG_STATUS_RESPONSE,
+    REPORT_KIND_ADCS_GET_PORTMAP,
     /****************************************************************************************************************************************************************** */
 
 
@@ -436,8 +463,35 @@ static ReportKind_t DetermineReportKind(uint16_t reflected_mid, uint8_t reflecte
     if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_ESTIMATOR_CONFIG_CC) return REPORT_KIND_ADCS_GET_ESTIMATOR_CONFIG;
     if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_NODE_SELECTION_CONFIG_CC) return REPORT_KIND_ADCS_GET_NODE_SELECTION_CONFIG;
     if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MTQ_CONFIG_CC) return REPORT_KIND_ADCS_GET_MTQ_CONFIG;
-    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MAG_SENSING_ELM_CONFIG_CC) return REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG;
     if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_SAT_ORBIT_PARAM_CONFIG_CC) return REPORT_KIND_ADCS_GET_SAT_ORBIT_PARAM_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_ERROR_LOG_SETTING_CC) return REPORT_KIND_ADCS_GET_ERROR_LOG_SETTING;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_CURRENT_UNIX_TIME_CC) return REPORT_KIND_ADCS_GET_CURRENT_UNIX_TIME;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_PERSIST_CONFIG_DIAGNOSTIC_CC) return REPORT_KIND_ADCS_GET_PERSIST_CONFIG_DIAGNOSTIC;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_COMMUNICATION_STATUS_CC) return REPORT_KIND_ADCS_GET_COMMUNICATION_STATUS;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_CONTROL_ESTIMATION_MODE_CC) return REPORT_KIND_ADCS_GET_CONTROL_ESTIMATION_MODE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_REFERENCE_IRC_VECTOR_CC) return REPORT_KIND_ADCS_GET_REFERENCE_IRC_VECTOR;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_REFERENCE_LLH_TARGET_CC) return REPORT_KIND_ADCS_GET_REFERENCE_LLH_TARGET;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_ORBIT_MODE_CC) return REPORT_KIND_ADCS_GET_ORBIT_MODE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_HEALTH_TLM_MMT_CC) return REPORT_KIND_ADCS_GET_HEALTH_TLM_MMT;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_RAW_CUBESENSE_SUN_CC) return REPORT_KIND_ADCS_GET_RAW_CUBESENSE_SUN;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_REFERENCE_RPY_VALUES_CC) return REPORT_KIND_ADCS_GET_REFERENCE_RPY_VALUES;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_OPENLOOPCMD_MTQ_CC) return REPORT_KIND_ADCS_GET_OPENLOOPCMD_MTQ;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_POWER_STATE_CC) return REPORT_KIND_ADCS_GET_POWER_STATE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_RUN_MODE_CC) return REPORT_KIND_ADCS_GET_RUN_MODE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_CONTROL_MODE_CC) return REPORT_KIND_ADCS_GET_CONTROL_MODE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MAG0_MMT_CALIB_CONFIG_CC) return REPORT_KIND_ADCS_GET_MAG0_MMT_CALIB_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MAG1_MMT_CALIB_CONFIG_CC) return REPORT_KIND_ADCS_GET_MAG1_MMT_CALIB_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_ESTIMATION_MODE_CC) return REPORT_KIND_ADCS_GET_ESTIMATION_MODE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_OPERATIONAL_STATE_CC) return REPORT_KIND_ADCS_GET_OPERATIONAL_STATE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_RAW_CSS_SENSOR_CC) return REPORT_KIND_ADCS_GET_RAW_CSS_SENSOR;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_RAW_GYR_SENSOR_CC) return REPORT_KIND_ADCS_GET_RAW_GYR_SENSOR;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_CALIBRATED_GYR_SENSOR_CC) return REPORT_KIND_ADCS_GET_CALIBRATED_GYR_SENSOR;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_MAG_SENSING_ELM_CONFIG_CC) return REPORT_KIND_ADCS_GET_MAG_SENSING_ELM_CONFIG;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_TLM_LOG_INCLMASK_CC) return REPORT_KIND_ADCS_GET_TLM_LOG_INCLMASK;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_UNSOLICIT_TLM_MSG_SETUP_CC) return REPORT_KIND_ADCS_GET_UNSOLICIT_TLM_MSG_SETUP;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP_CC) return REPORT_KIND_ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_EVENT_LOG_STATUS_RESPONSE_CC) return REPORT_KIND_ADCS_GET_EVENT_LOG_STATUS_RESPONSE;
+    if ((reflected_mid == ADCS_CMD_ID || reflected_mid == 0x6518) && reflected_cc == ADCS_GET_PORTMAP_CC) return REPORT_KIND_ADCS_GET_PORTMAP;
     /*********************************************************************************************************************************************************************** */
 
 
@@ -684,6 +738,33 @@ typedef struct
         ADCS_MTQConfigTlm_Payload_t            adcs_mtqconfig;
         ADCS_MagSensingElmConfigTlm_Payload_t  adcs_magsensingelmconfig;
         ADCS_SatOrbitParamConfigTlm_Payload_t  adcs_satorbitparamconfig;
+         ADCS_ErrorLogSettingTlm_Payload_t      adcs_errorlogsetting;
+        ADCS_CurrentUnixTimeTlm_Payload_t      adcs_currentunixtime;
+        ADCS_PersistConfigDiagnosticTlm_Payload_t adcs_persistconfigdiagnostic;
+        ADCS_CommunicationStatusTlm_Payload_t  adcs_communicationstatus;
+        ADCS_ControlEstimationModeTlm_Payload_t adcs_controlestimationmode;
+        ADCS_ReferenceIRCVectorTlm_Payload_t    adcs_referenceircvector;
+        ADCS_ReferenceLLHTargetTlm_Payload_t    adcs_referencellhtarget;
+        ADCS_OrbitModeTlm_Payload_t             adcs_orbitmode;
+        ADCS_HealthTlmMMTTlm_Payload_t          adcs_healthtlmmmt;
+        ADCS_RawCubeSenseSunTlm_Payload_t       adcs_rawcubesensesun;
+        ADCS_ReferenceRPYvaluesTlm_Payload_t    adcs_referencerpyvalues;
+        ADCS_OpenLoopCmdMTQTlm_Payload_t        adcs_openloopcmdmtq;
+        ADCS_PowerStateTlm_Payload_t            adcs_powerstate;
+        ADCS_RunModeTlm_Payload_t               adcs_runmode;
+        ADCS_ControlModeTlm_Payload_t           adcs_controlmode;
+        ADCS_Mag0MMTCalibConfigTlm_Payload_t    adcs_mag0mmtcalibconfig;
+        ADCS_Mag1MMTCalibConfigTlm_Payload_t    adcs_mag1mmtcalibconfig;
+        ADCS_EstimationModeTlm_Payload_t        adcs_estimationmode;
+        ADCS_OperationalStateTlm_Payload_t      adcs_operationalstate;
+        ADCS_RawCSSSensorTlm_Payload_t          adcs_rawcsssensor;
+        ADCS_RawGYRSensorTlm_Payload_t         adcs_rawgyrsensor;
+        ADCS_CalibratedGYRSensorTlm_Payload_t   adcs_calibratedgyrsensor;
+        ADCS_TlmLogInclMaskTlm_Payload_t        adcs_tlmloginclmask;
+        ADCS_UnsolicitTlmMsgSetupTlm_Payload_t  adcs_unsolicittlmmsgsetup;
+        ADCS_UnsolicitEventMsgSetupTlm_Payload_t adcs_unsoliciteventmsgsetup;
+        ADCS_EventLogStatusResponseTlm_Payload_t adcs_eventlogstatusresponse;
+        ADCS_PortMapTlm_Payload_t               adcs_portmap;
         /************************************************************************************************************************************************* */
 
 

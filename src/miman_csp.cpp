@@ -50,7 +50,24 @@ char WatchdogReadBuf[32];
 extern Setup * setup;
 struct usart_conf conf;
 
-static const unsigned int k_rdp_default_window_size = 6;
+// Window size 바꿀 수 있게 수정
+static unsigned int k_rdp_default_window_size = 6;
+unsigned int miman_get_rdp_default_window_size(void)
+{
+    return k_rdp_default_window_size;
+}
+
+void miman_set_rdp_default_window_size(unsigned int window_size)
+{
+    if (window_size < 1)
+        window_size = 1;
+
+    k_rdp_default_window_size = window_size;
+
+	console.AddLog("[RDP]##Default window size changed to %u", k_rdp_default_window_size);
+}
+
+
 static const unsigned int k_rdp_default_conn_timeout_ms = 30000;
 static const unsigned int k_rdp_default_packet_timeout_ms = 16000;
 static const unsigned int k_rdp_default_delayed_acks = 1;
@@ -76,6 +93,15 @@ static void miman_apply_rdp_profile(unsigned int window_size,
                                     unsigned int ack_timeout_ms,
                                     unsigned int ack_delay_count)
 {
+    printf("[RDP] Apply profile: window=%u conn_timeout=%u packet_timeout=%u delayed_acks=%u ack_timeout=%u ack_delay_count=%u\n",
+           window_size,
+           conn_timeout_ms,
+           packet_timeout_ms,
+           delayed_acks,
+           ack_timeout_ms,
+           ack_delay_count);
+    fflush(stdout);
+
     csp_rdp_set_opt(window_size, conn_timeout_ms, packet_timeout_ms,
                     delayed_acks, ack_timeout_ms, ack_delay_count);
 }
@@ -118,18 +144,19 @@ void miman_begin_ftp_rdp_profile(uint32_t ftp_timeout_ms)
         ftp_packet_timeout_ms = k_rdp_ftp_packet_timeout_ms;
     }
 
-    csp_log_info("FTP RDP profile enable: conn_timeout=%u ms packet_timeout=%u ms window=%u ack_timeout=%u ms",
-                 ftp_conn_timeout_ms,
-                 ftp_packet_timeout_ms,
-                 g_saved_rdp_window_size,
-                 g_saved_rdp_ack_timeout_ms);
+    printf("[RDP] FTP profile begin: saved_window=%u selected_window=%u ftp_timeout=%u\n",
+           g_saved_rdp_window_size,
+           k_rdp_default_window_size,
+           ftp_timeout_ms);
+    fflush(stdout);
 
-    miman_apply_rdp_profile(g_saved_rdp_window_size,
+    miman_apply_rdp_profile(k_rdp_default_window_size,
                             ftp_conn_timeout_ms,
                             ftp_packet_timeout_ms,
                             g_saved_rdp_delayed_acks,
                             g_saved_rdp_ack_timeout_ms,
                             g_saved_rdp_ack_delay_count);
+
     g_rdp_ftp_profile_active = true;
     pthread_mutex_unlock(&g_rdp_profile_lock);
 }
@@ -142,19 +169,18 @@ void miman_end_ftp_rdp_profile(void)
         return;
     }
 
+    printf("[RDP] FTP profile restore: restored_window=%u\n",
+           g_saved_rdp_window_size);
+    fflush(stdout);
+
     miman_apply_rdp_profile(g_saved_rdp_window_size,
                             g_saved_rdp_conn_timeout_ms,
                             g_saved_rdp_packet_timeout_ms,
                             g_saved_rdp_delayed_acks,
                             g_saved_rdp_ack_timeout_ms,
                             g_saved_rdp_ack_delay_count);
-    g_rdp_ftp_profile_active = false;
 
-    csp_log_info("FTP RDP profile restore: conn_timeout=%u ms packet_timeout=%u ms window=%u ack_timeout=%u ms",
-                 g_saved_rdp_conn_timeout_ms,
-                 g_saved_rdp_packet_timeout_ms,
-                 g_saved_rdp_window_size,
-                 g_saved_rdp_ack_timeout_ms);
+    g_rdp_ftp_profile_active = false;
     pthread_mutex_unlock(&g_rdp_profile_lock);
 }
 
