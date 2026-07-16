@@ -4687,6 +4687,40 @@ packetsign * PacketDecoder(csp_packet_t * packet)
     return sign;
 }
 
+vector<vector<float>> AIOBC_datachunk_parser(string path)
+{
+    vector<vector<float>> data;
+    ifstream file(path);
+
+    if (!file.is_open()){
+        console.AddLog("Fail to open TC File");
+        return data;
+    }
+
+    string line;
+    while(getline(file, line)){
+        string cell;
+        stringstream ss(line);
+        int num_field = 34;
+
+        vector<float> row;
+
+        for (int i = 0 ; i < num_field ; i++)
+        {
+            if(!getline(ss, cell, ',')){
+                break;
+            }
+
+            row.push_back(stof(cell));
+        }
+
+        data.push_back(row);
+    }
+
+    file.close();
+    return data;
+}
+
 packetsign * CmdGenerator_GS::GenerateCMDPacket(void)
 {
     packetsign * ResultPacket = (packetsign * )malloc(this->GetSize() + MIM_HAND_DATAFDSTART);

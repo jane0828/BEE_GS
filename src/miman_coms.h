@@ -7342,6 +7342,7 @@ packetsign * PingInit(FSWTle * FSWTleinfo);
 csp_packet_t * PacketEncoder(packetsign * sign, bool freeer = true);
 packetsign * PacketDecoder(csp_packet_t * packet);
 
+vector<vector<float>> AIOBC_datachunk_parser(string path);
 
 class CmdGenerator_GS {
 private:

@@ -1,0 +1,43 @@
+[15:59:51]  Connect to Switch Box..............Failed.
+[15:59:51]  Connect to Rotator.................Failed.
+[15:59:51]  Connect to GS100..................Success.
+[15:59:51]  BEE-1000 BCN Port 31 bind success.
+[15:59:51]  Rotator Read Failed. Please Check Again.
+[15:59:51]  BEE-1000 RPT Port 25 bind success.
+[15:59:51]  BEE-1000 Event Port 27 bind success.
+[15:59:51]  BEE-100 FM Port 23 bind success.
+[15:59:51]  UEL-Y-Sys. BCN Port 12 bind success.
+[15:59:51]  UEL-Y-Sys. RPT Port 10 bind success.
+[15:59:51]  UEL-Y-Sys. Event Port 11 bind success.
+[15:59:51]  UEL-Y-Sys. FM Port 14 bind success.
+[15:59:51]  BEE-1012 BCN Port 17 bind success.
+[15:59:51]  BEE-1012 RPT Port 15 bind success.
+[15:59:51]  BEE-1012 Event Port 16 bind success.
+[15:59:51]  BEE-1012 FM Port 18 bind success.
+[15:59:51]  BEE-1012 AIOBC Port 29 bind success.
+[15:59:55]  Cannot Read 20 parameters of Table 0.
+[15:59:57]  Cannot Read 13 parameters of Table 1.
+[16:00:01]  Cannot Read 18 parameters of Table 5.
+Unknown MsgID
+[16:00:24]  DataChunk generated. Magic=0x465A, RawDataLength=136, ChunkCRC32=0x249561A1, PacketCRC=0x4C, PacketLength=154
+[16:00:24]   Start Uplink Task.
+[16:00:24]  Send Packet of Ptype : 11. Check Terminal Log.
+[16:00:24]  [OK]CMD Packet Header: 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x4c
+|| Uplink || Length: 154
+00	00	00	00	00	00	00	4c	46	5a	
+00	00	00	88	24	95	61	a1	cb	a1	
+05	bf	8f	c2	95	3f	6f	12	83	3a	
+42	60	45	40	c1	ca	d1	3f	1f	85	
+8c	42	a0	1a	4f	40	7b	14	4e	3f	
+58	39	f4	3e	62	10	38	3f	db	f9	
+3e	3f	85	2b	b6	42	0a	d7	93	40	
+42	60	de	41	1b	2f	ed	c0	d7	a3	
+b0	3e	e5	d0	42	3f	27	31	08	3f	
+9a	99	e4	41	bc	74	d3	3e	4a	0c	
+d8	42	17	d9	4e	bf	fc	a9	d1	3f	
+cb	a1	ad	40	9a	99	f9	3f	ec	51	
+88	3f	29	5c	4f	3f	a2	45	f6	3e	
+48	e1	5a	3f	c1	ca	41	3f	3d	0a	
+97	3e	e5	d0	e2	3e	9c	c4	c7	41	
+50	8d	33	41	
+
