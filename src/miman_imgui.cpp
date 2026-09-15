@@ -21,7 +21,7 @@
 
 extern bool ftp_start_worker(pthread_t *thread, void *(*start_routine)(void *), void *arg, const char *label);
 
-#define CMD_LABEL_MAX 300
+#define CMD_LABEL_MAX 400
 extern FILE *log_ptr;
 bool raw_data = true;
 Console console;
@@ -564,12 +564,12 @@ void ImGui_FrequencyWindow(float fontscale)
     ImGui::Text("%"PRId16"", Return_RSSI());
     if (ImGui::Button("Set to RX", ImVec2(ImGui::GetContentRegionAvail().x * 0.5, ImGui::GetFontSize() * 1.5)))
     {
-        switch_to_rx(setup->ax100_node);
+        miman_switchbox_to_rx_with_log(setup->ax100_node, "unknown");
     }
     ImGui::SameLine();
     if (ImGui::Button("Set to TX", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 1.5)))
     {
-        switch_to_tx(setup->ax100_node);
+        miman_switchbox_to_tx_with_log(setup->ax100_node, "unknown");
     }
 
     if(State.Doppler == false)
@@ -1041,232 +1041,428 @@ void ImGui_BeaconWindow(float fontscale)
     }
 
 
-
-    if(ImGui::BeginTabItem("Mission Beacon"))
+    if (ImGui::BeginTabItem("Mission Beacon"))
     {
+        if (ImGui::BeginTable(
+                "##MissionBeaconTables",
+                2,
+                ImGuiTableFlags_SizingStretchSame |
+                ImGuiTableFlags_ScrollY |
+                ImGuiTableFlags_RowBg |
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_Resizable |
+                ImGuiTableFlags_Reorderable))
+        {
+            ImGui::TableSetupScrollFreeze(freeze_cols, freeze_rows);
 
-        if (ImGui::BeginTable("##MissionBeaconTables", 2, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable))
+            ImGui::TableSetupColumn(
+                "Parameter",
+                ImGuiTableColumnFlags_DefaultSort |
+                ImGuiTableColumnFlags_NoHide,
+                0.0f);
 
+            ImGui::TableSetupColumn(
+                "Data",
+                ImGuiTableColumnFlags_NoHide,
+                0.0f);
 
-    ImGui::TableSetupScrollFreeze(freeze_cols, freeze_rows);
-    ImGui::TableSetupColumn("Parameter", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_NoHide, 0.0f);
-    ImGui::TableSetupColumn("Data",      ImGuiTableColumnFlags_NoHide, 0.0f);
-   
-    ImGui::TableHeadersRow();
+            ImGui::TableHeadersRow();
 
+            if (!missionbeacon)
+            {
+                ImGui::TableNextRow();
 
-    if (!missionbeacon)
-    {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text("Mission Beacon");
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("No data");
-    }
-    else
-    {
-        char buf[128];
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted("Mission Beacon");
 
-        // =========================
-        //  CCSDS HEADER
-        // =========================
-        BeaconSectionHeader("Telemetry Header");
-        StateWindowColumnManager("CCSDS MsgID");
-        ImGui::Text("0x%02X 0x%02X", missionbeacon->CCSDS_MID[0], missionbeacon->CCSDS_MID[1]);
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted("No data");
+            }
+            else
+            {
+                /* ===================================================
+                * CCSDS HEADER
+                * =================================================== */
+                BeaconSectionHeader("Telemetry Header");
 
-        StateWindowColumnManager("CCSDS Sequence");
-        ImGui::Text("0x%02X 0x%02X", missionbeacon->CCSDS_Seq[0], missionbeacon->CCSDS_Seq[1]);
+                StateWindowColumnManager("CCSDS MsgID");
+                ImGui::Text(
+                    "0x%02X 0x%02X",
+                    missionbeacon->CCSDS_MID[0],
+                    missionbeacon->CCSDS_MID[1]);
 
-        StateWindowColumnManager("CCSDS Length");
-        ImGui::Text("0x%02X 0x%02X", missionbeacon->CCSDS_Len[0], missionbeacon->CCSDS_Len[1]);
+                StateWindowColumnManager("CCSDS Sequence");
+                ImGui::Text(
+                    "0x%02X 0x%02X",
+                    missionbeacon->CCSDS_Seq[0],
+                    missionbeacon->CCSDS_Seq[1]);
 
-        StateWindowColumnManager("CCSDS Time Code");
-        ImGui::Text("0x%02X %02X %02X %02X %02X %02X",
-                    missionbeacon->CCSDS_TimeCode[0], missionbeacon->CCSDS_TimeCode[1],
-                    missionbeacon->CCSDS_TimeCode[2], missionbeacon->CCSDS_TimeCode[3],
-                    missionbeacon->CCSDS_TimeCode[4], missionbeacon->CCSDS_TimeCode[5]);
+                StateWindowColumnManager("CCSDS Length");
+                ImGui::Text(
+                    "0x%02X 0x%02X",
+                    missionbeacon->CCSDS_Len[0],
+                    missionbeacon->CCSDS_Len[1]);
 
+                StateWindowColumnManager("CCSDS Time Code");
+                ImGui::Text(
+                    "0x%02X %02X %02X %02X %02X %02X",
+                    missionbeacon->CCSDS_TimeCode[0],
+                    missionbeacon->CCSDS_TimeCode[1],
+                    missionbeacon->CCSDS_TimeCode[2],
+                    missionbeacon->CCSDS_TimeCode[3],
+                    missionbeacon->CCSDS_TimeCode[4],
+                    missionbeacon->CCSDS_TimeCode[5]);
 
-        // =========================
-        //  SRL HouseKeeping
-        // =========================
-        BeaconSectionHeader("SRL HouseKeeping");
+                /* ===================================================
+                * SRL HOUSEKEEPING
+                * =================================================== */
+                BeaconSectionHeader("SRL HouseKeeping");
 
-        StateWindowColumnManager("SRL Command Counter");
-        ImGui::Text("%" PRIu8, missionbeacon->srlpayload.CommandCounter);
+                StateWindowColumnManager("SRL Command Counter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->srlpayload.CommandCounter);
 
-        StateWindowColumnManager("SRL Command Error Counter");
-        ImGui::Text("%" PRIu8, missionbeacon->srlpayload.CommandErrorCounter);
+                StateWindowColumnManager("SRL Command Error Counter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->srlpayload.CommandErrorCounter);
 
-        for (int i = 0; i < 4; i++) {
-            char label[64];
+                for (int i = 0; i < 4; i++)
+                {
+                    char label[64];
 
-            snprintf(label, sizeof(label), "IOHandleStatus[%d]", i);
-            StateWindowColumnManager(label);
-            ImGui::Text("%" PRIu8, missionbeacon->srlpayload.IOHandleStatus[i]);
+                    snprintf(
+                        label,
+                        sizeof(label),
+                        "IOHandleStatus[%d]",
+                        i);
 
-            snprintf(label, sizeof(label), "IOHandleTxCount[%d]", i);
-            StateWindowColumnManager(label);
-            ImGui::Text("%" PRIu16, missionbeacon->srlpayload.IOHandleTxCount[i]);
+                    StateWindowColumnManager(label);
+                    ImGui::Text(
+                        "%" PRIu8,
+                        missionbeacon->srlpayload.IOHandleStatus[i]);
+
+                    snprintf(
+                        label,
+                        sizeof(label),
+                        "IOHandleTxCount[%d]",
+                        i);
+
+                    StateWindowColumnManager(label);
+                    ImGui::Text(
+                        "%" PRIu16,
+                        missionbeacon->srlpayload.IOHandleTxCount[i]);
+                }
+
+                /* ===================================================
+                * RPT PAYLOAD SUMMARY
+                * =================================================== */
+                BeaconSectionHeader("RPT Payload Summary");
+
+                StateWindowColumnManager("CmdCounter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->rptpayload.CmdCounter);
+
+                StateWindowColumnManager("CmdErrCounter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->rptpayload.CmdErrCounter);
+
+                /* ===================================================
+                * RPT QUEUE INFO
+                * =================================================== */
+                BeaconSectionHeader("RPT Queue Info");
+
+                StateWindowColumnManager("ReportQueueCnt");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->rptpayload.ReportQueueCnt);
+
+                StateWindowColumnManager("CriticalQueueCnt");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->rptpayload.CriticalQueueCnt);
+
+                /* ===================================================
+                * RPT OPERATION DATA
+                * =================================================== */
+                BeaconSectionHeader("RPT Operation Data");
+
+                StateWindowColumnManager("BootCount");
+                ImGui::Text(
+                    "%" PRIu16,
+                    missionbeacon->rptpayload.BootCount);
+
+                StateWindowColumnManager("TimeSec");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->rptpayload.TimeSec);
+
+                StateWindowColumnManager("TimeSubsec");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->rptpayload.TimeSubsec);
+
+                StateWindowColumnManager("Sequence");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->rptpayload.Sequence);
+
+                StateWindowColumnManager("ResetCause");
+                ImGui::Text(
+                    "0x%02" PRIX8,
+                    missionbeacon->rptpayload.ResetCause);
+
+                /* ===================================================
+                * PAYSLT PAYLOAD 1
+                * =================================================== */
+                BeaconSectionHeader("PAYSLT Payload 1");
+
+                StateWindowColumnManager("Payload 1 Command Counter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->payhkpayload1.CommandCounter);
+
+                StateWindowColumnManager("Payload 1 Command Error Counter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->payhkpayload1.CommandErrorCounter);
+
+                StateWindowColumnManager("Payload 1 System Status");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.sys_status);
+
+                StateWindowColumnManager("Payload 1 Boot Count");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.boot_cnt);
+
+                StateWindowColumnManager("Payload 1 External Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_exp);
+
+                StateWindowColumnManager("Payload 1 NTC 0 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_0);
+
+                StateWindowColumnManager("Payload 1 NTC 1 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_1);
+
+                StateWindowColumnManager("Payload 1 NTC 2 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_2);
+
+                StateWindowColumnManager("Payload 1 NTC 3 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_3);
+
+                StateWindowColumnManager("Payload 1 NTC 4 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_4);
+
+                StateWindowColumnManager("Payload 1 NTC 5 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_5);
+
+                StateWindowColumnManager("Payload 1 NTC 6 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_6);
+
+                StateWindowColumnManager("Payload 1 NTC 7 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_7);
+
+                StateWindowColumnManager("Payload 1 NTC 8 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_8);
+
+                StateWindowColumnManager("Payload 1 NTC 9 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_9);
+
+                StateWindowColumnManager("Payload 1 NTC 10 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_10);
+
+                StateWindowColumnManager("Payload 1 NTC 11 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.temp_ntc_11);
+
+                StateWindowColumnManager("Payload 1 Sensor 1 Data 0");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.sen1_data_0);
+
+                StateWindowColumnManager("Payload 1 Sensor 1 Data 1");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.sen1_data_1);
+
+                StateWindowColumnManager("Payload 1 Sensor 2 Data 0");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.sen2_data_0);
+
+                StateWindowColumnManager("Payload 1 Sensor 2 Data 1");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.sen2_data_1);
+
+                StateWindowColumnManager("Payload 1 Total 12V Current");
+                ImGui::Text(
+                    "%" PRIu32 " mA",
+                    missionbeacon->payhkpayload1.current_12_tot);
+
+                StateWindowColumnManager("Payload 1 5V IO Current");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload1.current_5_io);
+
+                /* ===================================================
+                * PAYSLT PAYLOAD 2
+                * =================================================== */
+                BeaconSectionHeader("PAYSLT Payload 2");
+
+                StateWindowColumnManager("Payload 2 Command Counter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->payhkpayload2.CommandCounter);
+
+                StateWindowColumnManager("Payload 2 Command Error Counter");
+                ImGui::Text(
+                    "%" PRIu8,
+                    missionbeacon->payhkpayload2.CommandErrorCounter);
+
+                StateWindowColumnManager("Payload 2 System Status");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.sys_status);
+
+                StateWindowColumnManager("Payload 2 Boot Count");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.boot_cnt);
+
+                StateWindowColumnManager("Payload 2 External Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_exp);
+
+                StateWindowColumnManager("Payload 2 NTC 0 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_0);
+
+                StateWindowColumnManager("Payload 2 NTC 1 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_1);
+
+                StateWindowColumnManager("Payload 2 NTC 2 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_2);
+
+                StateWindowColumnManager("Payload 2 NTC 3 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_3);
+
+                StateWindowColumnManager("Payload 2 NTC 4 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_4);
+
+                StateWindowColumnManager("Payload 2 NTC 5 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_5);
+
+                StateWindowColumnManager("Payload 2 NTC 6 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_6);
+
+                StateWindowColumnManager("Payload 2 NTC 7 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_7);
+
+                StateWindowColumnManager("Payload 2 NTC 8 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_8);
+
+                StateWindowColumnManager("Payload 2 NTC 9 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_9);
+
+                StateWindowColumnManager("Payload 2 NTC 10 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_10);
+
+                StateWindowColumnManager("Payload 2 NTC 11 Temperature");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.temp_ntc_11);
+
+                StateWindowColumnManager("Payload 2 Sensor 1 Data 0");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.sen1_data_0);
+
+                StateWindowColumnManager("Payload 2 Sensor 1 Data 1");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.sen1_data_1);
+
+                StateWindowColumnManager("Payload 2 Sensor 2 Data 0");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.sen2_data_0);
+
+                StateWindowColumnManager("Payload 2 Sensor 2 Data 1");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.sen2_data_1);
+
+                StateWindowColumnManager("Payload 2 Total 12V Current");
+                ImGui::Text(
+                    "%" PRIu32 " mA",
+                    missionbeacon->payhkpayload2.current_12_tot);
+
+                StateWindowColumnManager("Payload 2 5V IO Current");
+                ImGui::Text(
+                    "%" PRIu32,
+                    missionbeacon->payhkpayload2.current_5_io);
+            }
+
+            ImGui::EndTable();
         }
 
-
-        // =========================
-        //  RPT Payload (FSW Report summary)
-        // =========================
-        BeaconSectionHeader("RPT Payload Summary");
-
-        StateWindowColumnManager("CmdCounter");
-        ImGui::Text("%" PRIu8, missionbeacon->rptpayload.CmdCounter);
-
-        StateWindowColumnManager("CmdErrCounter");
-        ImGui::Text("%" PRIu8, missionbeacon->rptpayload.CmdErrCounter);
-
-        BeaconSectionHeader("RPT Queue Info");
-        StateWindowColumnManager("ReportQueueCnt");
-        ImGui::Text("%" PRIu8, missionbeacon->rptpayload.ReportQueueCnt);
-
-        StateWindowColumnManager("CriticalQueueCnt");
-        ImGui::Text("%" PRIu8, missionbeacon->rptpayload.CriticalQueueCnt);
-
-
-        // =========================
-        //  Operation Data
-        // =========================
-        BeaconSectionHeader("RPT Operation Data");
-
-        StateWindowColumnManager("BootCount");
-        ImGui::Text("%" PRIu16, missionbeacon->rptpayload.BootCount);
-
-        StateWindowColumnManager("TimeSec");
-        ImGui::Text("%" PRIu32, missionbeacon->rptpayload.TimeSec);
-
-        StateWindowColumnManager("TimeSubsec");
-        ImGui::Text("%" PRIu32, missionbeacon->rptpayload.TimeSubsec);
-
-        StateWindowColumnManager("Sequence");
-        ImGui::Text("%" PRIu32, missionbeacon->rptpayload.Sequence);
-
-        StateWindowColumnManager("ResetCause");
-        ImGui::Text("0x%02X", (unsigned int)missionbeacon->rptpayload.ResetCause);
-
-
-        // =========================
-        // Mission Beacon Payload
-        // =========================
-        BeaconSectionHeader("Mission Beacon Payload");
-
-        StateWindowColumnManager("Command Counter");
-        ImGui::Text("%" PRIu8, missionbeacon->paybcnpayload.CommandCounter);
-
-        StateWindowColumnManager("Command Error Counter");
-        ImGui::Text("%" PRIu8, missionbeacon->paybcnpayload.CommandErrorCounter);
-
-        StateWindowColumnManager("Payload System Status");
-        ImGui::Text("%" PRIi8, missionbeacon->paybcnpayload.sys_status);
-
-        StateWindowColumnManager("NTC 0 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_0);
-
-        StateWindowColumnManager("NTC 1 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_1);
-
-        StateWindowColumnManager("NTC 2 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_2);
-
-        StateWindowColumnManager("NTC 3 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_3);
-
-        StateWindowColumnManager("NTC 4 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_4);
-
-        StateWindowColumnManager("NTC 5 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_5);
-
-        StateWindowColumnManager("NTC 6 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_6);
-
-        StateWindowColumnManager("NTC 7 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_7);
-
-        StateWindowColumnManager("NTC 8 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_8);
-
-        StateWindowColumnManager("NTC 9 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_9);
-
-        StateWindowColumnManager("NTC 10 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_10);
-
-        StateWindowColumnManager("NTC 11 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->paybcnpayload.temp_ntc_11);
-
-
-        // =========================
-        //  Mission Housekeeping Payload
-        // =========================
-        BeaconSectionHeader("Mission Housekeeping Payload");
-
-        StateWindowColumnManager("HK CommandCounter");
-        ImGui::Text("%" PRIu8, missionbeacon->payhkpayload.CommandCounter);
-
-        StateWindowColumnManager("HK CommandErrorCounter");
-        ImGui::Text("%" PRIu8, missionbeacon->payhkpayload.CommandErrorCounter);
-
-        StateWindowColumnManager("HK System Status");
-        ImGui::Text("%" PRIi8, missionbeacon->payhkpayload.sys_status);
-
-        StateWindowColumnManager("HK NTC 0 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_0);
-
-        StateWindowColumnManager("HK NTC 1 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_1);
-
-        StateWindowColumnManager("HK NTC 2 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_2);
-
-        StateWindowColumnManager("HK NTC 3 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_3);
-
-        StateWindowColumnManager("HK NTC 4 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_4);
-
-        StateWindowColumnManager("HK NTC 5 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_5);
-
-        StateWindowColumnManager("HK NTC 6 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_6);
-
-        StateWindowColumnManager("HK NTC 7 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_7);
-
-        StateWindowColumnManager("HK NTC 8 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_8);
-
-        StateWindowColumnManager("HK NTC 9 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_9);
-
-        StateWindowColumnManager("HK NTC 10 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_10);
-
-        StateWindowColumnManager("HK NTC 11 Temperature");
-        ImGui::Text("%" PRIi16, missionbeacon->payhkpayload.temp_ntc_11);
-
-        StateWindowColumnManager("HK sen1_data_0");
-        ImGui::Text("%" PRIu32, missionbeacon->payhkpayload.sen1_data_0);
-
-        StateWindowColumnManager("HK sen1_data_1");
-        ImGui::Text("%" PRIu32, missionbeacon->payhkpayload.sen1_data_1);
-
-
-
-    }
-
-
-        ImGui::EndTable();
         ImGui::EndTabItem();
-        ImGui::SetWindowFontScale(1.0 * fontscale);
     }
+
+    ImGui::SetWindowFontScale(1.0f * fontscale);
 
 
 
@@ -9346,9 +9542,15 @@ case 66: {
 
             ImGui::Separator();
             ImGui::Text("=== Sun Pointing Body Vector ===");
-            ImGui::Text("X : %d", p.SunPointingBodyVectorX);
-            ImGui::Text("Y : %d", p.SunPointingBodyVectorY);
-            ImGui::Text("Z : %d", p.SunPointingBodyVectorZ);
+            ImGui::InputScalar("X##SunPointingBodyVectorX",
+                            ImGuiDataType_S16,
+                            &p.SunPointingBodyVectorX);
+            ImGui::InputScalar("Y##SunPointingBodyVectorY",
+                            ImGuiDataType_S16,
+                            &p.SunPointingBodyVectorY);
+            ImGui::InputScalar("Z##SunPointingBodyVectorZ",
+                            ImGuiDataType_S16,
+                            &p.SunPointingBodyVectorZ);
 
             ImGui::Separator();
             ImGui::Text("=== Target Tracking Body Vector ===");
@@ -14493,6 +14695,47 @@ case 213: { // FTP_filenameCmd
         break;
     }
 
+    case 300 : {
+        static uint16_t msgid = FM_CMD_MID;
+        static uint8_t fnccode = FM_CREATE_DIRECTORY_CC;
+        static char path_buf[OS_MAX_PATH_LEN] = "/cf/sdcard/oemrec";
+
+        ImGui::InputScalar("msgid", ImGuiDataType_U16, &msgid);
+        ImGui::InputScalar("fnccode", ImGuiDataType_U8, &fnccode);
+        ImGui::InputText("directory path", path_buf, sizeof(path_buf));
+
+        if (ImGui::Button("Generate CMD")) {
+            uint16_t msgid_be = htons(msgid);
+            memset(command->fmcreatedirectorycmd.DirectoryName, 0, sizeof(command->fmcreatedirectorycmd.DirectoryName));
+            strncpy(command->fmcreatedirectorycmd.DirectoryName, path_buf, sizeof(command->fmcreatedirectorycmd.DirectoryName) - 1);
+
+            uint8_t sequence[2] = {0xC0, 0x00};
+            uint8_t  length[2]   = {0x00, (uint8_t)(sizeof(FM_CreateDirectoryCmd_t) - 7)};
+            memcpy(command->fmcreatedirectorycmd.CmdHeader + 0, &msgid_be, sizeof(uint16_t));
+            memcpy(command->fmcreatedirectorycmd.CmdHeader + 2, sequence, sizeof(uint16_t));
+            memcpy(command->fmcreatedirectorycmd.CmdHeader + 4, length, sizeof(uint16_t));
+            memcpy(command->fmcreatedirectorycmd.CmdHeader + 6, &fnccode, sizeof(uint8_t));
+
+            command->fmcreatedirectorycmd.CmdHeader[7] = 0x00;
+
+            pthread_join(p_thread[4], NULL);
+            packetsign* TestPacket = (packetsign*)malloc(2 + 2 + 4 + sizeof(FM_CreateDirectoryCmd_t));
+            TestPacket->Identifier = HVD_TEST;
+            TestPacket->PacketType = MIM_PT_TMTC_TEST;
+
+            TestPacket->Length = sizeof(FM_CreateDirectoryCmd_t);
+            uint16_t len = sizeof(FM_CreateDirectoryCmd_t);
+
+            const uint8_t* byteptr = reinterpret_cast<const uint8_t*>(&command->fmcreatedirectorycmd);
+
+            uint8_t checksum = 0xFF;
+            while (len--) checksum ^= *(byteptr++);
+            memcpy(command->fmcreatedirectorycmd.CmdHeader + 7, &checksum, sizeof(uint8_t));
+            memcpy(TestPacket->Data, &command->fmcreatedirectorycmd, sizeof(FM_CreateDirectoryCmd_t));
+            pthread_create(&p_thread[4], NULL, task_uplink_onorbit, (void*)TestPacket);
+        }
+    }
+
     }
 }
 
@@ -14823,16 +15066,27 @@ void ImGui_CommandWindow(float fontscale)
     if(State.chunk_sz < 1)
         State.chunk_sz = 1;
 
+    if (ImGui::Checkbox("Use CSP RDP##ftp_use_csp_rdp", &State.use_csp_rdp))
+    {
+        printf("[FTP] Use CSP RDP changed: %s\n", State.use_csp_rdp ? "ON" : "OFF");
+        fflush(stdout);
+    }
+
     static int rdp_window_size_input = -1;
 
     if (rdp_window_size_input < 0)
-        rdp_window_size_input = (int)miman_get_rdp_default_window_size();
+        rdp_window_size_input = (int)miman_get_rdp_ftp_window_size();
 
     ImGui::Text("RDP Window Size ");
     ImGui::SameLine();
 
     float apply_button_width = 70.0f;
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - apply_button_width - ImGui::GetStyle().ItemSpacing.x);
+    float input_width = ImGui::GetContentRegionAvail().x - apply_button_width - ImGui::GetStyle().ItemSpacing.x;
+
+    if (input_width < 50.0f)
+        input_width = 50.0f;
+
+    ImGui::SetNextItemWidth(input_width);
 
     ImGui::InputInt("##rdp_window_size", &rdp_window_size_input);
 
@@ -14843,9 +15097,11 @@ void ImGui_CommandWindow(float fontscale)
 
     if (ImGui::Button("Apply##rdp_window_size", ImVec2(apply_button_width, 0)))
     {
-        miman_set_rdp_default_window_size((unsigned int)rdp_window_size_input);
-    }
+        printf("[RDP] Apply button clicked: input=%d\n", rdp_window_size_input);
+        fflush(stdout);
 
+        miman_set_rdp_ftp_window_size((unsigned int)rdp_window_size_input);
+    }
 
 
     ImGui::Text("Task ");
@@ -16376,7 +16632,7 @@ void Initialize_CMDLabels()
     snprintf(Templabels[220], 64, "ES Query One"); 
     snprintf(Templabels[221], 64, "ES Query All");
 
-
+    snprintf(Templabels[300], 64, "FM Create Directory");
 }
 
 int CMDDataGenerator(uint32_t msgid, uint16_t fnccode, void *Requested, size_t RequestedSize) 

@@ -50,15 +50,12 @@ extern pthread_t p_thread[16];
 extern pthread_mutex_t conn_lock;
 extern Setup * setup;
 
-void miman_begin_ftp_rdp_profile(uint32_t ftp_timeout_ms);
-void miman_end_ftp_rdp_profile(void);
-
 static unsigned int ftp_chunk_size = 200;
 static unsigned int ftp_backend = 3; // Use file backend as standard
 static const char * const packet_missing = "-";
 static const char * const packet_ok = "+";
 static const unsigned int ftp_chunk_size_limit = 200;
-static const unsigned int ftp_transfer_timeout_ms = 30000;
+static const unsigned int ftp_transfer_timeout_ms = 10000;
 static const time_t ftp_failure_cooldown_sec = 3;
 
 static pthread_mutex_t ftp_launch_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -195,9 +192,9 @@ int ftp_list_callback(uint16_t entries, const gs_ftp_list_entry_t * listent, voi
 }
 
 void * ftp_downlink_onorbit(void * param){
-#define CSP_USE_RDP
     // ftp_avail();
     ftp_worker_begin();
+    const bool use_rdp = State.use_csp_rdp;
     bool dlstate = State.downlink_mode;
     //This funcion must be on p_thread[4]
     if((dlstate))
@@ -213,19 +210,35 @@ void * ftp_downlink_onorbit(void * param){
     // gs_ftp_info_callback_t = ftp_callback;
     printftp("Start FTP Downlink.");
     State.downlink_mode = false;
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
     // ftp_config.timeout = 30000; //default timeout value
-    ftp_config.timeout = 30000;
+    ftp_config.timeout = ftp_transfer_timeout_ms;
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
-    console.AddLog("[FTP]##Download config: host=%u port=%u ftp_timeout=%u ms chunk=%u",
-                   ftp_config.host, ftp_config.port, ftp_config.timeout, ftp_config.chunk_size);
+    ftp_config.csp_opts = use_rdp ? (CSP_O_RDP | CSP_O_CRC32) : CSP_O_CRC32;
+    printf("[FTP] Download config: host=%u port=%u ftp_timeout=%u ms chunk=%u rdp=%s window=%u\n",
+           ftp_config.host,
+           ftp_config.port,
+           ftp_config.timeout,
+           ftp_config.chunk_size,
+           use_rdp ? "ON" : "OFF",
+           miman_get_rdp_ftp_window_size());
+    fflush(stdout);
+    console.AddLog("[FTP]##Download config: host=%u port=%u ftp_timeout=%u ms chunk=%u rdp=%s window=%u",
+                   ftp_config.host,
+                   ftp_config.port,
+                   ftp_config.timeout,
+                   ftp_config.chunk_size,
+                   use_rdp ? "ON" : "OFF",
+                   miman_get_rdp_ftp_window_size());
     pthread_mutex_lock(&conn_lock);
-    miman_begin_ftp_rdp_profile(ftp_config.timeout);
+    if (use_rdp)
+        miman_begin_ftp_rdp_profile(ftp_config.timeout);
     int status = (int)gs_ftp_download(&ftp_config, FTP->local_path, FTP->remote_path, ftp_info_print_callback, NULL);
-    miman_end_ftp_rdp_profile();
+    if (use_rdp)
+        miman_end_ftp_rdp_profile();
     pthread_mutex_unlock(&conn_lock);
     if (status != 0) {
 		console.AddLog("[ERROR]##Fail to complete ftp_download. Retcode : %d", status);\
@@ -240,14 +253,13 @@ void * ftp_downlink_onorbit(void * param){
     {
         State.downlink_mode = dlstate;
     }
-#undef CSP_USE_RDP
 	return NULL;
 }
 
 void * ftp_uplink_onorbit(void * param){
-#define CSP_USE_RDP
     // ftp_avail();
     ftp_worker_begin();
+    const bool use_rdp = State.use_csp_rdp;
     bool dlstate = State.downlink_mode;
     //This funcion must be on p_thread[4]
     if((dlstate))
@@ -260,20 +272,36 @@ void * ftp_uplink_onorbit(void * param){
     //Port : 15
     ftpinfo * FTP = (ftpinfo *) param;
     State.downlink_mode = false;
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
     // ftp_config.timeout = 30000; //default timeout value
     ftp_config.timeout = ftp_transfer_timeout_ms;
     ftp_config.chunk_size = ftp_chunk_size_clamped(State.chunk_sz);
+    ftp_config.csp_opts = use_rdp ? (CSP_O_RDP | CSP_O_CRC32) : CSP_O_CRC32;
     int status = 0;
-    console.AddLog("[FTP]##Upload config: host=%u port=%u ftp_timeout=%u ms chunk=%u",
-                   ftp_config.host, ftp_config.port, ftp_config.timeout, ftp_config.chunk_size);
+    printf("[FTP] Upload config: host=%u port=%u ftp_timeout=%u ms chunk=%u rdp=%s window=%u\n",
+           ftp_config.host,
+           ftp_config.port,
+           ftp_config.timeout,
+           ftp_config.chunk_size,
+           use_rdp ? "ON" : "OFF",
+           miman_get_rdp_ftp_window_size());
+    fflush(stdout);
+    console.AddLog("[FTP]##Upload config: host=%u port=%u ftp_timeout=%u ms chunk=%u rdp=%s window=%u",
+                   ftp_config.host,
+                   ftp_config.port,
+                   ftp_config.timeout,
+                   ftp_config.chunk_size,
+                   use_rdp ? "ON" : "OFF",
+                   miman_get_rdp_ftp_window_size());
     pthread_mutex_lock(&conn_lock);
-    miman_begin_ftp_rdp_profile(ftp_config.timeout);
+    if (use_rdp)
+        miman_begin_ftp_rdp_profile(ftp_config.timeout);
     status = (int)gs_ftp_upload(&ftp_config, FTP->local_path, FTP->remote_path, ftp_info_print_callback, NULL);
-    miman_end_ftp_rdp_profile();
+    if (use_rdp)
+        miman_end_ftp_rdp_profile();
     pthread_mutex_unlock(&conn_lock);
     printftp("FTP task DONE.");
     
@@ -290,14 +318,13 @@ void * ftp_uplink_onorbit(void * param){
     {
         State.downlink_mode = dlstate;
     }
-#undef CSP_USE_RDP
 	return NULL;
 }
 
 
 void * ftp_list_onorbit(void *){
     ftp_worker_begin();
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
@@ -321,7 +348,7 @@ void * ftp_list_onorbit(void *){
 
 void * ftp_move_onorbit(void *){
     ftp_worker_begin();
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
@@ -344,7 +371,7 @@ void * ftp_move_onorbit(void *){
 
 void * ftp_remove_onorbit(void *){
     ftp_worker_begin();
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
@@ -367,7 +394,7 @@ void * ftp_remove_onorbit(void *){
 
 void * ftp_copy_onorbit(void *){
     ftp_worker_begin();
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
@@ -391,7 +418,7 @@ void * ftp_copy_onorbit(void *){
 void * ftp_mkdir_onorbit(void *){
     ftp_worker_begin();
     uint32_t mode = 0;
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;
@@ -414,7 +441,7 @@ void * ftp_mkdir_onorbit(void *){
 
 void * ftp_rmdir_onorbit(void *){
     ftp_worker_begin();
-    gs_ftp_settings_t ftp_config;
+    gs_ftp_settings_t ftp_config = {};
     ftp_config.mode = GS_FTP_MODE_STANDARD;
     ftp_config.host = setup->obc_node;
     ftp_config.port = FTPRDP_PORT;

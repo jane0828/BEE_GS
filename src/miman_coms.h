@@ -192,116 +192,141 @@ typedef struct {
 #define a sizeof(Beacon);
 
 
-
 typedef struct CFE_SRL_HousekeepingTlm_Payload {
     uint8 CommandCounter;
-
     uint8 CommandErrorCounter;
 
     uint8 IOHandleStatus[4];
-
     uint16 IOHandleTxCount[4];
-    
-}__attribute__((packed)) CFE_SRL_HousekeepingTlm_Payload_t;
 
-typedef struct RPT_HkTlm_Payload{
+} __attribute__((packed)) CFE_SRL_HousekeepingTlm_Payload_t;
+
+
+typedef struct RPT_HkTlm_Payload {
     uint8 CmdCounter;
     uint8 CmdErrCounter;
 
-    /**
+    /*
      * Queue Info
      */
     uint8 ReportQueueCnt;
     uint8 CriticalQueueCnt;
 
-    /**
+    /*
      * Operation Data
      */
     uint16 BootCount;
     uint32 TimeSec;
     uint32 TimeSubsec;
-    uint32 Sequence; /* Backup data numbering */
+    uint32 Sequence;
 
-    /**
+    /*
      * Reset Cause
      */
     uint8 ResetCause;
 
-}__attribute__((packed)) RPT_BcnTlm_Payload_t;
+} __attribute__((packed)) RPT_BcnTlm_Payload_t;
+
 
 typedef struct PAY_BcnTlm_Payload {
     uint8 CommandCounter;
     uint8 CommandErrorCounter;
 
-    /**
-     * Else ....
+    /*
+     * Compact beacon subset
      */
-    /* compact beacon subset */
-    int8  sys_status;         /* payload system status */
+    int8  sys_status;
+
     int16 temp_ntc_0;
     int16 temp_ntc_1;
-    int16 temp_ntc_2;     
+    int16 temp_ntc_2;
     int16 temp_ntc_3;
-    int16 temp_ntc_4;         /* board temp 4 */
-    int16 temp_ntc_5;         /* board temp 5 */
-    int16 temp_ntc_6;         /* board temp 6 */
-    int16 temp_ntc_7;         /* board temp 7 */
-    int16 temp_ntc_8;         /* board temp 8 */
-    int16 temp_ntc_9;         /* board temp 9 */
-    int16 temp_ntc_10;        /* board temp 10 */
-    int16 temp_ntc_11;        /* board temp 11 */     
+    int16 temp_ntc_4;
+    int16 temp_ntc_5;
+    int16 temp_ntc_6;
+    int16 temp_ntc_7;
+    int16 temp_ntc_8;
+    int16 temp_ntc_9;
+    int16 temp_ntc_10;
+    int16 temp_ntc_11;
+
+} __attribute__((packed)) PAY_BcnTlm_Payload_t;
 
 
-} PAY_BcnTlm_Payload_t;
-
-typedef struct PAY_HkTlm_Payload {
+/*
+ * Updated PAY Housekeeping Telemetry Payload
+ */
+typedef struct PAYSLT_HkTlm_Payload {
     uint8 CommandCounter;
     uint8 CommandErrorCounter;
 
-    int8  sys_status;         /* payload system status */
-    int16 temp_ntc_0;         /* board temp 0 */
-    int16 temp_ntc_1;         /* board temp 1 */
-    int16 temp_ntc_2;         /* board temp 2 */
-    int16 temp_ntc_3;         /* board temp 3 */
-    int16 temp_ntc_4;         /* board temp 4 */
-    int16 temp_ntc_5;         /* board temp 5 */
-    int16 temp_ntc_6;         /* board temp 6 */
-    int16 temp_ntc_7;         /* board temp 7 */
-    int16 temp_ntc_8;         /* board temp 8 */
-    int16 temp_ntc_9;         /* board temp 9 */
-    int16 temp_ntc_10;        /* board temp 10 */
-    int16 temp_ntc_11;        /* board temp 11 */
-    /* Expanded TM (selected currents/sensors) */
-    uint32 sen1_data_0;
-    uint32 sen1_data_1;  
+    uint32 sys_status;       /* Payload system status */
+    uint32 boot_cnt;         /* System boot count */
+    uint32 temp_exp;         /* Board temperature */
 
-} PAY_HkTlm_LINPayload_t;
+    uint32 temp_ntc_0;       /* Board temperature 0 */
+    uint32 temp_ntc_1;       /* Board temperature 1 */
+    uint32 temp_ntc_2;       /* Board temperature 2 */
+    uint32 temp_ntc_3;       /* Board temperature 3 */
+    uint32 temp_ntc_4;       /* Board temperature 4 */
+    uint32 temp_ntc_5;       /* Board temperature 5 */
+    uint32 temp_ntc_6;       /* Board temperature 6 */
+    uint32 temp_ntc_7;       /* Board temperature 7 */
+    uint32 temp_ntc_8;       /* Board temperature 8 */
+    uint32 temp_ntc_9;       /* Board temperature 9 */
+    uint32 temp_ntc_10;      /* Board temperature 10 */
+    uint32 temp_ntc_11;      /* Board temperature 11 */
+
+    /*
+     * Expanded TM
+     */
+    uint32 sen1_data_0;
+    uint32 sen1_data_1;
+
+    uint32 sen2_data_0;
+    uint32 sen2_data_1;
+
+    uint32 current_12_tot;   /* 12 V current (mA) */
+    uint32 current_5_io;
+
+} PAYSLT_HkTlm_Payload_t;
+
 
 // BEE-1000 Mission Beacon
-typedef struct {
+typedef struct MissionBeacon {
 
-	// Telemetry header
+    /*
+     * Telemetry Header
+     */
     uint8 CCSDS_MID[2];
     uint8 CCSDS_Seq[2];
     uint8 CCSDS_Len[2];
     uint8 CCSDS_TimeCode[6];
 
-
+    /*
+     * SRL Housekeeping
+     */
     CFE_SRL_HousekeepingTlm_Payload_t srlpayload;
 
-    RPT_BcnTlm_Payload_t    rptpayload;
+    /*
+     * RPT Beacon
+     */
+    RPT_BcnTlm_Payload_t rptpayload;
 
-    // Payload
-    PAY_BcnTlm_Payload_t    paybcnpayload;
+    /*
+     * PAY Beacon
+     */
+    PAYSLT_HkTlm_Payload_t payhkpayload1;
+
+    /*
+     * PAY Housekeeping
+     */
+    PAYSLT_HkTlm_Payload_t payhkpayload2;
+
+} __attribute__((packed)) MissionBeacon;
 
 
-
-    PAY_HkTlm_LINPayload_t     payhkpayload;
-    
-
-}__attribute__((packed)) MissionBeacon;
-
-#define a sizeof(MissionBeacon);
+#define MISSION_BEACON_SIZE (sizeof(MissionBeacon))
 
 
 struct GETFILEINFO {
@@ -738,7 +763,7 @@ typedef struct
         ADCS_MTQConfigTlm_Payload_t            adcs_mtqconfig;
         ADCS_MagSensingElmConfigTlm_Payload_t  adcs_magsensingelmconfig;
         ADCS_SatOrbitParamConfigTlm_Payload_t  adcs_satorbitparamconfig;
-         ADCS_ErrorLogSettingTlm_Payload_t      adcs_errorlogsetting;
+        ADCS_ErrorLogSettingTlm_Payload_t      adcs_errorlogsetting;
         ADCS_CurrentUnixTimeTlm_Payload_t      adcs_currentunixtime;
         ADCS_PersistConfigDiagnosticTlm_Payload_t adcs_persistconfigdiagnostic;
         ADCS_CommunicationStatusTlm_Payload_t  adcs_communicationstatus;

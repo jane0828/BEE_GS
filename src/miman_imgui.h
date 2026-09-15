@@ -57,7 +57,8 @@ void ImGui_ControlWindow(float fontscale);
 void ImGui_CommandWindow(float fontscale);
 
 void ImGui_AutoPilotWindow(float fontscale);
-
+int miman_switchbox_to_rx_with_log(uint8_t node, const char * source);
+int miman_switchbox_to_tx_with_log(uint8_t node, const char * source);
 
 void ImGuiCustomStyle(ImGuiStyle* style);
 bool popup_setup(Setup * setup);

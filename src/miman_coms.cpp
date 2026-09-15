@@ -1068,159 +1068,305 @@ int BeaconSaver(Beacon* bec)
 }
 
 
-
 int MissionBeaconSaver(MissionBeacon* misnbec)
 {
-    if (!misnbec) return -1;
+    if (!misnbec) {
+        return -1;
+    }
 
     MissionBeaconCounter++;
 
     char filename[128];
-    time_t tmtime = time(0);
+    time_t tmtime = time(NULL);
     struct tm* local = localtime(&tmtime);
 
-    sprintf(filename,
-            "../data/missionbeacon/MissionBeacon--%04d-%02d-%02d-%02d-%02d-%02d--.txt",
-            local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
-            local->tm_hour, local->tm_min, local->tm_sec);
+    if (!local) {
+        return -2;
+    }
+
+    snprintf(filename,
+             sizeof(filename),
+             "../data/missionbeacon/"
+             "MissionBeacon--%04d-%02d-%02d-%02d-%02d-%02d--.txt",
+             local->tm_year + 1900,
+             local->tm_mon + 1,
+             local->tm_mday,
+             local->tm_hour,
+             local->tm_min,
+             local->tm_sec);
 
     FILE* fp = fopen(filename, "w");
-    if (!fp) return -2;
+    if (!fp) {
+        return -3;
+    }
 
     fprintf(fp, "================= MISSION BEACON SAVE =================\n");
 
     /* ===================================================
-    *  CCSDS HEADER
-    * =================================================== */
+     * CCSDS HEADER
+     * =================================================== */
     fprintf(fp, "\n[CCSDS HEADER]\n");
-    fprintf(fp, "MID        : %02X %02X\n",
-            misnbec->CCSDS_MID[0], misnbec->CCSDS_MID[1]);
-    fprintf(fp, "SEQ        : %02X %02X\n",
-            misnbec->CCSDS_Seq[0], misnbec->CCSDS_Seq[1]);
-    fprintf(fp, "LEN        : %02X %02X\n",
-            misnbec->CCSDS_Len[0], misnbec->CCSDS_Len[1]);
-    fprintf(fp, "TimeCode   : %02X %02X %02X %02X %02X %02X\n",
-            misnbec->CCSDS_TimeCode[0], misnbec->CCSDS_TimeCode[1],
-            misnbec->CCSDS_TimeCode[2], misnbec->CCSDS_TimeCode[3],
-            misnbec->CCSDS_TimeCode[4], misnbec->CCSDS_TimeCode[5]);
+
+    fprintf(fp, "MID                         : %02X %02X\n",
+            misnbec->CCSDS_MID[0],
+            misnbec->CCSDS_MID[1]);
+
+    fprintf(fp, "SEQ                         : %02X %02X\n",
+            misnbec->CCSDS_Seq[0],
+            misnbec->CCSDS_Seq[1]);
+
+    fprintf(fp, "LEN                         : %02X %02X\n",
+            misnbec->CCSDS_Len[0],
+            misnbec->CCSDS_Len[1]);
+
+    fprintf(fp, "TimeCode                    : %02X %02X %02X %02X %02X %02X\n",
+            misnbec->CCSDS_TimeCode[0],
+            misnbec->CCSDS_TimeCode[1],
+            misnbec->CCSDS_TimeCode[2],
+            misnbec->CCSDS_TimeCode[3],
+            misnbec->CCSDS_TimeCode[4],
+            misnbec->CCSDS_TimeCode[5]);
 
     /* ===================================================
-    *  SRL HOUSEKEEPING
-    * =================================================== */
+     * SRL HOUSEKEEPING
+     * =================================================== */
     fprintf(fp, "\n[SRL HOUSEKEEPING]\n");
-    fprintf(fp, "SRL Command Counter        : %" PRIu8 "\n",
+
+    fprintf(fp, "SRL Command Counter         : %" PRIu8 "\n",
             misnbec->srlpayload.CommandCounter);
-    fprintf(fp, "SRL Command Error Counter  : %" PRIu8 "\n",
+
+    fprintf(fp, "SRL Command Error Counter   : %" PRIu8 "\n",
             misnbec->srlpayload.CommandErrorCounter);
 
     for (int i = 0; i < 4; i++) {
-        fprintf(fp, "IOHandleStatus[%d]         : %" PRIu8 "\n",
-                i, misnbec->srlpayload.IOHandleStatus[i]);
-        fprintf(fp, "IOHandleTxCount[%d]        : %" PRIu16 "\n",
-                i, misnbec->srlpayload.IOHandleTxCount[i]);
+        fprintf(fp, "IOHandleStatus[%d]           : %" PRIu8 "\n",
+                i,
+                misnbec->srlpayload.IOHandleStatus[i]);
+
+        fprintf(fp, "IOHandleTxCount[%d]          : %" PRIu16 "\n",
+                i,
+                misnbec->srlpayload.IOHandleTxCount[i]);
     }
 
     /* ===================================================
-    *  RPT PAYLOAD SUMMARY
-    * =================================================== */
+     * RPT PAYLOAD SUMMARY
+     * =================================================== */
     fprintf(fp, "\n[RPT PAYLOAD SUMMARY]\n");
-    fprintf(fp, "CmdCounter                : %" PRIu8 "\n",
+
+    fprintf(fp, "CmdCounter                  : %" PRIu8 "\n",
             misnbec->rptpayload.CmdCounter);
-    fprintf(fp, "CmdErrCounter             : %" PRIu8 "\n",
+
+    fprintf(fp, "CmdErrCounter               : %" PRIu8 "\n",
             misnbec->rptpayload.CmdErrCounter);
 
     /* ===================================================
-    *  RPT QUEUE INFO
-    * =================================================== */
+     * RPT QUEUE INFO
+     * =================================================== */
     fprintf(fp, "\n[RPT QUEUE INFO]\n");
-    fprintf(fp, "ReportQueueCnt            : %" PRIu8 "\n",
+
+    fprintf(fp, "ReportQueueCnt              : %" PRIu8 "\n",
             misnbec->rptpayload.ReportQueueCnt);
-    fprintf(fp, "CriticalQueueCnt          : %" PRIu8 "\n",
+
+    fprintf(fp, "CriticalQueueCnt            : %" PRIu8 "\n",
             misnbec->rptpayload.CriticalQueueCnt);
 
     /* ===================================================
-    *  OPERATION DATA
-    * =================================================== */
-    fprintf(fp, "\n[OPERATION DATA]\n");
-    fprintf(fp, "BootCount                 : %" PRIu16 "\n",
+     * RPT OPERATION DATA
+     * =================================================== */
+    fprintf(fp, "\n[RPT OPERATION DATA]\n");
+
+    fprintf(fp, "BootCount                   : %" PRIu16 "\n",
             misnbec->rptpayload.BootCount);
-    fprintf(fp, "TimeSec                   : %" PRIu32 "\n",
+
+    fprintf(fp, "TimeSec                     : %" PRIu32 "\n",
             misnbec->rptpayload.TimeSec);
-    fprintf(fp, "TimeSubsec                : %" PRIu32 "\n",
+
+    fprintf(fp, "TimeSubsec                  : %" PRIu32 "\n",
             misnbec->rptpayload.TimeSubsec);
-    fprintf(fp, "Sequence                  : %" PRIu32 "\n",
+
+    fprintf(fp, "Sequence                    : %" PRIu32 "\n",
             misnbec->rptpayload.Sequence);
-    fprintf(fp, "ResetCause                : 0x%02X\n",
+
+    fprintf(fp, "ResetCause                  : 0x%02" PRIX8 "\n",
             misnbec->rptpayload.ResetCause);
 
     /* ===================================================
-    *  MISSION BEACON PAYLOAD
-    * =================================================== */
-    fprintf(fp, "\n[MISSION BEACON PAYLOAD]\n");
-    fprintf(fp, "CommandCounter             : %" PRIu8 "\n",
-            misnbec->paybcnpayload.CommandCounter);
-    fprintf(fp, "CommandErrorCounter        : %" PRIu8 "\n",
-            misnbec->paybcnpayload.CommandErrorCounter);
-    fprintf(fp, "System Status              : %" PRIi8 "\n",
-            misnbec->paybcnpayload.sys_status);
+     * PAYSLT PAYLOAD 1
+     * =================================================== */
+    fprintf(fp, "\n[PAYSLT PAYLOAD 1]\n");
 
-    fprintf(fp, "NTC Temp 0                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_0);
-    fprintf(fp, "NTC Temp 1                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_1);
-    fprintf(fp, "NTC Temp 2                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_2);
-    fprintf(fp, "NTC Temp 3                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_3);
-    fprintf(fp, "NTC Temp 4                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_4);
-    fprintf(fp, "NTC Temp 5                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_5);
-    fprintf(fp, "NTC Temp 6                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_6);
-    fprintf(fp, "NTC Temp 7                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_7);
-    fprintf(fp, "NTC Temp 8                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_8);
-    fprintf(fp, "NTC Temp 9                 : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_9);
-    fprintf(fp, "NTC Temp 10                : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_10);
-    fprintf(fp, "NTC Temp 11                : %" PRIi16 "\n", misnbec->paybcnpayload.temp_ntc_11);
+    fprintf(fp, "Command Counter             : %" PRIu8 "\n",
+            misnbec->payhkpayload1.CommandCounter);
+
+    fprintf(fp, "Command Error Counter       : %" PRIu8 "\n",
+            misnbec->payhkpayload1.CommandErrorCounter);
+
+    fprintf(fp, "System Status               : %" PRIu32 "\n",
+            misnbec->payhkpayload1.sys_status);
+
+    fprintf(fp, "Boot Count                  : %" PRIu32 "\n",
+            misnbec->payhkpayload1.boot_cnt);
+
+    fprintf(fp, "External Temperature        : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_exp);
+
+    fprintf(fp, "NTC Temperature 0           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_0);
+
+    fprintf(fp, "NTC Temperature 1           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_1);
+
+    fprintf(fp, "NTC Temperature 2           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_2);
+
+    fprintf(fp, "NTC Temperature 3           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_3);
+
+    fprintf(fp, "NTC Temperature 4           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_4);
+
+    fprintf(fp, "NTC Temperature 5           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_5);
+
+    fprintf(fp, "NTC Temperature 6           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_6);
+
+    fprintf(fp, "NTC Temperature 7           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_7);
+
+    fprintf(fp, "NTC Temperature 8           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_8);
+
+    fprintf(fp, "NTC Temperature 9           : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_9);
+
+    fprintf(fp, "NTC Temperature 10          : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_10);
+
+    fprintf(fp, "NTC Temperature 11          : %" PRIu32 "\n",
+            misnbec->payhkpayload1.temp_ntc_11);
+
+    fprintf(fp, "Sensor 1 Data 0             : %" PRIu32 "\n",
+            misnbec->payhkpayload1.sen1_data_0);
+
+    fprintf(fp, "Sensor 1 Data 1             : %" PRIu32 "\n",
+            misnbec->payhkpayload1.sen1_data_1);
+
+    fprintf(fp, "Sensor 2 Data 0             : %" PRIu32 "\n",
+            misnbec->payhkpayload1.sen2_data_0);
+
+    fprintf(fp, "Sensor 2 Data 1             : %" PRIu32 "\n",
+            misnbec->payhkpayload1.sen2_data_1);
+
+    fprintf(fp, "Total 12V Current           : %" PRIu32 " mA\n",
+            misnbec->payhkpayload1.current_12_tot);
+
+    fprintf(fp, "5V IO Current               : %" PRIu32 "\n",
+            misnbec->payhkpayload1.current_5_io);
 
     /* ===================================================
-    *  MISSION HOUSEKEEPING PAYLOAD
-    * =================================================== */
-    fprintf(fp, "\n[MISSION HOUSEKEEPING]\n");
-    fprintf(fp, "HK CommandCounter          : %" PRIu8 "\n",
-            misnbec->payhkpayload.CommandCounter);
-    fprintf(fp, "HK CommandErrorCounter     : %" PRIu8 "\n",
-            misnbec->payhkpayload.CommandErrorCounter);
-    fprintf(fp, "HK System Status           : %" PRIi8 "\n",
-            misnbec->payhkpayload.sys_status);
+     * PAYSLT PAYLOAD 2
+     * =================================================== */
+    fprintf(fp, "\n[PAYSLT PAYLOAD 2]\n");
 
-    fprintf(fp, "HK NTC Temp 0              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_0);
-    fprintf(fp, "HK NTC Temp 1              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_1);
-    fprintf(fp, "HK NTC Temp 2              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_2);
-    fprintf(fp, "HK NTC Temp 3              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_3);
-    fprintf(fp, "HK NTC Temp 4              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_4);
-    fprintf(fp, "HK NTC Temp 5              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_5);
-    fprintf(fp, "HK NTC Temp 6              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_6);
-    fprintf(fp, "HK NTC Temp 7              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_7);
-    fprintf(fp, "HK NTC Temp 8              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_8);
-    fprintf(fp, "HK NTC Temp 9              : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_9);
-    fprintf(fp, "HK NTC Temp 10             : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_10);
-    fprintf(fp, "HK NTC Temp 11             : %" PRIi16 "\n", misnbec->payhkpayload.temp_ntc_11);
+    fprintf(fp, "Command Counter             : %" PRIu8 "\n",
+            misnbec->payhkpayload2.CommandCounter);
 
-    fprintf(fp, "HK Sensor1 Data 0           : %" PRIu32 "\n",
-            misnbec->payhkpayload.sen1_data_0);
-    fprintf(fp, "HK Sensor1 Data 1           : %" PRIu32 "\n",
-            misnbec->payhkpayload.sen1_data_1);
+    fprintf(fp, "Command Error Counter       : %" PRIu8 "\n",
+            misnbec->payhkpayload2.CommandErrorCounter);
 
+    fprintf(fp, "System Status               : %" PRIu32 "\n",
+            misnbec->payhkpayload2.sys_status);
 
+    fprintf(fp, "Boot Count                  : %" PRIu32 "\n",
+            misnbec->payhkpayload2.boot_cnt);
 
+    fprintf(fp, "External Temperature        : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_exp);
 
+    fprintf(fp, "NTC Temperature 0           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_0);
 
-    // ---------------------------------------------------
-    // BINARY DUMP
-    // ---------------------------------------------------
+    fprintf(fp, "NTC Temperature 1           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_1);
+
+    fprintf(fp, "NTC Temperature 2           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_2);
+
+    fprintf(fp, "NTC Temperature 3           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_3);
+
+    fprintf(fp, "NTC Temperature 4           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_4);
+
+    fprintf(fp, "NTC Temperature 5           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_5);
+
+    fprintf(fp, "NTC Temperature 6           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_6);
+
+    fprintf(fp, "NTC Temperature 7           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_7);
+
+    fprintf(fp, "NTC Temperature 8           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_8);
+
+    fprintf(fp, "NTC Temperature 9           : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_9);
+
+    fprintf(fp, "NTC Temperature 10          : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_10);
+
+    fprintf(fp, "NTC Temperature 11          : %" PRIu32 "\n",
+            misnbec->payhkpayload2.temp_ntc_11);
+
+    fprintf(fp, "Sensor 1 Data 0             : %" PRIu32 "\n",
+            misnbec->payhkpayload2.sen1_data_0);
+
+    fprintf(fp, "Sensor 1 Data 1             : %" PRIu32 "\n",
+            misnbec->payhkpayload2.sen1_data_1);
+
+    fprintf(fp, "Sensor 2 Data 0             : %" PRIu32 "\n",
+            misnbec->payhkpayload2.sen2_data_0);
+
+    fprintf(fp, "Sensor 2 Data 1             : %" PRIu32 "\n",
+            misnbec->payhkpayload2.sen2_data_1);
+
+    fprintf(fp, "Total 12V Current           : %" PRIu32 " mA\n",
+            misnbec->payhkpayload2.current_12_tot);
+
+    fprintf(fp, "5V IO Current               : %" PRIu32 "\n",
+            misnbec->payhkpayload2.current_5_io);
+
+    /* ===================================================
+     * BINARY DUMP
+     * =================================================== */
     fprintf(fp, "\n[BINARY DATA]\n");
-    for (size_t i = 0; i < sizeof(*misnbec); i++)
-        fprintf(fp, "%02X ", ((unsigned char*)misnbec)[i]);
-    fprintf(fp, "\n");
+
+    const unsigned char* raw =
+        reinterpret_cast<const unsigned char*>(misnbec);
+
+    for (size_t i = 0; i < sizeof(*misnbec); i++) {
+        fprintf(fp, "%02X ", raw[i]);
+
+        if ((i + 1) % 16 == 0) {
+            fprintf(fp, "\n");
+        }
+    }
+
+    if (sizeof(*misnbec) % 16 != 0) {
+        fprintf(fp, "\n");
+    }
+
+    fprintf(fp,
+            "\nMissionBeacon Size          : %zu bytes\n",
+            sizeof(*misnbec));
 
     fclose(fp);
     return 0;
 }
+
+
 
 static void DumpHex(FILE *fp, const uint8_t *p, size_t n)
 {
@@ -1445,6 +1591,1219 @@ static void DumpReportPayloadParsed_ByMidCc(FILE *fp, const Report *rpt)
                 fprintf(fp, "\n[WDT]\n");
                 fprintf(fp, "wdt_cnt_gnd : %" PRIu32 "\n", pl.wdt_cnt_gnd);
                 fprintf(fp, "wdt_gnd_left: %" PRIu32 "\n", pl.wdt_gnd_left);
+
+                break;
+            }
+
+            case ADCS_GET_WHL_CONFIG_CC :
+            {
+                fprintf(fp, "\n[ADCS GET WHEEL CONFIG CC]\n");
+                if(payload_len < sizeof(ADCS_WhlConfigTlm_Payload_t)){
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_WhlConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_WhlConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Report Data]\n");
+                
+                fprintf(fp, "\n[Reaction Wheel 0]\n");
+                fprintf(fp, "RWL0 Inertia      : %f\n", pl.Rwl0Inertia);
+                fprintf(fp, "RWL0 Max Momentum : %f\n", pl.Rwl0MaxMomentum);
+                fprintf(fp, "RWL0 Max Torque   : %f\n", pl.Rwl0MaxToque);
+
+                fprintf(fp, "\n[Reaction Wheel 1]\n");
+                fprintf(fp, "RWL1 Inertia      : %f\n", pl.Rwl1Inertia);
+                fprintf(fp, "RWL1 Max Momentum : %f\n", pl.Rwl1MaxMomentum);
+                fprintf(fp, "RWL1 Max Torque   : %f\n", pl.Rwl1MaxToque);
+
+                fprintf(fp, "\n[Reaction Wheel 2]\n");
+                fprintf(fp, "RWL2 inertia      : %f\n", pl.Rwl2Inertia);
+                fprintf(fp, "RWL2 Max Momentum : %f\n", pl.Rwl2MaxMomentum);
+                fprintf(fp, "RWL2 Max Torque   : %f\n", pl.Rwl2MaxToque);
+
+                fprintf(fp, "\n[Reaction Wheel 3]\n");
+                fprintf(fp, "RWL3 Inertia      : %f\n", pl.Rwl3Inertia);
+                fprintf(fp, "RWL3 Max Momentum : %f\n", pl.Rwl3MaxMomentum);
+                fprintf(fp, "RWL3 Max Torque   : %f\n", pl.Rwl3MaxToque);
+
+                fprintf(fp, "\n[Wheel Ramp Torque]\n");
+                fprintf(fp, "Wheel Ramp Torque : %f\n", pl.WheelRampTorque);
+
+                fprintf(fp, "\n[Wheel Scheme]\n");
+                fprintf(fp, "Wheel Scheme      : %" PRIu8 "\n", pl.WheelScheme);
+                fprintf(fp, "Failed Wheel ID   : %" PRIu8 "\n", pl.FailedWheelID);
+
+                fprintf(fp, "\n[Pyramid]\n");
+                fprintf(fp, "Pyramid Nominal Momentum : %f\n", pl.PyramidNominalMomentum);
+                fprintf(fp, "Pyramid Tilt Angle       : %f\n", pl.PyramidTiltAngle);
+
+                break;
+            }
+
+            case ADCS_GET_SATELLITE_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET SATELLITE CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_SatelliteConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_SatelliteConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_SatelliteConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Report Data]\n");
+
+                fprintf(fp, "\n[Inertia Tensor]\n");
+                fprintf(fp, "Ixx : %f\n", pl.Ixx);
+                fprintf(fp, "Iyy : %f\n", pl.Iyy);
+                fprintf(fp, "Izz : %f\n", pl.Izz);
+                fprintf(fp, "Ixy : %f\n", pl.Ixy);
+                fprintf(fp, "Ixz : %f\n", pl.Ixz);
+                fprintf(fp, "Iyz : %f\n", pl.Iyz);
+
+                fprintf(fp, "\n[Sun Pointing Body Vector]\n");
+                fprintf(fp, "SunPointingBodyVectorX : %" PRIi16 "\n", pl.SunPointingBodyVectorX);
+                fprintf(fp, "SunPointingBodyVectorY : %" PRIi16 "\n", pl.SunPointingBodyVectorY);
+                fprintf(fp, "SunPointingBodyVectorZ : %" PRIi16 "\n", pl.SunPointingBodyVectorZ);
+
+                fprintf(fp, "\n[Target Tracking Body Vector]\n");
+                fprintf(fp, "TargetTrackingBodyVectorX : %" PRIi16 "\n", pl.TargetTrackingBodyVectorX);
+                fprintf(fp, "TargetTrackingBodyVectorY : %" PRIi16 "\n", pl.TargetTrackingBodyVectorY);
+                fprintf(fp, "TargetTrackingBodyVectorZ : %" PRIi16 "\n", pl.TargetTrackingBodyVectorZ);
+
+                fprintf(fp, "\n[Sat Tracking Body Vector]\n");
+                fprintf(fp, "SatTrackingBodyVectorX : %" PRIi16 "\n", pl.SatTrackingBodyVectorX);
+                fprintf(fp, "SatTrackingBodyVectorY : %" PRIi16 "\n", pl.SatTrackingBodyVectorY);
+                fprintf(fp, "SatTrackingBodyVectorZ : %" PRIi16 "\n", pl.SatTrackingBodyVectorZ);
+
+                break;
+            }
+
+            case ADCS_GET_CONTROLLER_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET CONTROLLER CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_ControllerConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ControllerConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ControllerConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Report Data]\n");
+
+                fprintf(fp, "\n[Default Control Mode]\n");
+                fprintf(fp, "DefaultControlMode             : %" PRIu8 "\n", pl.DefaultControlMode);
+
+                fprintf(fp, "\n[Control Gains]\n");
+                fprintf(fp, "DetumblingDampingGain          : %f\n", pl.DetumblingDampingGain);
+                fprintf(fp, "SunSpinGain_Sunlit             : %f\n", pl.SunSpinGain_Sunlit);
+                fprintf(fp, "SunSpinGain_Eclipse            : %f\n", pl.SunSpinGain_Eclipse);
+                fprintf(fp, "DetumblingSpinGain             : %f\n", pl.DetumblingSpinGain);
+                fprintf(fp, "FastBDotGain                   : %f\n", pl.FastBDotGain);
+                fprintf(fp, "YMomNutationDampingGain        : %f\n", pl.YMomNutationDampingGain);
+                fprintf(fp, "YMomNutationDampingQuatGain    : %f\n", pl.YMomNutationDampingQuatGain);
+                fprintf(fp, "XGGQuatGain                    : %f\n", pl.XGGQuatGain);
+                fprintf(fp, "YGGQuatGain                    : %f\n", pl.YGGQuatGain);
+                fprintf(fp, "ZGGQuatGain                    : %f\n", pl.ZGGQuatGain);
+                fprintf(fp, "WheelDesatControlGain          : %f\n", pl.WheelDesatControlGain);
+
+                fprintf(fp, "\n[Y-Momentum Gains]\n");
+                fprintf(fp, "YMomProportionalGain           : %f\n", pl.YMomProportionalGain);
+                fprintf(fp, "YMomDerivativeGain             : %f\n", pl.YMomDerivativeGain);
+
+                fprintf(fp, "\n[Reaction Wheel Gains]\n");
+                fprintf(fp, "RWheelProportionalGain         : %f\n", pl.RWheelProportionalGain);
+                fprintf(fp, "RWheelDerivativeGain           : %f\n", pl.RWheelDerivativeGain);
+
+                fprintf(fp, "\n[Tracking Gains]\n");
+                fprintf(fp, "TrackingProportionalGain       : %f\n", pl.TrackingProportionalGain);
+                fprintf(fp, "TrackingDerivativeGain         : %f\n", pl.TrackingDerivativeGain);
+                fprintf(fp, "TrackingIntegralGain           : %f\n", pl.TrackingIntegralGain);
+
+                fprintf(fp, "\n[Reference Values]\n");
+                fprintf(fp, "ReferenceSpinRate_degps        : %f\n", pl.ReferenceSpinRate_degps);
+                fprintf(fp, "ReferenceWheelMomentum_Nms     : %f\n", pl.ReferenceWheelMomentum_Nms);
+                fprintf(fp, "YWheelBiasMomentum_Nms         : %f\n", pl.YWheelBiasMomentum_Nms);
+                fprintf(fp, "RefSpinRate_RW_degps           : %f\n", pl.RefSpinRate_RW_degps);
+
+                fprintf(fp, "\n[Angle Limits]\n");
+                fprintf(fp, "SunKeepOutAngle_deg            : %f\n", pl.SunKeepOutAngle_deg);
+                fprintf(fp, "RollLimitAngle_deg             : %f\n", pl.RollLimitAngle_deg);
+
+                fprintf(fp, "\n[Flags]\n");
+                fprintf(fp, "YawCompensationForEarthRotation : %" PRIu8 "\n", pl.flags.YawCompensationForEarthRotation);
+                fprintf(fp, "EnableSunTrackingInEclipse      : %" PRIu8 "\n", pl.flags.EnableSunTrackingInEclipse);
+                fprintf(fp, "EnableSunAvoidance              : %" PRIu8 "\n", pl.flags.EnableSunAvoidance);
+
+                break;
+            }
+
+            case ADCS_GET_DEFAULT_MODE_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET DEFAULT MODE CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_DefaultModeConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_DefaultModeConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_DefaultModeConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Report Data]\n");
+                fprintf(fp, "DefaultRunMode                   : %" PRIu8 "\n", pl.DefaultRunMode);
+                fprintf(fp, "DefaultOperationalState          : %" PRIu8 "\n", pl.DefaultOperationalState);
+                fprintf(fp, "DefaultControlModeInOpStateSafe  : %" PRIu8 "\n", pl.DefaultControlModeInOpStateSafe);
+                fprintf(fp, "DefaultControlModeInOpStateAuto  : %" PRIu8 "\n", pl.DefaultControlModeInOpStateAuto);
+
+                break;
+            }
+
+            case ADCS_GET_MOUNTING_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET MOUNTING CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_MountingConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_MountingConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_MountingConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Stack Mounting]\n");
+                fprintf(fp, "StackX_mounting : %" PRIu8 "\n", pl.StackX_mounting);
+                fprintf(fp, "StackY_mounting : %" PRIu8 "\n", pl.StackY_mounting);
+                fprintf(fp, "StackZ_mounting : %" PRIu8 "\n", pl.StackZ_mounting);
+
+                fprintf(fp, "\n[MTQ Mounting]\n");
+                fprintf(fp, "MTQ0_mounting   : %" PRIu8 "\n", pl.MTQ0_mounting);
+                fprintf(fp, "MTQ1_mounting   : %" PRIu8 "\n", pl.MTQ1_mounting);
+                fprintf(fp, "MTQ2_mounting   : %" PRIu8 "\n", pl.MTQ2_mounting);
+
+                fprintf(fp, "\n[Wheel Mounting]\n");
+                fprintf(fp, "Wheel0_mounting : %" PRIu8 "\n", pl.Wheel0_mounting);
+                fprintf(fp, "Wheel1_mounting : %" PRIu8 "\n", pl.Wheel1_mounting);
+                fprintf(fp, "Wheel2_mounting : %" PRIu8 "\n", pl.Wheel2_mounting);
+                fprintf(fp, "Wheel3_mounting : %" PRIu8 "\n", pl.Wheel3_mounting);
+
+                fprintf(fp, "\n[Pyramid RWL Angles ]\n");
+                fprintf(fp, "PyramidRWL_alpha : %" PRIi16 ")\n", pl.PyramidRWL_alpha / 100.0, pl.PyramidRWL_alpha);
+                fprintf(fp, "PyramidRWL_beta  : %" PRIi16 ")\n", pl.PyramidRWL_beta  / 100.0, pl.PyramidRWL_beta);
+                fprintf(fp, "PyramidRWL_gamma : %" PRIi16 ")\n", pl.PyramidRWL_gamma / 100.0, pl.PyramidRWL_gamma);
+
+                fprintf(fp, "\n[CSS Mounting]\n");
+                fprintf(fp, "CSS0_mounting   : %" PRIu8 "\n", pl.CSS0_mounting);
+                fprintf(fp, "CSS1_mounting   : %" PRIu8 "\n", pl.CSS1_mounting);
+                fprintf(fp, "CSS2_mounting   : %" PRIu8 "\n", pl.CSS2_mounting);
+                fprintf(fp, "CSS3_mounting   : %" PRIu8 "\n", pl.CSS3_mounting);
+                fprintf(fp, "CSS4_mounting   : %" PRIu8 "\n", pl.CSS4_mounting);
+                fprintf(fp, "CSS5_mounting   : %" PRIu8 "\n", pl.CSS5_mounting);
+                fprintf(fp, "CSS6_mounting   : %" PRIu8 "\n", pl.CSS6_mounting);
+                fprintf(fp, "CSS7_mounting   : %" PRIu8 "\n", pl.CSS7_mounting);
+                fprintf(fp, "CSS8_mounting   : %" PRIu8 "\n", pl.CSS8_mounting);
+                fprintf(fp, "CSS9_mounting   : %" PRIu8 "\n", pl.CSS9_mounting);
+
+                fprintf(fp, "\n[FSS Angles]\n");
+                fprintf(fp, "FSS0_alpha : %" PRIi16 "\n", pl.FSS0_alpha);
+                fprintf(fp, "FSS0_beta  : %" PRIi16 "\n", pl.FSS0_beta);
+                fprintf(fp, "FSS0_gamma : %" PRIi16 ")\n", pl.FSS0_gamma);
+                fprintf(fp, "FSS1_alpha : %" PRIi16 ")\n", pl.FSS1_alpha);
+                fprintf(fp, "FSS1_beta  : %" PRIi16 ")\n", pl.FSS1_beta);
+                fprintf(fp, "FSS1_gamma : %" PRIi16 ")\n", pl.FSS1_gamma);
+                fprintf(fp, "FSS2_alpha : %" PRIi16 ")\n", pl.FSS2_alpha);
+                fprintf(fp, "FSS2_beta  : %" PRIi16 ")\n", pl.FSS2_beta);
+                fprintf(fp, "FSS2_gamma : %" PRIi16 ")\n", pl.FSS2_gamma);
+                fprintf(fp, "FSS3_alpha : %" PRIi16 ")\n", pl.FSS3_alpha);
+                fprintf(fp, "FSS3_beta  : %" PRIi16 ")\n", pl.FSS3_beta);
+                fprintf(fp, "FSS3_gamma : %" PRIi16 ")\n", pl.FSS3_gamma);
+
+                fprintf(fp, "\n[HSS Angles]\n");
+                fprintf(fp, "HSS0_alpha : %" PRIi16 ")\n", pl.HSS0_alpha);
+                fprintf(fp, "HSS0_beta  : %" PRIi16 ")\n", pl.HSS0_beta);
+                fprintf(fp, "HSS0_gamma : %" PRIi16 ")\n", pl.HSS0_gamma);
+                fprintf(fp, "HSS1_alpha : %" PRIi16 ")\n", pl.HSS1_alpha);
+                fprintf(fp, "HSS1_beta  : %" PRIi16 ")\n", pl.HSS1_beta);
+                fprintf(fp, "HSS1_gamma : %" PRIi16 ")\n", pl.HSS1_gamma);
+
+                fprintf(fp, "\n[MAG Angles]\n");
+                fprintf(fp, "MAG0_alpha : %" PRIi16 ")\n", pl.MAG0_alpha);
+                fprintf(fp, "MAG0_beta  : %" PRIi16 ")\n", pl.MAG0_beta);
+                fprintf(fp, "MAG0_gamma : %" PRIi16 ")\n", pl.MAG0_gamma);
+                fprintf(fp, "MAG1_alpha : %" PRIi16 ")\n", pl.MAG1_alpha);
+                fprintf(fp, "MAG1_beta  : %" PRIi16 ")\n", pl.MAG1_beta);
+                fprintf(fp, "MAG1_gamma : %" PRIi16 ")\n", pl.MAG1_gamma);
+
+                fprintf(fp, "\n[STR Angles]\n");
+                fprintf(fp, "STR0_alpha : %" PRIi16 ")\n", pl.STR0_alpha);
+                fprintf(fp, "STR0_beta  : %" PRIi16 ")\n", pl.STR0_beta);
+                fprintf(fp, "STR0_gamma : %" PRIi16 ")\n", pl.STR0_gamma);
+                fprintf(fp, "STR1_alpha : %" PRIi16 ")\n", pl.STR1_alpha);
+                fprintf(fp, "STR1_beta  : %" PRIi16 ")\n", pl.STR1_beta);
+                fprintf(fp, "STR1_gamma : %" PRIi16 ")\n", pl.STR1_gamma);
+
+                fprintf(fp, "\n[External Sensor Angles]\n");
+                fprintf(fp, "ExtSensor0_alpha : %" PRIi16 ")\n", pl.ExtSensor0_alpha);
+                fprintf(fp, "ExtSensor0_beta  : %" PRIi16 ")\n", pl.ExtSensor0_beta);
+                fprintf(fp, "ExtSensor0_gamma : %" PRIi16 ")\n", pl.ExtSensor0_gamma);
+                fprintf(fp, "ExtSensor1_alpha : %" PRIi16 ")\n", pl.ExtSensor1_alpha);
+                fprintf(fp, "ExtSensor1_beta  : %" PRIi16 ")\n", pl.ExtSensor1_beta);
+                fprintf(fp, "ExtSensor1_gamma : %" PRIi16 ")\n", pl.ExtSensor1_gamma);
+
+                fprintf(fp, "\n[External Gyro Axis Mounting]\n");
+                fprintf(fp, "ExtGyro0_axis1_mounting : %" PRIu8 "\n", pl.ExtGyro0_axis1_mounting);
+                fprintf(fp, "ExtGyro0_axis2_mounting : %" PRIu8 "\n", pl.ExtGyro0_axis2_mounting);
+                fprintf(fp, "ExtGyro0_axis3_mounting : %" PRIu8 "\n", pl.ExtGyro0_axis3_mounting);
+                fprintf(fp, "ExtGyro1_axis1_mounting : %" PRIu8 "\n", pl.ExtGyro1_axis1_mounting);
+                fprintf(fp, "ExtGyro1_axis2_mounting : %" PRIu8 "\n", pl.ExtGyro1_axis2_mounting);
+                fprintf(fp, "ExtGyro1_axis3_mounting : %" PRIu8 "\n", pl.ExtGyro1_axis3_mounting);
+
+                break;
+            }
+
+            case ADCS_GET_ESTIMATOR_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET ESTIMATOR CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_EstimatorConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_EstimatorConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_EstimatorConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Default Estimator Modes]\n");
+                fprintf(fp, "DefaultMainEstimatorMode   : %" PRIu8 "\n", pl.DefaultMainEstimatorMode);
+                fprintf(fp, "DefaultBackupEstimatorMode : %" PRIu8 "\n", pl.DefaultBackupEstimatorMode);
+
+                fprintf(fp, "\n[Measurement Noise]\n");
+                fprintf(fp, "MAGMeasurementNoise : %f\n", pl.MAGMeasurementNoise);
+                fprintf(fp, "CSSMeasurementNoise : %f\n", pl.CSSMeasurementNoise);
+                fprintf(fp, "FSSMeasurementNoise : %f\n", pl.FSSMeasurementNoise);
+                fprintf(fp, "HSSMeasurementNoise : %f\n", pl.HSSMeasurementNoise);
+                fprintf(fp, "STRMeasurementNoise : %f\n", pl.STRMeasurementNoise);
+
+                fprintf(fp, "\n[System Noise]\n");
+                fprintf(fp, "MMTRKFSystemNoise : %f\n", pl.MMTRKFSystemNoise);
+                fprintf(fp, "EKFSystemNoise    : %f\n", pl.EKFSystemNoise);
+
+                fprintf(fp, "\n[Nutation Correction]\n");
+                fprintf(fp, "NutationEpsilonCorrection : %f\n", pl.NutationEpsilonCorrection);
+                fprintf(fp, "NutationPsiCorrection     : %f\n", pl.NutationPsiCorrection);
+
+                fprintf(fp, "\n[EKF Sensor Flags]\n");
+                fprintf(fp, "UseFSSinEKF : %" PRIu8 "\n", pl.UseFSSinEKF);
+                fprintf(fp, "UseCSSinEKF : %" PRIu8 "\n", pl.UseCSSinEKF);
+                fprintf(fp, "UseHSSinEKF : %" PRIu8 "\n", pl.UseHSSinEKF);
+                fprintf(fp, "UseSTRinEKF : %" PRIu8 "\n", pl.UseSTRinEKF);
+
+                fprintf(fp, "\n[TRIAD Vectors]\n");
+                fprintf(fp, "TriadVector1 : %" PRIu8 "\n", pl.TriadVector1);
+                fprintf(fp, "TriadVector2 : %" PRIu8 "\n", pl.TriadVector2);
+
+                break;
+            }
+
+            case ADCS_GET_NODE_SELECTION_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET NODE SELECTION CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_NodeSelectionConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_NodeSelectionConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_NodeSelectionConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Node Selection Flags]\n");
+                fprintf(fp, "RWLSelectionFlags       : 0x%02X\n", pl.RWLSelectionFlags);
+                fprintf(fp, "MAGSelectionFlags       : 0x%02X\n", pl.MAGSelectionFlags);
+                fprintf(fp, "FSSSelectionFlags       : 0x%02X\n", pl.FSSSelectionFlags);
+                fprintf(fp, "HSSSelectionFlags       : 0x%02X\n", pl.HSSSelectionFlags);
+                fprintf(fp, "GYRSelectionFlags       : 0x%02X\n", pl.GYRSelectionFlags);
+                fprintf(fp, "STRSelectionFlags       : 0x%02X\n", pl.STRSelectionFlags);
+                fprintf(fp, "GNSSSelectionFlags      : 0x%02X\n", pl.GNSSSelectionFlags);
+                fprintf(fp, "ExtSensorSelectionFlags : 0x%02X\n", pl.ExtSensorSelectionFlags);
+
+                break;
+            }
+
+            case ADCS_GET_MTQ_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET MTQ CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_MTQConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_MTQConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_MTQConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[MTQ Max Dipole Moment]\n");
+                fprintf(fp, "MTQ0MaxDipoleMoment : %f\n", pl.MTQ0MaxDipoleMoment);
+                fprintf(fp, "MTQ1MaxDipoleMoment : %f\n", pl.MTQ1MaxDipoleMoment);
+                fprintf(fp, "MTQ2MaxDipoleMoment : %f\n", pl.MTQ2MaxDipoleMoment);
+
+                fprintf(fp, "\n[MTQ Timing]\n");
+                fprintf(fp, "MaxMTQOnTime : %" PRIu16 "\n", pl.MaxMTQOnTime);
+                fprintf(fp, "MinMTQOnTime : %" PRIu16 "\n", pl.MinMTQOnTime);
+
+                fprintf(fp, "\n[Filter]\n");
+                fprintf(fp, "MagneticControlFilterFactor : %f\n", pl.MagneticControlFilterFactor);
+
+                break;
+            }
+
+            case ADCS_GET_MAG_SENSING_ELM_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET MAG SENSING ELEMENT CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_MagSensingElmConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_MagSensingElmConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_MagSensingElmConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Mag Sensing Element Flags]\n");
+                fprintf(fp, "Mag0SensingElement : %" PRIu8 "\n", pl.Mag0SensingElement);
+                fprintf(fp, "Mag1SensingElement : %" PRIu8 "\n", pl.Mag1SensingElement);
+
+                break;
+            }
+
+            case ADCS_GET_SAT_ORBIT_PARAM_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET SAT ORBIT PARAM CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_SatOrbitParamConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_SatOrbitParamConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_SatOrbitParamConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Orbital Parameters]\n");
+                fprintf(fp, "Epoch       : %lf\n", pl.Epoch);
+                fprintf(fp, "Inclination : %lf\n", pl.Inclination);
+                fprintf(fp, "RAAN        : %lf\n", pl.RAAN);
+                fprintf(fp, "Eccentricity: %lf\n", pl.Eccentricity);
+                fprintf(fp, "AOP         : %lf\n", pl.AOP);
+                fprintf(fp, "MeanAnomaly : %lf\n", pl.MeanAnomaly);
+                fprintf(fp, "MeanMotion  : %lf\n", pl.MeanMotion);
+                fprintf(fp, "B_StarDrag  : %lf\n", pl.B_StarDrag);
+
+                break;
+            }
+
+            case ADCS_GET_ERROR_LOG_SETTING_CC:
+            {
+                fprintf(fp, "\n[ADCS GET ERROR LOG SETTING CC]\n");
+                if (payload_len < sizeof(ADCS_ErrorLogSettingTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ErrorLogSettingTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ErrorLogSettingTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Error Log Settings]\n");
+                fprintf(fp, "ActiveState      : %" PRIu8 "\n", pl.ActiveState);
+                fprintf(fp, "BufferFullAction : %" PRIu8 "\n", pl.BufferFullAction);
+
+                break;
+            }
+
+            case ADCS_GET_CURRENT_UNIX_TIME_CC:
+            {
+                fprintf(fp, "\n[ADCS GET CURRENT UNIX TIME CC]\n");
+                if (payload_len < sizeof(ADCS_CurrentUnixTimeTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_CurrentUnixTimeTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_CurrentUnixTimeTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Unix Time]\n");
+                fprintf(fp, "CurrentUnixseconds     : %" PRIu32 "\n", pl.CurrentUnixseconds);
+                fprintf(fp, "CurrentUnixNanoseconds : %" PRIu32 "\n", pl.CurrentUnixNanoseconds);
+
+                break;
+            }
+
+            case ADCS_GET_PERSIST_CONFIG_DIAGNOSTIC_CC:
+            {
+                fprintf(fp, "\n[ADCS GET PERSIST CONFIG DIAGNOSTIC CC]\n");
+                if (payload_len < sizeof(ADCS_PersistConfigDiagnosticTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_PersistConfigDiagnosticTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_PersistConfigDiagnosticTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Persist Config Diagnostic]\n");
+                fprintf(fp, "State      : %" PRIu8  "\n", pl.State);
+                fprintf(fp, "LastResult : %" PRIu8  "\n", pl.LastResult);
+                fprintf(fp, "Timestamp  : %" PRIu32 "\n", pl.Timestamp);
+
+                break;
+            }
+
+            case ADCS_GET_COMMUNICATION_STATUS_CC:
+            {
+                fprintf(fp, "\n[ADCS GET COMMUNICATION STATUS CC]\n");
+                if (payload_len < sizeof(ADCS_CommunicationStatusTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_CommunicationStatusTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_CommunicationStatusTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[UART]\n");
+                fprintf(fp, "UART_TcCnt  : %" PRIu16 "\n", pl.UART_TcCnt);
+                fprintf(fp, "UART_TlmCnt : %" PRIu16 "\n", pl.UART_TlmCnt);
+                fprintf(fp, "UART_ErrSW  : %" PRIu16 "\n", pl.UART_ErrSW);
+                fprintf(fp, "UART_ErrHW  : %" PRIu16 "\n", pl.UART_ErrHW);
+
+                fprintf(fp, "\n[UART2]\n");
+                fprintf(fp, "UART2_TcCnt  : %" PRIu16 "\n", pl.UART2_TcCnt);
+                fprintf(fp, "UART2_TlmCnt : %" PRIu16 "\n", pl.UART2_TlmCnt);
+                fprintf(fp, "UART2_ErrSW  : %" PRIu16 "\n", pl.UART2_ErrSW);
+                fprintf(fp, "UART2_ErrHW  : %" PRIu16 "\n", pl.UART2_ErrHW);
+
+                fprintf(fp, "\n[CAN]\n");
+                fprintf(fp, "CAN_TcCnt  : %" PRIu16 "\n", pl.CAN_TcCnt);
+                fprintf(fp, "CAN_TlmCnt : %" PRIu16 "\n", pl.CAN_TlmCnt);
+                fprintf(fp, "CAN_ErrSW  : %" PRIu16 "\n", pl.CAN_ErrSW);
+                fprintf(fp, "CAN_ErrHW  : %" PRIu16 "\n", pl.CAN_ErrHW);
+
+                fprintf(fp, "\n[I2C]\n");
+                fprintf(fp, "I2C_TcCnt  : %" PRIu16 "\n", pl.I2C_TcCnt);
+                fprintf(fp, "I2C_TlmCnt : %" PRIu16 "\n", pl.I2C_TlmCnt);
+                fprintf(fp, "I2C_ErrSW  : %" PRIu16 "\n", pl.I2C_ErrSW);
+                fprintf(fp, "I2C_ErrHW  : %" PRIu16 "\n", pl.I2C_ErrHW);
+
+                break;
+            }
+
+            case ADCS_GET_CONTROL_ESTIMATION_MODE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET CONTROL ESTIMATION MODE CC]\n");
+                if (payload_len < sizeof(ADCS_ControlEstimationModeTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ControlEstimationModeTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ControlEstimationModeTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Control/Estimation Modes]\n");
+                fprintf(fp, "ControlMode          : %" PRIu8  "\n", pl.ControlMode);
+                fprintf(fp, "MainEstimatorMode    : %" PRIu8  "\n", pl.MainEstimatorMode);
+                fprintf(fp, "BackupEstimatorMode  : %" PRIu8  "\n", pl.BackupEstimatorMode);
+                fprintf(fp, "ControlTimeout       : %" PRIu16 "\n", pl.ControlTimeout);
+
+                break;
+            }
+
+            case ADCS_GET_REFERENCE_IRC_VECTOR_CC:
+            {
+                fprintf(fp, "\n[ADCS GET REFERENCE IRC VECTOR CC]\n");
+                if (payload_len < sizeof(ADCS_ReferenceIRCVectorTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ReferenceIRCVectorTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ReferenceIRCVectorTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[ECI Pointing Vector]\n");
+                fprintf(fp, "ECIPointingVectorX : %f\n", pl.ECIPointingVectorX);
+                fprintf(fp, "ECIPointingVectorY : %f\n", pl.ECIPointingVectorY);
+                fprintf(fp, "ECIPointingVectorZ : %f\n", pl.ECIPointingVectorZ);
+
+                break;
+            }
+
+            case ADCS_GET_REFERENCE_LLH_TARGET_CC:
+            {
+                fprintf(fp, "\n[ADCS GET REFERENCE LLH TARGET CC]\n");
+                if (payload_len < sizeof(ADCS_ReferenceLLHTargetTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ReferenceLLHTargetTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ReferenceLLHTargetTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[LLH Target]\n");
+                fprintf(fp, "Latitude  : %f\n", pl.Latitude);
+                fprintf(fp, "Longitude : %f\n", pl.Longitude);
+                fprintf(fp, "Altitude  : %f\n", pl.Altitude);
+
+                break;
+            }
+
+            case ADCS_GET_ORBIT_MODE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET ORBIT MODE CC]\n");
+                if (payload_len < sizeof(ADCS_OrbitModeTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_OrbitModeTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_OrbitModeTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Orbit Mode]\n");
+                fprintf(fp, "OrbitMode : %" PRIu8 "\n", pl.OrbitMode);
+
+                break;
+            }
+
+            case ADCS_GET_HEALTH_TLM_MMT_CC:
+            {
+                fprintf(fp, "\n[ADCS GET HEALTH TLM MMT CC]\n");
+                if (payload_len < sizeof(ADCS_HealthTlmMMTTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_HealthTlmMMTTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_HealthTlmMMTTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[MAG0]\n");
+                fprintf(fp, "Mag0MCUTemperature      : %" PRIi16 "\n", pl.Mag0MCUTemperature);
+                fprintf(fp, "Mag0MCUCurrent          : %" PRIu16 "\n", pl.Mag0MCUCurrent);
+                fprintf(fp, "Mag0MCUVoltage          : %" PRIu16 "\n", pl.Mag0MCUVoltage);
+                fprintf(fp, "Mag0PrimaryTemperature  : %" PRIi16 "\n", pl.Mag0PrimaryTemperature);
+                fprintf(fp, "Mag0RedundantTemperature: %" PRIi16 "\n", pl.Mag0RedundantTemperature);
+                fprintf(fp, "Mag0BurnCurrent         : %" PRIu32 "\n", pl.Mag0BurnCurrent);
+                fprintf(fp, "Mag0DeployPinState      : %" PRIu8  "\n", pl.Mag0DeployPinState);
+                fprintf(fp, "Mag0BurnPinState        : %" PRIu8  "\n", pl.Mag0BurnPinState);
+                fprintf(fp, "Mag0BurnUnderCurrent    : %" PRIu8  "\n", pl.Mag0BurnUnderCurrent);
+                fprintf(fp, "Mag0BurnOverCurrent     : %" PRIu8  "\n", pl.Mag0BurnOverCurrent);
+                fprintf(fp, "Mag0DeployTimeout       : %" PRIu8  "\n", pl.Mag0DeployTimeout);
+
+                fprintf(fp, "\n[MAG1]\n");
+                fprintf(fp, "Mag1MCUTemperature      : %" PRIi16 "\n", pl.Mag1MCUTemperature);
+                fprintf(fp, "Mag1MCUCurrent          : %" PRIu16 "\n", pl.Mag1MCUCurrent);
+                fprintf(fp, "Mag1MCUVoltage          : %" PRIu16 "\n", pl.Mag1MCUVoltage);
+                fprintf(fp, "Mag1PrimaryTemperature  : %" PRIi16 "\n", pl.Mag1PrimaryTemperature);
+                fprintf(fp, "Mag1RedundantTemperature: %" PRIi16 "\n", pl.Mag1RedundantTemperature);
+                fprintf(fp, "Mag1BurnCurrent         : %" PRIu32 "\n", pl.Mag1BurnCurrent);
+                fprintf(fp, "Mag1DeployPinState      : %" PRIu8  "\n", pl.Mag1DeployPinState);
+                fprintf(fp, "Mag1BurnPinState        : %" PRIu8  "\n", pl.Mag1BurnPinState);
+                fprintf(fp, "Mag1BurnUnderCurrent    : %" PRIu8  "\n", pl.Mag1BurnUnderCurrent);
+                fprintf(fp, "Mag1BurnOverCurrent     : %" PRIu8  "\n", pl.Mag1BurnOverCurrent);
+                fprintf(fp, "Mag1DeployTimeout       : %" PRIu8  "\n", pl.Mag1DeployTimeout);
+
+                break;
+            }
+
+            case ADCS_GET_RAW_CUBESENSE_SUN_CC:
+            {
+                fprintf(fp, "\n[ADCS GET RAW CUBE SENSE SUN CC]\n");
+                if (payload_len < sizeof(ADCS_RawCubeSenseSunTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_RawCubeSenseSunTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_RawCubeSenseSunTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Timestamp]\n");
+                fprintf(fp, "TimeSecond     : %" PRIu32 "\n", pl.TimeSecond);
+                fprintf(fp, "TimeNanoSecond : %" PRIu32 "\n", pl.TimeNanoSecond);
+
+                fprintf(fp, "\n[FSS0]\n");
+                fprintf(fp, "FSS0AlphaAngle     : %" PRIi16 "\n", pl.FSS0AlphaAngle);
+                fprintf(fp, "FSS0BetaAngle      : %" PRIi16 "\n", pl.FSS0BetaAngle);
+                fprintf(fp, "FSS0CaptureResult  : %" PRIu8  "\n", pl.FSS0CaptureResult);
+                fprintf(fp, "FSS0DetectionResult: %" PRIu8  "\n", pl.FSS0DetectionResult);
+
+                fprintf(fp, "\n[FSS1]\n");
+                fprintf(fp, "FSS1AlphaAngle     : %" PRIi16 "\n", pl.FSS1AlphaAngle);
+                fprintf(fp, "FSS1BetaAngle      : %" PRIi16 "\n", pl.FSS1BetaAngle);
+                fprintf(fp, "FSS1CaptureResult  : %" PRIu8  "\n", pl.FSS1CaptureResult);
+                fprintf(fp, "FSS1DetectionResult: %" PRIu8  "\n", pl.FSS1DetectionResult);
+
+                fprintf(fp, "\n[FSS2]\n");
+                fprintf(fp, "FSS2AlphaAngle     : %" PRIi16 "\n", pl.FSS2AlphaAngle);
+                fprintf(fp, "FSS2BetaAngle      : %" PRIi16 "\n", pl.FSS2BetaAngle);
+                fprintf(fp, "FSS2CaptureResult  : %" PRIu8  "\n", pl.FSS2CaptureResult);
+                fprintf(fp, "FSS2DetectionResult: %" PRIu8  "\n", pl.FSS2DetectionResult);
+
+                fprintf(fp, "\n[FSS3]\n");
+                fprintf(fp, "FSS3AlphaAngle     : %" PRIi16 "\n", pl.FSS3AlphaAngle);
+                fprintf(fp, "FSS3BetaAngle      : %" PRIi16 "\n", pl.FSS3BetaAngle);
+                fprintf(fp, "FSS3CaptureResult  : %" PRIu8  "\n", pl.FSS3CaptureResult);
+                fprintf(fp, "FSS3DetectionResult: %" PRIu8  "\n", pl.FSS3DetectionResult);
+
+                fprintf(fp, "\n[Valid Result]\n");
+                fprintf(fp, "ValidResult: %" PRIu8 "\n", pl.ValidResult);
+
+                break;
+            }
+
+            case ADCS_GET_REFERENCE_RPY_VALUES_CC:
+            {
+                fprintf(fp, "\n[ADCS GET REFERENCE RPY VALUES CC]\n");
+                if (payload_len < sizeof(ADCS_ReferenceRPYvaluesTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ReferenceRPYvaluesTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ReferenceRPYvaluesTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[RPY Values]\n");
+                fprintf(fp, "Roll  : %f\n", pl.Roll);
+                fprintf(fp, "Pitch : %f\n", pl.Pitch);
+                fprintf(fp, "Yaw   : %f\n", pl.Yaw);
+
+                break;
+            }
+
+            case ADCS_GET_OPENLOOPCMD_MTQ_CC:
+            {
+                fprintf(fp, "\n[ADCS GET OPEN LOOP CMD MTQ CC]\n");
+                if (payload_len < sizeof(ADCS_OpenLoopCmdMTQTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_OpenLoopCmdMTQTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_OpenLoopCmdMTQTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[MTQ Open Loop Commands]\n");
+                fprintf(fp, "MTQ0_OpenLoopCmd : %" PRIi16 "\n", pl.MTQ0_OpenLoopCmd);
+                fprintf(fp, "MTQ1_OpenLoopCmd : %" PRIi16 "\n", pl.MTQ1_OpenLoopCmd);
+                fprintf(fp, "MTQ2_OpenLoopCmd : %" PRIi16 "\n", pl.MTQ2_OpenLoopCmd);
+
+                break;
+            }
+
+            case ADCS_GET_POWER_STATE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET POWER STATE CC]\n");
+                if (payload_len < sizeof(ADCS_PowerStateTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_PowerStateTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_PowerStateTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[RWL]\n");
+                fprintf(fp, "RWL0 : %" PRIu8 "\n", pl.RWL0);
+                fprintf(fp, "RWL1 : %" PRIu8 "\n", pl.RWL1);
+                fprintf(fp, "RWL2 : %" PRIu8 "\n", pl.RWL2);
+                fprintf(fp, "RWL3 : %" PRIu8 "\n", pl.RWL3);
+
+                fprintf(fp, "\n[MAG]\n");
+                fprintf(fp, "MAG0 : %" PRIu8 "\n", pl.MAG0);
+                fprintf(fp, "MAG1 : %" PRIu8 "\n", pl.MAG1);
+
+                fprintf(fp, "\n[GYR]\n");
+                fprintf(fp, "GYR0 : %" PRIu8 "\n", pl.GYR0);
+                fprintf(fp, "GYR1 : %" PRIu8 "\n", pl.GYR1);
+
+                fprintf(fp, "\n[FSS]\n");
+                fprintf(fp, "FSS0 : %" PRIu8 "\n", pl.FSS0);
+                fprintf(fp, "FSS1 : %" PRIu8 "\n", pl.FSS1);
+                fprintf(fp, "FSS2 : %" PRIu8 "\n", pl.FSS2);
+                fprintf(fp, "FSS3 : %" PRIu8 "\n", pl.FSS3);
+
+                fprintf(fp, "\n[HSS]\n");
+                fprintf(fp, "HSS0 : %" PRIu8 "\n", pl.HSS0);
+                fprintf(fp, "HSS1 : %" PRIu8 "\n", pl.HSS1);
+
+                fprintf(fp, "\n[STR]\n");
+                fprintf(fp, "STR0 : %" PRIu8 "\n", pl.STR0);
+                fprintf(fp, "STR1 : %" PRIu8 "\n", pl.STR1);
+
+                fprintf(fp, "\n[External Sensor]\n");
+                fprintf(fp, "ExtSensor0 : %" PRIu8 "\n", pl.ExtSensor0);
+                fprintf(fp, "ExtSensor1 : %" PRIu8 "\n", pl.ExtSensor1);
+
+                fprintf(fp, "\n[External GYR]\n");
+                fprintf(fp, "ExtGYR0 : %" PRIu8 "\n", pl.ExtGYR0);
+                fprintf(fp, "ExtGYR1 : %" PRIu8 "\n", pl.ExtGYR1);
+
+                break;
+            }
+
+            case ADCS_GET_RUN_MODE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET RUN MODE CC]\n");
+                if (payload_len < sizeof(ADCS_RunModeTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_RunModeTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_RunModeTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Run Mode]\n");
+                fprintf(fp, "RunMode : %" PRIu8 "\n", pl.RunMode);
+
+                break;
+            }
+
+            case ADCS_GET_CONTROL_MODE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET CONTROL MODE CC]\n");
+                if (payload_len < sizeof(ADCS_ControlModeTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_ControlModeTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_ControlModeTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Control Mode]\n");
+                fprintf(fp, "ControlMode    : %" PRIu8  "\n", pl.ControlMode);
+                fprintf(fp, "ControlTimeout : %" PRIu16 "\n", pl.ControlTimeout);
+
+                break;
+            }
+
+            case ADCS_GET_MAG0_MMT_CALIB_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET MAG0 MMT CALIB CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_Mag0MMTCalibConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_Mag0MMTCalibConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_Mag0MMTCalibConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[MMT Offsets]\n");
+                fprintf(fp, "MMT_Ch1Offset : %" PRIi16 "\n", pl.MMT_Ch1Offset);
+                fprintf(fp, "MMT_Ch2Offset : %" PRIi16 "\n", pl.MMT_Ch2Offset);
+                fprintf(fp, "MMT_Ch3Offset : %" PRIi16 "\n", pl.MMT_Ch3Offset);
+
+                fprintf(fp, "\n[MMT Sensitivity Matrix]\n");
+                fprintf(fp, "MMT_SensitivityMAT_S11 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S11);
+                fprintf(fp, "MMT_SensitivityMAT_S22 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S22);
+                fprintf(fp, "MMT_SensitivityMAT_S33 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S33);
+                fprintf(fp, "MMT_SensitivityMAT_S12 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S12);
+                fprintf(fp, "MMT_SensitivityMAT_S13 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S13);
+                fprintf(fp, "MMT_SensitivityMAT_S21 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S21);
+                fprintf(fp, "MMT_SensitivityMAT_S23 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S23);
+                fprintf(fp, "MMT_SensitivityMAT_S31 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S31);
+                fprintf(fp, "MMT_SensitivityMAT_S32 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S32);
+
+                break;
+            }
+
+            case ADCS_GET_MAG1_MMT_CALIB_CONFIG_CC:
+            {
+                fprintf(fp, "\n[ADCS GET MAG1 MMT CALIB CONFIG CC]\n");
+                if (payload_len < sizeof(ADCS_Mag1MMTCalibConfigTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_Mag1MMTCalibConfigTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_Mag1MMTCalibConfigTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[MMT Offsets]\n");
+                fprintf(fp, "MMT_Ch1Offset : %" PRIi16 "\n", pl.MMT_Ch1Offset);
+                fprintf(fp, "MMT_Ch2Offset : %" PRIi16 "\n", pl.MMT_Ch2Offset);
+                fprintf(fp, "MMT_Ch3Offset : %" PRIi16 "\n", pl.MMT_Ch3Offset);
+
+                fprintf(fp, "\n[MMT Sensitivity Matrix]\n");
+                fprintf(fp, "MMT_SensitivityMAT_S11 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S11);
+                fprintf(fp, "MMT_SensitivityMAT_S22 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S22);
+                fprintf(fp, "MMT_SensitivityMAT_S33 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S33);
+                fprintf(fp, "MMT_SensitivityMAT_S12 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S12);
+                fprintf(fp, "MMT_SensitivityMAT_S13 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S13);
+                fprintf(fp, "MMT_SensitivityMAT_S21 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S21);
+                fprintf(fp, "MMT_SensitivityMAT_S23 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S23);
+                fprintf(fp, "MMT_SensitivityMAT_S31 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S31);
+                fprintf(fp, "MMT_SensitivityMAT_S32 : %" PRIi16 "\n", pl.MMT_SensitivityMAT_S32);
+
+                break;
+            }
+
+            case ADCS_GET_ESTIMATION_MODE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET ESTIMATION MODE CC]\n");
+                if (payload_len < sizeof(ADCS_EstimationModeTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_EstimationModeTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_EstimationModeTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Estimation Mode]\n");
+                fprintf(fp, "MainEstimatorMode   : %" PRIu8 "\n", pl.MainEstimatorMode);
+                fprintf(fp, "BackupEstimatorMode : %" PRIu8 "\n", pl.BackupEstimatorMode);
+
+                break;
+            }
+
+            case ADCS_GET_OPERATIONAL_STATE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET OPERATIONAL STATE CC]\n");
+                if (payload_len < sizeof(ADCS_OperationalStateTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_OperationalStateTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_OperationalStateTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Operational State]\n");
+                fprintf(fp, "OperationalMode : %" PRIu8 "\n", pl.OperationalMode);
+
+                break;
+            }
+
+            case ADCS_GET_RAW_CSS_SENSOR_CC:
+            {
+                fprintf(fp, "\n[ADCS GET RAW CSS SENSOR CC]\n");
+                if (payload_len < sizeof(ADCS_RawCSSSensorTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_RawCSSSensorTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_RawCSSSensorTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Timestamp]\n");
+                fprintf(fp, "TimeSeconds     : %" PRIu32 "\n", pl.TimeSeconds);
+                fprintf(fp, "TimeNanoSeconds : %" PRIu32 "\n", pl.TimeNanoSeconds);
+
+                fprintf(fp, "\n[CSS Raw Values]\n");
+                fprintf(fp, "CSS0 : %" PRIu8 "\n", pl.CSS0);
+                fprintf(fp, "CSS1 : %" PRIu8 "\n", pl.CSS1);
+                fprintf(fp, "CSS2 : %" PRIu8 "\n", pl.CSS2);
+                fprintf(fp, "CSS3 : %" PRIu8 "\n", pl.CSS3);
+                fprintf(fp, "CSS4 : %" PRIu8 "\n", pl.CSS4);
+                fprintf(fp, "CSS5 : %" PRIu8 "\n", pl.CSS5);
+                fprintf(fp, "CSS6 : %" PRIu8 "\n", pl.CSS6);
+                fprintf(fp, "CSS7 : %" PRIu8 "\n", pl.CSS7);
+                fprintf(fp, "CSS8 : %" PRIu8 "\n", pl.CSS8);
+                fprintf(fp, "CSS9 : %" PRIu8 "\n", pl.CSS9);
+
+                fprintf(fp, "\n[Valid Flag]\n");
+                fprintf(fp, "CSSValidFlag : %" PRIu8 "\n", pl.CSSValidFlag);
+
+                break;
+            }
+
+            case ADCS_GET_RAW_GYR_SENSOR_CC:
+            {
+                fprintf(fp, "\n[ADCS GET RAW GYR SENSOR CC]\n");
+                if (payload_len < sizeof(ADCS_RawGYRSensorTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_RawGYRSensorTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_RawGYRSensorTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Timestamp]\n");
+                fprintf(fp, "TimeSeconds     : %" PRIu32 "\n", pl.TimeSeconds);
+                fprintf(fp, "TimeNanoSeconds : %" PRIu32 "\n", pl.TimeNanoSeconds);
+
+                fprintf(fp, "\n[GYR0 Raw Rate]\n");
+                fprintf(fp, "GYR0RawRateX : %f\n", pl.GYR0RawRateX);
+                fprintf(fp, "GYR0RawRateY : %f\n", pl.GYR0RawRateY);
+                fprintf(fp, "GYR0RawRateZ : %f\n", pl.GYR0RawRateZ);
+
+                fprintf(fp, "\n[GYR1 Raw Rate]\n");
+                fprintf(fp, "GYR1RawRateX : %f\n", pl.GYR1RawRateX);
+                fprintf(fp, "GYR1RawRateY : %f\n", pl.GYR1RawRateY);
+                fprintf(fp, "GYR1RawRateZ : %f\n", pl.GYR1RawRateZ);
+
+                fprintf(fp, "\n[Valid Flags]\n");
+                fprintf(fp, "GYR0ValidFlag : %" PRIu8 "\n", pl.GYR0ValidFlag);
+                fprintf(fp, "GYR1ValidFlag : %" PRIu8 "\n", pl.GYR1ValidFlag);
+
+                break;
+            }
+
+            case ADCS_GET_CALIBRATED_GYR_SENSOR_CC:
+            {
+                fprintf(fp, "\n[ADCS GET CALIBRATED GYR SENSOR CC]\n");
+                if (payload_len < sizeof(ADCS_CalibratedGYRSensorTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_CalibratedGYRSensorTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_CalibratedGYRSensorTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Timestamp]\n");
+                fprintf(fp, "TimeSeconds     : %" PRIu32 "\n", pl.TimeSeconds);
+                fprintf(fp, "TimeNanoSeconds : %" PRIu32 "\n", pl.TimeNanoSeconds);
+
+                fprintf(fp, "\n[GYR0 Calibrated Rate]\n");
+                fprintf(fp, "GYR0CalibratedRateX : %f\n", pl.GYR0CalibratedRateX);
+                fprintf(fp, "GYR0CalibratedRateY : %f\n", pl.GYR0CalibratedRateY);
+                fprintf(fp, "GYR0CalibratedRateZ : %f\n", pl.GYR0CalibratedRateZ);
+
+                fprintf(fp, "\n[GYR1 Calibrated Rate]\n");
+                fprintf(fp, "GYR1CalibratedRateX : %f\n", pl.GYR1CalibratedRateX);
+                fprintf(fp, "GYR1CalibratedRateY : %f\n", pl.GYR1CalibratedRateY);
+                fprintf(fp, "GYR1CalibratedRateZ : %f\n", pl.GYR1CalibratedRateZ);
+
+                fprintf(fp, "\n[ExtGYR0 Calibrated Rate]\n");
+                fprintf(fp, "ExtGYR0CalibratedRateX : %f\n", pl.ExtGYR0CalibratedRateX);
+                fprintf(fp, "ExtGYR0CalibratedRateY : %f\n", pl.ExtGYR0CalibratedRateY);
+                fprintf(fp, "ExtGYR0CalibratedRateZ : %f\n", pl.ExtGYR0CalibratedRateZ);
+
+                fprintf(fp, "\n[ExtGYR1 Calibrated Rate]\n");
+                fprintf(fp, "ExtGYR1CalibratedRateX : %f\n", pl.ExtGYR1CalibratedRateX);
+                fprintf(fp, "ExtGYR1CalibratedRateY : %f\n", pl.ExtGYR1CalibratedRateY);
+                fprintf(fp, "ExtGYR1CalibratedRateZ : %f\n", pl.ExtGYR1CalibratedRateZ);
+
+                fprintf(fp, "\n[Valid Flags]\n");
+                fprintf(fp, "GYR0ValidFlag    : %" PRIu8 "\n", pl.GYR0ValidFlag);
+                fprintf(fp, "GYR1ValidFlag    : %" PRIu8 "\n", pl.GYR1ValidFlag);
+                fprintf(fp, "EXTGYR0ValidFlag : %" PRIu8 "\n", pl.EXTGYR0ValidFlag);
+                fprintf(fp, "EXTGYR1ValidFlag : %" PRIu8 "\n", pl.EXTGYR1ValidFlag);
+
+                break;
+            }
+
+            case ADCS_GET_TLM_LOG_INCLMASK_CC:
+            {
+                fprintf(fp, "\n[ADCS GET TLM LOG INCL MASK CC]\n");
+                if (payload_len < sizeof(ADCS_TlmLogInclMaskTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_TlmLogInclMaskTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_TlmLogInclMaskTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Inclusion Masks]\n");
+                DumpArr_u8(fp, "FastInclusionBitmask[0..4]", pl.FastInclusionBitmask, 5);
+                DumpArr_u8(fp, "SlowInclusionBitmask[0..4]", pl.SlowInclusionBitmask, 5);
+
+                break;
+            }
+
+            case ADCS_GET_UNSOLICIT_TLM_MSG_SETUP_CC:
+            {
+                fprintf(fp, "\n[ADCS GET UNSOLICIT TLM MSG SETUP CC]\n");
+                if (payload_len < sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_UnsolicitTlmMsgSetupTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_UnsolicitTlmMsgSetupTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Tlm Return Intervals]\n");
+                fprintf(fp, "UARTTlmReturnInterval  : %" PRIu8 "\n", pl.UARTTlmReturnInterval);
+                fprintf(fp, "UART2TlmReturnInterval : %" PRIu8 "\n", pl.UART2TlmReturnInterval);
+                fprintf(fp, "CANTlmRetrunInterval   : %" PRIu8 "\n", pl.CANTlmRetrunInterval);
+
+                fprintf(fp, "\n[Tlm ID Inclusion Bitmasks]\n");
+                DumpArr_u8(fp, "UARTTlmIDInclusionBitmask[0..4]",  pl.UARTTlmIDInclusionBitmask,  5);
+                DumpArr_u8(fp, "UART2TlmIDInclusionBitmask[0..4]", pl.UART2TlmIDInclusionBitmask, 5);
+                DumpArr_u8(fp, "CANTlmIDInclusionBitmask[0..4]",   pl.CANTlmIDInclusionBitmask,   5);
+
+                break;
+            }
+
+            case ADCS_GET_UNSOLICIT_EVENT_MSG_SETUP_CC:
+            {
+                fprintf(fp, "\n[ADCS GET UNSOLICIT EVENT MSG SETUP CC]\n");
+                if (payload_len < sizeof(ADCS_UnsolicitEventMsgSetupTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_UnsolicitEventMsgSetupTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_UnsolicitEventMsgSetupTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[UART Event Flags]\n");
+                fprintf(fp, "InfoUART     : %" PRIu8 "\n", pl.InfoUART);
+                fprintf(fp, "MinorUART    : %" PRIu8 "\n", pl.MinorUART);
+                fprintf(fp, "MajorUART    : %" PRIu8 "\n", pl.MajorUART);
+                fprintf(fp, "CriticalUART : %" PRIu8 "\n", pl.CriticalUART);
+
+                fprintf(fp, "\n[UART2 Event Flags]\n");
+                fprintf(fp, "InfoUART2     : %" PRIu8 "\n", pl.InfoUART2);
+                fprintf(fp, "MinorUART2    : %" PRIu8 "\n", pl.MinorUART2);
+                fprintf(fp, "MajorUART2    : %" PRIu8 "\n", pl.MajorUART2);
+                fprintf(fp, "CriticalUART2 : %" PRIu8 "\n", pl.CriticalUART2);
+
+                fprintf(fp, "\n[CAN Event Flags]\n");
+                fprintf(fp, "InfoCAN     : %" PRIu8 "\n", pl.InfoCAN);
+                fprintf(fp, "MinorCAN    : %" PRIu8 "\n", pl.MinorCAN);
+                fprintf(fp, "MajorCAN    : %" PRIu8 "\n", pl.MajorCAN);
+                fprintf(fp, "CriticalCAN : %" PRIu8 "\n", pl.CriticalCAN);
+
+                break;
+            }
+
+            case ADCS_GET_EVENT_LOG_STATUS_RESPONSE_CC:
+            {
+                fprintf(fp, "\n[ADCS GET EVENT LOG STATUS RESPONSE CC]\n");
+                if (payload_len < sizeof(ADCS_EventLogStatusResponseTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_EventLogStatusResponseTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_EventLogStatusResponseTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Queue/Buffer Status]\n");
+                fprintf(fp, "NumQueuedEntry   : %" PRIu16 "\n", pl.NumQueuedEntry);
+                fprintf(fp, "NumBufferedEntry : %" PRIu16 "\n", pl.NumBufferedEntry);
+                fprintf(fp, "NumEntry         : %" PRIu32 "\n", pl.NumEntry);
+                fprintf(fp, "NumEmptyEntry    : %" PRIu32 "\n", pl.NumEmptyEntry);
+
+                fprintf(fp, "\n[Timestamps]\n");
+                fprintf(fp, "OldEntryUnixTime  : %" PRIu32 "\n", pl.OldEntryUnixTime);
+                fprintf(fp, "LastEntryUnixTime : %" PRIu32 "\n", pl.LastEntryUnixTime);
+
+                fprintf(fp, "\n[Event Counts]\n");
+                fprintf(fp, "NumCriticalEVS      : %" PRIu32 "\n", pl.NumCriticalEVS);
+                fprintf(fp, "NumMajorWarningEVS  : %" PRIu32 "\n", pl.NumMajorWarningEVS);
+                fprintf(fp, "NumMinorWarningEVS  : %" PRIu32 "\n", pl.NumMinorWarningEVS);
+                fprintf(fp, "NumInfoEVS          : %" PRIu32 "\n", pl.NumInfoEVS);
+
+                fprintf(fp, "\n[Write/Read Status]\n");
+                fprintf(fp, "WriteCnt      : %" PRIu32 "\n", pl.WriteCnt);
+                fprintf(fp, "ReadQueState  : %" PRIu8  "\n", pl.ReadQueState);
+
+                break;
+            }
+
+            case ADCS_GET_PORTMAP_CC:
+            {
+                fprintf(fp, "\n[ADCS GET PORT MAP CC]\n");
+                if (payload_len < sizeof(ADCS_PortMapTlm_Payload_t)) {
+                    fprintf(fp, "WARN: payload too small. need=%zu got=%" PRIu16 "\n",
+                            sizeof(ADCS_PortMapTlm_Payload_t), payload_len);
+                    break;
+                }
+
+                ADCS_PortMapTlm_Payload_t pl;
+                memcpy(&pl, p, sizeof(pl));
+
+                fprintf(fp, "\n[Sensor 1]\n");
+                fprintf(fp, "NodeType_Sensor1     : %" PRIu8  "\n", pl.NodeType_Sensor1);
+                fprintf(fp, "AbstNodeType_Sensor1 : %" PRIu8  "\n", pl.AbstNodeType_Sensor1);
+                fprintf(fp, "SerialNum_Sensor1    : %" PRIu32 "\n", pl.SerialNum_Sensor1);
+                fprintf(fp, "Address_Sensor1      : %" PRIu32 "\n", pl.Address_Sensor1);
+
+                fprintf(fp, "\n[Sensor 2]\n");
+                fprintf(fp, "NodeType_Sensor2     : %" PRIu8  "\n", pl.NodeType_Sensor2);
+                fprintf(fp, "AbstNodeType_Sensor2 : %" PRIu8  "\n", pl.AbstNodeType_Sensor2);
+                fprintf(fp, "SerialNum_Sensor2    : %" PRIu32 "\n", pl.SerialNum_Sensor2);
+                fprintf(fp, "Address_Sensor2      : %" PRIu32 "\n", pl.Address_Sensor2);
+
+                fprintf(fp, "\n[Sensor 3]\n");
+                fprintf(fp, "NodeType_Sensor3     : %" PRIu8  "\n", pl.NodeType_Sensor3);
+                fprintf(fp, "AbstNodeType_Sensor3 : %" PRIu8  "\n", pl.AbstNodeType_Sensor3);
+                fprintf(fp, "SerialNum_Sensor3    : %" PRIu32 "\n", pl.SerialNum_Sensor3);
+                fprintf(fp, "Address_Sensor3      : %" PRIu32 "\n", pl.Address_Sensor3);
+
+                fprintf(fp, "\n[Sensor 4]\n");
+                fprintf(fp, "NodeType_Sensor4     : %" PRIu8  "\n", pl.NodeType_Sensor4);
+                fprintf(fp, "AbstNodeType_Sensor4 : %" PRIu8  "\n", pl.AbstNodeType_Sensor4);
+                fprintf(fp, "SerialNum_Sensor4    : %" PRIu32 "\n", pl.SerialNum_Sensor4);
+                fprintf(fp, "Address_Sensor4      : %" PRIu32 "\n", pl.Address_Sensor4);
+
+                fprintf(fp, "\n[Sensor 5]\n");
+                fprintf(fp, "NodeType_Sensor5     : %" PRIu8  "\n", pl.NodeType_Sensor5);
+                fprintf(fp, "AbstNodeType_Sensor5 : %" PRIu8  "\n", pl.AbstNodeType_Sensor5);
+                fprintf(fp, "SerialNum_Sensor5    : %" PRIu32 "\n", pl.SerialNum_Sensor5);
+                fprintf(fp, "Address_Sensor5      : %" PRIu32 "\n", pl.Address_Sensor5);
+
+                fprintf(fp, "\n[Sensor 6]\n");
+                fprintf(fp, "NodeType_Sensor6     : %" PRIu8  "\n", pl.NodeType_Sensor6);
+                fprintf(fp, "AbstNodeType_Sensor6 : %" PRIu8  "\n", pl.AbstNodeType_Sensor6);
+                fprintf(fp, "SerialNum_Sensor6    : %" PRIu32 "\n", pl.SerialNum_Sensor6);
+                fprintf(fp, "Address_Sensor6      : %" PRIu32 "\n", pl.Address_Sensor6);
+
+                fprintf(fp, "\n[Sensor 7]\n");
+                fprintf(fp, "NodeType_Sensor7     : %" PRIu8  "\n", pl.NodeType_Sensor7);
+                fprintf(fp, "AbstNodeType_Sensor7 : %" PRIu8  "\n", pl.AbstNodeType_Sensor7);
+                fprintf(fp, "SerialNum_Sensor7    : %" PRIu32 "\n", pl.SerialNum_Sensor7);
+                fprintf(fp, "Address_Sensor7      : %" PRIu32 "\n", pl.Address_Sensor7);
+
+                fprintf(fp, "\n[Sensor 8]\n");
+                fprintf(fp, "NodeType_Sensor8     : %" PRIu8  "\n", pl.NodeType_Sensor8);
+                fprintf(fp, "AbstNodeType_Sensor8 : %" PRIu8  "\n", pl.AbstNodeType_Sensor8);
+                fprintf(fp, "SerialNum_Sensor8    : %" PRIu32 "\n", pl.SerialNum_Sensor8);
+                fprintf(fp, "Address_Sensor8      : %" PRIu32 "\n", pl.Address_Sensor8);
+
+                fprintf(fp, "\n[Wheel 1]\n");
+                fprintf(fp, "NodeType_Wheel1     : %" PRIu8  "\n", pl.NodeType_Wheel1);
+                fprintf(fp, "AbstNodeType_Wheel1 : %" PRIu8  "\n", pl.AbstNodeType_Wheel1);
+                fprintf(fp, "SerialNum_Wheel1    : %" PRIu32 "\n", pl.SerialNum_Wheel1);
+                fprintf(fp, "Address_Wheel1      : %" PRIu32 "\n", pl.Address_Wheel1);
+
+                fprintf(fp, "\n[Wheel 2]\n");
+                fprintf(fp, "NodeType_Wheel2     : %" PRIu8  "\n", pl.NodeType_Wheel2);
+                fprintf(fp, "AbstNodeType_Wheel2 : %" PRIu8  "\n", pl.AbstNodeType_Wheel2);
+                fprintf(fp, "SerialNum_Wheel2    : %" PRIu32 "\n", pl.SerialNum_Wheel2);
+                fprintf(fp, "Address_Wheel2      : %" PRIu32 "\n", pl.Address_Wheel2);
+
+                fprintf(fp, "\n[Wheel 3]\n");
+                fprintf(fp, "NodeType_Wheel3     : %" PRIu8  "\n", pl.NodeType_Wheel3);
+                fprintf(fp, "AbstNodeType_Wheel3 : %" PRIu8  "\n", pl.AbstNodeType_Wheel3);
+                fprintf(fp, "SerialNum_Wheel3    : %" PRIu32 "\n", pl.SerialNum_Wheel3);
+                fprintf(fp, "Address_Wheel3      : %" PRIu32 "\n", pl.Address_Wheel3);
+
+                fprintf(fp, "\n[Wheel 4]\n");
+                fprintf(fp, "NodeType_Wheel4     : %" PRIu8  "\n", pl.NodeType_Wheel4);
+                fprintf(fp, "AbstNodeType_Wheel4 : %" PRIu8  "\n", pl.AbstNodeType_Wheel4);
+                fprintf(fp, "SerialNum_Wheel4    : %" PRIu32 "\n", pl.SerialNum_Wheel4);
+                fprintf(fp, "Address_Wheel4      : %" PRIu32 "\n", pl.Address_Wheel4);
 
                 break;
             }
